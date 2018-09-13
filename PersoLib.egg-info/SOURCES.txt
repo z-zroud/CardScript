@@ -1,0 +1,17 @@
+MANIFEST.in
+setup.py
+PersoLib.egg-info/PKG-INFO
+PersoLib.egg-info/SOURCES.txt
+PersoLib.egg-info/dependency_links.txt
+PersoLib.egg-info/top_level.txt
+perso_lib/__init__.py
+perso_lib/apdu.py
+perso_lib/auth.py
+perso_lib/data_parse.py
+perso_lib/des.py
+perso_lib/kmc.py
+perso_lib/pcsc.py
+perso_lib/utils.py
+perso_lib/dll/DataParse.dll
+perso_lib/dll/Des0.dll
+perso_lib/dll/PCSC.dll
