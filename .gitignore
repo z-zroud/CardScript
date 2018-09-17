@@ -11,7 +11,7 @@
 build/  
 dist/  
 PersoLib.egg-info/
-obj/
+perso_lib/__pycache__/
 ipch/
 .vs/
 bin/

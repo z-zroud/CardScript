@@ -37,6 +37,7 @@ def send(cmd):
     apdu_response.sw = _pcsc_lib.SendApdu(bytes_cmd,resp_data,resp_len)
     apdu_response.response = bytes.decode(resp_data.value)
     apdu_response.request = cmd
+    # sys.exit()
     return apdu_response
 
 #Get all smard card readers
