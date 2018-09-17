@@ -29,7 +29,7 @@ def init():
     return False
 
 #send apdu command
-def send(cmd):
+def send(cmd,resp_sw_list=(0x9000,)):
     apdu_response = ApduResponse()
     bytes_cmd = str.encode(cmd)
     resp_len = c_int(2048)
@@ -38,7 +38,10 @@ def send(cmd):
     apdu_response.response = bytes.decode(resp_data.value)
     apdu_response.request = cmd
     # sys.exit()
-    return apdu_response
+    for sw in resp_sw_list:
+        if sw == apdu_response.sw:
+            return apdu_response
+    sys.exit()
 
 #Get all smard card readers
 def get_readers():

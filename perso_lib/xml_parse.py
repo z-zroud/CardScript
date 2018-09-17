@@ -26,6 +26,13 @@ class XmlParser:
         if node.hasAttribute(attr_name):
             return node.getAttribute(attr_name)
 
+    def get_attributes(self,node):
+        dict_attr = {}
+        for key in node.attributes.keys():
+            attr = node.attributes[key]
+            dict_attr[attr.name] = attr.value
+        return dict_attr
+
 
 if __name__ == '__main__':
     xml_parse = XmlParser('install.xml')

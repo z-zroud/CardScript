@@ -1,3 +1,4 @@
+import os
 from perso_lib import utils
 
 class FileHandle:
@@ -8,6 +9,9 @@ class FileHandle:
     @property
     def current_offset(self):
         return self._file.tell()
+
+    def get_file_size(self):
+        return os.path.getsize(self.file_name)
 
     def read_line(self):
         value = self._file.readline()
@@ -23,7 +27,13 @@ class FileHandle:
         self._file.seek(offset,0)
         return self._file.read(read_len)
 
+    def read_str(self,offset,read_len):
+        '''读取二进制文件，并转换为字符串形式'''
+        data = self.read(offset,read_len)
+        return bytes.decode(data)
+
     def read_binary(self,offset,read_len):
+        '''读取二进制文件，并按二进制呈现为字符串形式'''
         data = ''
         #self._file.seek(offset,0)
         value_arr = self.read(offset,read_len)
@@ -32,8 +42,25 @@ class FileHandle:
         return data
         
     def read_int(self,offset):
+        '''按二进制顺序读取2字节，转换为整形'''
         data = self.read_binary(offset,2)
-        return utils.str_to_int(data)
+        return utils.hex_str_to_int(data)
+
+    def read_int_reverse(self,offset):
+        '''读取2字节，逆序转换为整形'''
+        data = self.read_binary(offset,2)
+        hex_str = ''
+        for i in range(0,4,2):
+            hex_str += data[2 - i : 2 - i + 2]
+        return utils.hex_str_to_int(hex_str)
+
+    def read_int64_reverse(self,offset):
+        '''读取4个字节，全部逆序转换为整形'''
+        data = self.read_binary(offset,4)
+        hex_str = ''
+        for i in range(0,8,2):
+            hex_str += data[6 - i : 6 - i + 2]
+        return utils.hex_str_to_int(hex_str)
 
 
 
@@ -42,3 +69,5 @@ if __name__ == '__main__':
     for i in range(5):
         value = fh.read_binary(fh.current_offset,2)
         value = fh.read_int(fh.current_offset)
+        value = fh.read_int(fh.current_offset)
+        value = fh.read_str(fh.current_offset,2)

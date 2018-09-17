@@ -1,0 +1,290 @@
+<Rule>
+      <Decrypt DGI="8000" type="DES" key="11111111111111112222222222222222"/>
+      <Decrypt DGI="8020" type="DES" key="11111111111111112222222222222222"/>
+      <Decrypt DGI="8201" type="DES" key="11111111111111112222222222222222"/>
+      <Decrypt DGI="8202" type="DES" key="11111111111111112222222222222222"/>
+      <Decrypt DGI="8203" type="DES" key="11111111111111112222222222222222"/>
+      <Decrypt DGI="8204" type="DES" key="11111111111111112222222222222222"/>         
+      <Decrypt DGI="8205" type="DES" key="11111111111111112222222222222222"/>
+      <Decrypt DGI="8100" type="SM" key="11111111111111112222222222222222"/>
+      <Decrypt DGI="8030" type="SM" key="11111111111111112222222222222222"/>
+      
+	  <!--磁条数据信息-->
+      <AddTag srcDGI="0101" dstDGI="01" dstTag="57"/>
+      <AddTag srcDGI="0101" dstDGI="01" dstTag="8F"/>
+      <AddTag srcDGI="0101" dstDGI="01" dstTag="9F32"/>
+      <AssembleTlv DGI="0101"/>
+      
+      <!--持卡人基本信息-->
+      <AddTag srcDGI="0102" dstDGI="01" dstTag="9F61"/>
+      <AddTag srcDGI="0102" dstDGI="01" dstTag="9F62"/>
+      <AddTag srcDGI="0102" dstDGI="01" dstTag="5F20"/>
+      <!--AddTag srcDGI="0102" dstDGI="01" dstTag="9F0B"/-->  
+      <AssembleTlv DGI="0102"/>
+      
+      <!--磁条数据信息-->
+      <AddTag srcDGI="0103" dstDGI="01" dstTag="57"/>
+      <!--AddTag srcDGI="0101" dstDGI="01" dstTag="9F1F"/-->
+      <AssembleTlv DGI="0103"/>
+      
+      <!--PBOC签名的静态应用数据-->
+      <AddTag srcDGI="0201" dstDGI="01" dstTag="5F24"/>  
+      <AddTag srcDGI="0201" dstDGI="01" dstTag="5A"/>
+      <AddTag srcDGI="0201" dstDGI="01" dstTag="9F07"/>  
+      <AddTag srcDGI="0201" dstDGI="01" dstTag="8E"/>  
+      <AddTag srcDGI="0201" dstDGI="01" dstTag="9F0D"/>  
+      <AddTag srcDGI="0201" dstDGI="01" dstTag="9F0E"/>  
+      <AddTag srcDGI="0201" dstDGI="01" dstTag="9F0F"/>  
+      <AddTag srcDGI="0201" dstDGI="01" dstTag="5F28"/>    
+      <AssembleTlv DGI="0201"/>
+      
+      <!--PBOC IC卡公钥信息-->
+      <AddTag srcDGI="0202" dstDGI="01" dstTag="9F46"/>
+      <AddTag srcDGI="0202" dstDGI="01" dstTag="9F47"/>
+      <AddTag srcDGI="0202" dstDGI="01" dstTag="9F48"/>
+      <AssembleTlv DGI="0202"/>
+      
+      <!--PBOC 包含发卡行签名的静态应用数据-->
+      <AddTag srcDGI="0203" dstDGI="01" dstTag="93"/>
+      <AddTag srcDGI="0203" dstDGI="01" dstTag="5F25"/>
+      <AddTag srcDGI="0203" dstDGI="01" dstTag="9F4A"/>
+      <AssembleTlv DGI="0203"/>      
+
+      <!--EC 签名的静态应用数据-->
+      <AddTag srcDGI="0204" dstDGI="01" dstTag="5F24"/>
+      <AddTag srcDGI="0204" dstDGI="01" dstTag="5A"/>
+      <AddTag srcDGI="0204" dstDGI="01" dstTag="9F07"/>
+      <AddTag srcDGI="0204" dstDGI="02" dstTag="8E"/>
+      <AddTag srcDGI="0204" dstDGI="02" dstTag="9F0D"/>
+      <AddTag srcDGI="0204" dstDGI="02" dstTag="9F0E"/>     
+      <AddTag srcDGI="0204" dstDGI="02" dstTag="9F0F"/>
+      <AddTag srcDGI="0204" dstDGI="01" dstTag="5F28"/>
+      <AssembleTlv DGI="0204"/>      
+      
+      <!--EC IC卡公钥信息-->
+      <AddTag srcDGI="0205" dstDGI="02" dstTag="9F46"/>
+      <AddTag srcDGI="0205" dstDGI="01" dstTag="9F47"/>
+      <AddTag srcDGI="0205" dstDGI="01" dstTag="9F48"/>
+      <AssembleTlv DGI="0205"/>  
+      
+      <!--EC 由发卡行签名的数据-->
+      <AddTag srcDGI="0206" dstDGI="02" dstTag="93"/>
+      <AddTag srcDGI="0206" dstDGI="01" dstTag="5F25"/>
+      <AddTag srcDGI="0206" dstDGI="01" dstTag="9F4A"/>
+      <AssembleTlv DGI="0206"/>
+      
+      <!--通用 发卡行公钥证书-->      
+      <AddTag srcDGI="0301" dstDGI="01" dstTag="90"/>
+      <AssembleTlv DGI="0301"/>   
+      
+      <!--PBOC EC通用 DOL数据-->   
+      <AddTag srcDGI="0302" dstDGI="01" dstTag="5F30"/>
+      <AddTag srcDGI="0302" dstDGI="01" dstTag="5F34"/>
+      <AddTag srcDGI="0302" dstDGI="01" dstTag="8C"/>
+      <AddTag srcDGI="0302" dstDGI="01" dstTag="8D"/>     
+      <AddTag srcDGI="0302" dstDGI="01" dstTag="9F08"/>
+      <AddTag srcDGI="0302" dstDGI="01" dstTag="9F49"/>
+      <AssembleTlv DGI="0302"/>  
+            
+      <!--QPBOC签名的静态应用数据-->
+      <AddTag srcDGI="0303" dstDGI="01" dstTag="5F24"/>
+      <AddTag srcDGI="0303" dstDGI="01" dstTag="5A"/>
+      <AddTag srcDGI="0303" dstDGI="01" dstTag="9F07"/>
+      <AddTag srcDGI="0303" dstDGI="02" dstTag="8E"/>
+      <AddTag srcDGI="0303" dstDGI="02" dstTag="9F0D"/>
+      <AddTag srcDGI="0303" dstDGI="02" dstTag="9F0E"/>
+      <AddTag srcDGI="0303" dstDGI="02" dstTag="9F0F"/>
+      <AddTag srcDGI="0303" dstDGI="01" dstTag="5F28"/>
+      <AssembleTlv DGI="0303"/>  
+      
+      <!--QPBOC IC卡公钥信息-->      
+      <AddTag srcDGI="0304" dstDGI="03" dstTag="9F46"/>
+      <AddTag srcDGI="0304" dstDGI="01" dstTag="9F47"/>
+      <AddTag srcDGI="0304" dstDGI="01" dstTag="9F48"/>
+      <!--AddTag srcDGI="0304" dstDGI="02" dstTag="9F48"/-->
+      <AssembleTlv DGI="0304"/> 
+      
+      <!--QPBOC 由发卡行签名的数据，及杂项-->      
+      <AddTag srcDGI="0305" dstDGI="03" dstTag="93"/>
+      <AddTag srcDGI="0305" dstDGI="01" dstTag="5F25"/>
+      <AddTag srcDGI="0305" dstDGI="01" dstTag="9F4A"/>
+      <AddTag srcDGI="0305" dstDGI="01" dstTag="9F08"/>
+      <AddTag srcDGI="0305" dstDGI="01" dstTag="8F"/>
+      <AddTag srcDGI="0305" dstDGI="01" dstTag="9F32"/>
+      <AssembleTlv DGI="0305"/>       
+      
+      <!--通用 脱机交易限制-->
+      <AddTag srcDGI="0401" dstDGI="01" dstTag="9F14"/>
+      <AddTag srcDGI="0401" dstDGI="01" dstTag="9F23"/>
+      <AssembleTlv DGI="0401"/> 
+      
+      <!--通用 国密 发卡行公钥证书-->      
+      <AddTag srcDGI="0402" srcTag="90" dstDGI="01" dstTag="9001"/>
+      <AddTag srcDGI="0402" srcTag="8F" dstDGI="01" dstTag="8F01"/>
+      <AssembleTlv DGI="0402"/> 
+      
+      <!--国密 PBOC 签名的静态应用数据-->      
+      <AddTag srcDGI="0403" dstDGI="01" dstTag="5F24"/>
+      <AddTag srcDGI="0403" dstDGI="01" dstTag="5A"/>
+      <AddTag srcDGI="0403" dstDGI="01" dstTag="9F07"/>
+      <AddTag srcDGI="0403" dstDGI="01" dstTag="8E"/>
+      <AddTag srcDGI="0403" dstDGI="01" dstTag="9F0D"/>
+      <AddTag srcDGI="0403" dstDGI="01" dstTag="9F0E"/>
+      <AddTag srcDGI="0403" dstDGI="01" dstTag="9F0F"/>
+      <AddTag srcDGI="0403" dstDGI="01" dstTag="5F28"/>
+      <AssembleTlv DGI="0403"/> 
+      
+      <!--国密 PBOC 由发卡行签名的数据-->      
+      <AddTag srcDGI="0404" srcTag="93" dstDGI="01" dstTag="9301"/>
+      <AddTag srcDGI="0404" dstDGI="01" dstTag="5F25"/>
+      <AddTag srcDGI="0404" dstDGI="01" dstTag="9F4A"/>
+      <AssembleTlv DGI="0404"/> 
+      
+      <!--国密 PBOC IC卡公钥证书-->      
+      <AddTag srcDGI="0405" srcTag="9F46" dstDGI="01" dstTag="9F4601"/>
+      <AssembleTlv DGI="0405"/>   
+      
+      <!--国密 QPBOC 签名的静态应用数据--> 
+      <AddTag srcDGI="0406" dstDGI="01" dstTag="5F24"/>
+      <AddTag srcDGI="0406" dstDGI="01" dstTag="5A"/>
+      <AddTag srcDGI="0406" dstDGI="01" dstTag="9F07"/>
+      <AddTag srcDGI="0406" dstDGI="02" dstTag="8E"/>
+      <AddTag srcDGI="0406" dstDGI="02" dstTag="9F0D"/>
+      <AddTag srcDGI="0406" dstDGI="02" dstTag="9F0E"/>
+      <AddTag srcDGI="0406" dstDGI="02" dstTag="9F0F"/>
+      <AddTag srcDGI="0406" dstDGI="01" dstTag="5F28"/>
+      <AssembleTlv DGI="0406"/> 
+      
+      <!--国密 QPBOC 由发卡行签名的数据-->      
+      <AddTag srcDGI="0407" srcTag="93" dstDGI="03" dstTag="9301"/>
+      <AddTag srcDGI="0407" dstDGI="01" dstTag="5F25"/>
+      <AddTag srcDGI="0407" dstDGI="01" dstTag="9F08"/>
+      <AddTag srcDGI="0407" dstDGI="01" dstTag="9F4A"/>
+      <AssembleTlv DGI="0407"/> 
+      
+      <!--国密 QPBOC IC卡公钥证书-->     
+      <AddTag srcDGI="0408" srcTag="9F46" dstDGI="03" dstTag="9F4601"/>
+      <AssembleTlv DGI="0408"/> 
+      
+      <!--国密 EC 签名的静态应用数据-->
+      <AddTag srcDGI="0409" dstDGI="01" dstTag="5F24"/>
+      <AddTag srcDGI="0409" dstDGI="01" dstTag="5A"/>
+      <AddTag srcDGI="0409" dstDGI="01" dstTag="9F07"/>
+      <AddTag srcDGI="0409" dstDGI="02" dstTag="8E"/>
+      <AddTag srcDGI="0409" dstDGI="02" dstTag="9F0D"/>
+      <AddTag srcDGI="0409" dstDGI="02" dstTag="9F0E"/>
+      <AddTag srcDGI="0409" dstDGI="02" dstTag="9F0F"/>
+      <AddTag srcDGI="0409" dstDGI="01" dstTag="5F28"/>
+      <AssembleTlv DGI="0409"/> 
+      
+      <!--国密 EC 由发卡行公钥签名的数据-->      
+      <AddTag srcDGI="040A" srcTag="93" dstDGI="02" dstTag="9301"/>
+      <AddTag srcDGI="040A" dstDGI="01" dstTag="5F25"/>
+      <AddTag srcDGI="040A" dstDGI="01" dstTag="9F4A"/>
+      <AssembleTlv DGI="040A"/>
+      
+      <!--国密 EC IC卡公钥证书-->      
+      <AddTag srcDGI="040B" srcTag="9F46" dstDGI="02" dstTag="9F4601"/>
+      <AssembleTlv DGI="040B"/>
+      
+      <!--杂项 EC和QPBOC专用数据-->
+      <!--AddTag srcDGI="0501" dstDGI="02" dstTag="9F74"/-->
+      <AddFixedTag srcDGI="0501" tag="9F74" value="454343303031"/>
+      <!--AddTag srcDGI="0501" dstDGI="03" dstTag="9F69"/-->
+      <AssembleTlv DGI="0501"/>
+      
+      <!--0D01和0E01包含了不在记录中的应用控制数据-->
+      <AddTag srcDGI="0D01" dstDGI="01" dstTag="9F56"/>
+      <AddTag srcDGI="0D01" dstDGI="01" dstTag="9F36"/>
+      <AddTag srcDGI="0D01" dstDGI="01" dstTag="9F53"/>
+      <AddTag srcDGI="0D01" dstDGI="01" dstTag="9F54"/>
+      <AddTag srcDGI="0D01" dstDGI="01" dstTag="9F58"/>
+      <AddTag srcDGI="0D01" dstDGI="01" dstTag="9F59"/>
+      <AddTag srcDGI="0D01" dstDGI="01" dstTag="9F5C"/>
+      <AddTag srcDGI="0D01" dstDGI="03" dstTag="9F68"/>
+      <AddTag srcDGI="0D01" dstDGI="03" dstTag="9F6B"/>
+      <AddTag srcDGI="0D01" dstDGI="03" dstTag="9F5D"/>
+      <AddTag srcDGI="0D01" dstDGI="03" dstTag="DF62"/>
+      <AddTag srcDGI="0D01" dstDGI="03" dstTag="DF63"/>
+      <AddTag srcDGI="0D01" dstDGI="02" dstTag="9F6D"/>
+      <AddTag srcDGI="0D01" dstDGI="02" dstTag="9F77"/>
+      <AddTag srcDGI="0D01" dstDGI="02" dstTag="9F78"/>
+      <AddTag srcDGI="0D01" dstDGI="02" dstTag="9F79"/>
+      <AddTag srcDGI="0D01" dstDGI="02" dstTag="DF4F"/>
+      <AssembleTlv DGI="0D01"/>   
+         
+      <AddTag srcDGI="0E01" dstDGI="01" dstTag="57"/>
+      <AddTag srcDGI="0E01" dstDGI="01" dstTag="5F20"/>
+      <AddTag srcDGI="0E01" dstDGI="01" dstTag="5F34"/>
+      <AddTag srcDGI="0E01" dstDGI="01" dstTag="9F56"/>
+      <AddTag srcDGI="0E01" dstDGI="01" dstTag="9F4F"/>
+      <AddTag srcDGI="0E01" dstDGI="01" dstTag="9F51"/>
+      <AddTag srcDGI="0E01" dstDGI="01" dstTag="9F52"/>
+      <AddTag srcDGI="0E01" dstDGI="03" dstTag="9F6C"/>
+      <AssembleTlv DGI="0E01"/>  
+      
+      <MergeTag srcDGI="8000" srcTag="8000" dstDGI="01" dstTag="EF04"/>
+      <MergeTag srcDGI="8000" srcTag="8000" dstDGI="01" dstTag="EF08"/>
+      <MergeTag srcDGI="8000" srcTag="8000" dstDGI="01" dstTag="EF06"/>
+      
+      <AddKcv srcDGI="9000" dstDGI="8000" type="DES"/>
+      
+      <MergeTag srcDGI="8030" srcTag="8030" dstDGI="01" dstTag="EF0401"/>
+      <MergeTag srcDGI="8030" srcTag="8030" dstDGI="01" dstTag="EF0801"/>
+      <MergeTag srcDGI="8030" srcTag="8030" dstDGI="01" dstTag="EF0601"/>
+      <AddKcv srcDGI="9030" dstDGI="8030" type="SM"/>  
+      <AddTag srcDGI="8100" srcTag="8100" dstDGI="01" dstTag="EF0201"/>     
+      <AddTag srcDGI="A001" dstDGI="03" dstTag="A001"/>
+      <AddTag srcDGI="8020" srcTag="8020" dstDGI="03" dstTag="EF15"/>
+      <AddKcv srcDGI="9020" dstDGI="8020" type="DES"/>
+      
+      <!--国际 PBOC AIP AFL-->
+      <AddTag srcDGI="9104" dstDGI="01" dstTag="82"/>
+      <AddFixedTag srcDGI="9104" tag="94" value="08010200100103011801020020010100"/>
+      <AssembleTlv DGI="9104"/>
+      
+      <!--国密 PBOC AIP AFL-->
+      <AddTag srcDGI="9114" dstDGI="01" dstTag="82"/>
+      <AddFixedTag srcDGI="9114" tag="94" value="08020300180202002001020020030501"/>
+      <AssembleTlv DGI="9114"/> 
+             
+      <!--国际 ECC AIP AFL-->
+      <AddTag srcDGI="9203" dstDGI="02" dstTag="82"/>
+      <AddFixedTag srcDGI="9203" tag="94" value="0801020010040601180102002001010028010100"/>
+      <AssembleTlv DGI="9203"/>  
+      
+      <!--国密 ECC AIP AFL-->
+      <AddTag srcDGI="9213" dstDGI="02" dstTag="82"/>
+      <AddFixedTag srcDGI="9213" tag="94" value="08020300180202002001020020090B0128010100"/>
+      <AssembleTlv DGI="9213"/>  
+            
+      <!--国际 QPBOC AIP AFL-->
+      <AddTag srcDGI="9207" dstDGI="03" dstTag="82"/>
+      <AddFixedTag srcDGI="9207" tag="94" value="180101001803050128010100"/>
+      <AddTag srcDGI="9207" dstDGI="03" dstTag="9F10"/>
+      <AssembleTlv DGI="9207"/> 
+            
+      <!--国密 QPBOC AIP AFL-->
+      <AddTag srcDGI="9217" dstDGI="03" dstTag="82"/>
+      <AddFixedTag srcDGI="9217" tag="94" value="200202002006080128010100"/>
+      <AddTag srcDGI="9217" srcTag="9F10" dstDGI="03" dstTag="9F1001"/>
+      <AssembleTlv DGI="9217"/> 
+      
+      <AddTag srcDGI="9200" dstDGI="03" dstTag="9F10"/>
+      <AssembleTlv DGI="9200"/>  
+      
+      <AddTag srcDGI="9201" srcTag="9F10" dstDGI="03" dstTag="9F1001"/>
+      <AssembleTlv DGI="9201"/> 
+      
+      <AddFixedTag srcDGI="9102" tag="9102" value="A534500E556E696F6E5061792044656269748701019F380C9F7A019F02065F2A02DF69015F2D027A68BF0C0A9F4D020B0ADF4D020C0A"/>
+      <AddFixedTag srcDGI="9103" tag="9103" value="A545500E556E696F6E5061792044656269748701019F381E9F66049F02069F03069F1A0295055F2A029A039C019F3704DF6001DF6901BF0C0EDF6101C29F4D020B0ADF4D020C0A"/>
+      
+      <AddFixedTag srcDGI="PSE" tag="0101" value="010121701F611D4F08A000000333010101500E556E696F6E506179204465626974870101"/>
+      <AddFixedTag srcDGI="PSE" tag="9102" value="91020AA5088801015F2D027A68"/>
+      
+      <AddFixedTag srcDGI="PPSE" tag="9102" value="910224A522BF0C1F611D4F08A000000333010101500E556E696F6E506179204465626974870101"/>
+      
+      <RemoveDGI DGI="01"/>
+      <RemoveDGI DGI="02"/>
+      <RemoveDGI DGI="03"/>
+</Rule>

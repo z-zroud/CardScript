@@ -11,7 +11,7 @@ readers = get_readers()
 if open_reader(readers[0]):
     send('00A40400 0E 325041592E5359532E4444463031')
     send('00A40400 07 A0000000031010')
-    sw = send('80 CA DF 61')
+    sw = send('80 CA DF 61',(0x6A81,0x9000,0x1111))
     print(sw.response)
     sw = send('80 CA BF 55')
     print(sw.response)
