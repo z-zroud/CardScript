@@ -54,6 +54,11 @@ class FileHandle:
             hex_str += data[2 - i : 2 - i + 2]
         return utils.hex_str_to_int(hex_str)
 
+    def read_int64(self,offset):
+        '''读取4字节，并将ASCII转化为整形'''
+        data = self.read_binary(offset,4)
+        return utils.hex_str_to_int(data)
+
     def read_int64_reverse(self,offset):
         '''读取4个字节，全部逆序转换为整形'''
         data = self.read_binary(offset,4)

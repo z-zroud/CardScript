@@ -37,8 +37,8 @@ def process_pse_and_ppse(fh,dgi_name,has_template):
         data = fh.read_binary(fh.current_offset,next_len)
     if dgi_name == 'Store_PSE_1':
         dgi.dgi = 'PSE'
-        value = dgi.assemble_tlv('0101',data)
-        dgi.add_tag_value('0101',value)
+        #value = dgi.assemble_tlv('0101',data)
+        dgi.add_tag_value('0101',data)
     elif dgi_name == 'Store_PSE_2':
         dgi.dgi = 'PSE'
         value = dgi.assemble_tlv('A5','880101' + data)
@@ -59,7 +59,7 @@ def process_rule(rule_file_name,cps):
     decrypt_nodes = rule_file.get_nodes(rule_file.root_element,'Decrypt')
     for node in decrypt_nodes:
         decrypt_attrs = rule_file.get_attributes(node)
-        rule.process_decrypt(decrypt_attrs['DGI'],decrypt_attrs['DGI'],decrypt_attrs['key'],decrypt_attrs['type'])
+        rule.process_decrypt(decrypt_attrs['DGI'],decrypt_attrs['key'],decrypt_attrs['type'])
     exchange_nodes = rule_file.get_nodes(rule_file.root_element,'Exchange')
     for node in exchange_nodes:
         exchange_attrs = rule_file.get_attributes(node)
@@ -84,6 +84,7 @@ def process_yinlian_dp(dp_file,rule_file):
         card_seq = fh.read_int64_reverse(fh.current_offset)
         card_data_total_len = fh.read_int_reverse(fh.current_offset)
         cps = Cps() #存储单个卡片数据
+        cps.dp_file_path = dp_file
         pse_and_ppse_dgi = ['Store_PSE_1','Store_PSE_2','Store_PPSE','DGIF001']
         for dgi_name in dgi_list:
             dgi = Dgi() #存储单个DGI数据
@@ -102,7 +103,7 @@ def process_yinlian_dp(dp_file,rule_file):
             dgi.dgi = dgi_seq
             next_len = get_next_len(fh)
             n_dgi_seq = utils.hex_str_to_int(dgi_seq)
-            print('dgi=' + dgi_seq)
+            #print('dgi=' + dgi_seq)
             if n_dgi_seq <= 0x0B00: #认为是记录
                 template70 = fh.read_binary(fh.current_offset,1)
                 if template70 != '70':

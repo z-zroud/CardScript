@@ -47,6 +47,14 @@ def bcd_to_str(bcd):
         result += asc
     return result
 
+# convert str to bcd str
+def str_to_bcd(s):
+    bcd = ''
+    for index in range(len(s)):
+        asc = ord(s[index])
+        bcd += int_to_hex_str(asc)
+    return bcd
+
 def is_hex_str(hex_str):
     str_list = '0123456789ABCDEF'
     for c in hex_str:
@@ -55,6 +63,7 @@ def is_hex_str(hex_str):
     return True
 
 if __name__ == '__main__':
+    print(str_to_bcd('000PRN'))
     print(bcd_to_str("30303038"))
     print(int_to_hex_str(4))
     print(int_to_hex_str(26))

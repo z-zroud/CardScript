@@ -73,10 +73,6 @@ def process_rule(rule_file_name,cps):
     for node in merge_tag_nodes:
         attrs = rule_file.get_attributes(node)
         rule.process_merge_tag(attrs['srcDGI'],attrs['srcTag'],attrs['dstDGI'],attrs['dstTag'])   
-    kcv_nodes = rule_file.get_nodes(rule_file.root_element,'AddKcv')
-    for node in kcv_nodes:
-        attrs = rule_file.get_attributes(node)
-        rule.process_add_kcv(attrs['srcDGI'],attrs['dstDGI'],attrs['type'])
     fixed_tag_nodes = rule_file.get_nodes(rule_file.root_element,'AddFixedTag')
     for node in fixed_tag_nodes:
         attrs = rule_file.get_attributes(node)
@@ -84,7 +80,11 @@ def process_rule(rule_file_name,cps):
     decrypt_nodes = rule_file.get_nodes(rule_file.root_element,'Decrypt')
     for node in decrypt_nodes:
         decrypt_attrs = rule_file.get_attributes(node)
-        rule.process_decrypt(decrypt_attrs['DGI'],decrypt_attrs['DGI'],decrypt_attrs['key'],decrypt_attrs['type'])
+        rule.process_decrypt(decrypt_attrs['DGI'],decrypt_attrs['key'],decrypt_attrs['type'])
+    kcv_nodes = rule_file.get_nodes(rule_file.root_element,'AddKcv')
+    for node in kcv_nodes:  #需放在解密之后执行
+        attrs = rule_file.get_attributes(node)
+        rule.process_add_kcv(attrs['srcDGI'],attrs['dstDGI'],attrs['type'])
     exchange_nodes = rule_file.get_nodes(rule_file.root_element,'Exchange')
     for node in exchange_nodes:
         exchange_attrs = rule_file.get_attributes(node)
@@ -111,6 +111,7 @@ def process_szsm_dp(dp_file,rule_file):
     cps_list = []
     while True:
         cps = Cps()
+        cps.dp_file_path = dp_file
         card_data = fh.read_line()
         if card_data == '': #数据处理完毕
             break

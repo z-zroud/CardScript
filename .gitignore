@@ -7,9 +7,10 @@
 *.ilk
 *.log
 
-#过滤文件夹Debug,Release,obj  
+#杩囨护鏂囦欢澶笵ebug,Release,obj  
 build/  
 dist/  
+椤圭洰/
 PersoLib.egg-info/
 perso_lib/__pycache__/
 ipch/

@@ -1,5 +1,6 @@
 import os
 import sys
+from perso_lib import utils
 from ctypes import *
 
 __all__ = ['ApduResponse','init','send','get_readers','open_reader','warm_reset']
@@ -28,8 +29,12 @@ def init():
         return True
     return False
 
+def send(cmd_header,data,resp_sw_list=(0x9000,)):
+    cmd = cmd_header + utils.get_strlen(data) + data
+    return send_raw(cmd,resp_sw_list)
+
 #send apdu command
-def send(cmd,resp_sw_list=(0x9000,)):
+def send_raw(cmd,resp_sw_list=(0x9000,)):
     apdu_response = ApduResponse()
     bytes_cmd = str.encode(cmd)
     resp_len = c_int(2048)
@@ -74,7 +79,7 @@ def warm_reset():
 if __name__ == '__main__':
     readers = get_readers()
     if open_reader(readers[1]):
-        resp = send("00A40400 08 A000000333010102")
+        resp = send_raw("00A40400 08 A000000333010102")
         print(resp.sw)
     else:
         print("shit")

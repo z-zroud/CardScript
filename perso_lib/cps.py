@@ -1,5 +1,6 @@
 from perso_lib.ini_parse import IniParser
 from perso_lib import utils
+import os
 
 class Dgi:
     def __init__(self):
@@ -28,7 +29,7 @@ class Dgi:
     def assemble_tlv(self,tag,data):
         '''拼接TLV格式，不考虑数据长度超过0xFF的情况'''
         data_len = len(data)
-        if data_len >= 0x80:
+        if data_len >= 0x80 * 2:
             return tag + '81' + utils.get_strlen(data) + data
         else:
             return tag + utils.get_strlen(data) + data
@@ -40,6 +41,8 @@ def _custom_sorted(dgi):
         return 0x9FFFFF
     elif dgi.dgi == 'PPSE':
         return 0xAFFFFF
+    elif dgi.dgi == 'A001': #扩展应用应放在8020应用秘钥之前
+        return 0x8019
     elif '_' in dgi.dgi:
         value = dgi.dgi.replace('_','0')
         number = utils.hex_str_to_int(value)
@@ -50,6 +53,7 @@ def _custom_sorted(dgi):
 class Cps:
     def __init__(self):
         self.dgi_list = []
+        self.dp_file_path = ''
 
     def add_dgi(self,dgi):
         '''添加DGI分组，若该DGI分组存在,则直接合并其中的tag'''
@@ -73,7 +77,7 @@ class Cps:
             if dgi == item.dgi:
                 return item
     
-    def save(self,file_name,sort=_custom_sorted):
+    def _save(self,file_name,sort=_custom_sorted):
         open(file_name,'w+')    #make sure file is existed.
         ini = IniParser(file_name)
         self.dgi_list.sort(key=_custom_sorted)
@@ -81,6 +85,15 @@ class Cps:
             ini.add_section(item.dgi)
             for key,value in item.tag_value_dict.items():
                 ini.add_option(item.dgi,key,value)
+
+    def save(self):
+        dp_dir = self.dp_file_path[:self.dp_file_path.rfind('.')]
+        print('dp_dir',dp_dir)
+        if os.path.exists(dp_dir) is False:
+            os.mkdir(dp_dir) 
+        file_name = self.get_account() + '.txt'
+        file_path = dp_dir + os.path.sep + file_name
+        self._save(file_path)
 
     def get_account(self,tag='5A'):
         ret = ''
@@ -116,4 +129,4 @@ if __name__ == '__main__':
     dgi.dgi = '0201'
     dgi.add_tag_value('9F1F','YYYY')
     cps.add_dgi(dgi)
-    cps.save('D:\\xxx.txt')
+    cps.save()

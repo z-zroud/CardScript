@@ -10,7 +10,7 @@ def _process_encrypted_data(dgi,data,key,config):
     xml = XmlParser(config)
     encrypted_nodes = xml.get_nodes(xml.root_element,'Encrypt')
     for encrypted_node in encrypted_nodes:
-        attr = xml.get_attribute(encrypted_node,'dgi')
+        attr = xml.get_attribute(encrypted_node,'DGI')
         if dgi == attr:
             padding80 = xml.get_attribute(encrypted_node,'padding80')
             if padding80 == 'true':
@@ -30,8 +30,8 @@ def _process_template_and_dgi(dgi,data):
             data = '7081' + utils.get_strlen(data) + data
         else:
             data = '70' + utils.get_strlen(data) + data
-    if dgi == '0201':
-        dgi += 'FF00'
+    # if dgi == '0201':
+    #     dgi += 'FF00'
     data = dgi + utils.get_strlen(data) + data
     return data
 
@@ -44,6 +44,7 @@ def _assemble_options(ini,section):
     return data
 
 def perso(cps_file,config,session_key):
+    '''个人化完整的数据，无需自己解析TLV及添加模板'''
     if len(cps_file) == 0 or len(config) == 0:
         return False
     ini = IniParser(cps_file)
@@ -77,7 +78,69 @@ def perso(cps_file,config,session_key):
             return False
     return True
 
+def perso_pse_mem(pse_dgi):
+    data_list = []
+    for key,value in pse_dgi.tag_value_dict.items():
+        data = _process_template_and_dgi(key,value)
+        data_list.append(data)
+    count = 0
+    data_count = len(data_list)
+    for data in data_list:
+        resp = ApduResponse()
+        count += 1
+        data_type = '00'
+        reset = True if count == 1 else False
+        if count == data_count:
+            data_type = '80'
+        resp = apdu.store_data(data,data_type,reset)
+        if resp.sw != 0x9000:
+            return False
+    return True
+
+def perso_ppse_mem(ppse_dgi):
+    return perso_pse_mem(ppse_dgi)
+
+def perso_cps_mem(dgi_list,config_file,session_key):
+    '''个人化缓存中的数据'''
+    count = 0
+    dgi_count = len(dgi_list)
+    for dgi in dgi_list:
+        data = ''
+        for _,value in dgi.tag_value_dict.items():
+            data += value
+        is_encrypted_data, data = _process_encrypted_data(dgi.dgi,data,session_key,config_file)
+        data = _process_template_and_dgi(dgi.dgi,data)
+        resp = ApduResponse()
+        count += 1
+        reset = True if count == 1 else False
+        data_type = '00'
+        if is_encrypted_data:
+            data_type = '60'
+        if count == dgi_count:
+            data_type = '80'
+        data_len = len(data)
+        max_len = 0xFF * 2
+        if data_len > max_len:
+            block_count = data_len // max_len + 1
+            for i in range(block_count):
+                if i != 0:
+                    reset = False
+                data_block = data[i * max_len : (i + 1) * max_len]
+                resp = apdu.store_data(data_block,data_type,reset)
+        else:
+            resp = apdu.store_data(data,data_type,reset)
+        if resp.sw != 0x9000:
+            return False
+    return True
+
+def psrso_pse(cps_file,config_file):
+    pass
+
+def perso_ppse(cps_file,config_file):
+    pass
+
 def perso_cps(cps_file,config,session_key):
+    '''个人化标准的CPS格式数据'''
     if len(cps_file) == 0 or len(config) == 0:
         return False
     ini = IniParser(cps_file)

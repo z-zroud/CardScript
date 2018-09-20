@@ -229,6 +229,7 @@ def process_goldpac_dp(dp_file,rule_file):
         sddf_elements = parse_sddf_element(sddf_tag,sddf_value)
         sddf_dgi_list.extend(sddf_elements)   
     cps = Cps()
+    cps.dp_file_path = dp_file
     for item in goldpac_dgi_list:
         print(item.goldpac_dgi + ":" + item.data)
     for sddf_tag in sddf_dgi_list:   #解析TagLink节点，并生成cps数据
@@ -250,7 +251,7 @@ def process_goldpac_dp(dp_file,rule_file):
         rsa_dgi_list = split_rsa(xml,goldpac_dgi_list,True)
         for rsa_dgi in rsa_dgi_list:
             cps.add_dgi(rsa_dgi)
-    cps.save('D:\\goldpac.txt')
+    return cps
         
 
 

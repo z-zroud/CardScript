@@ -9,16 +9,36 @@ class Store_Data_Type:
     encrypted = "60"
     end_data = "80"
 
+
+def delete_app(aid,resp_sw_list=(0x9000,)):
+    aid_len = utils.get_strlen(aid)
+    data = '4F' + aid_len + aid
+    data_len = utils.get_strlen(data)
+    cmd = '80E40000' + data_len + data
+    return pcsc.send_raw(cmd,resp_sw_list)
+
+def install_app(packet_aid,applet_aid,inst_aid,priviliage,install_param,token='00'):
+    cmd_header = '80E60C00'
+    packet_aid_len = utils.get_strlen(packet_aid)
+    applet_aid_len = utils.get_strlen(applet_aid)
+    inst_aid_len = utils.get_strlen(inst_aid)
+    priviliage_len = utils.get_strlen(priviliage)
+    install_param_len = utils.get_strlen(install_param)
+    data = packet_aid_len + packet_aid + applet_aid_len + applet_aid + inst_aid_len + inst_aid
+    data += priviliage_len + priviliage + install_param_len + install_param + token
+    cmd = cmd_header + utils.get_strlen(data) + data
+    return pcsc.send_raw(cmd) 
+
 # Select Command
 def select(instance_id):
     aid_len = utils.get_strlen(instance_id)
     cmd = '00A40400' + aid_len + instance_id
-    return pcsc.send(cmd) 
+    return pcsc.send_raw(cmd) 
 
 def select_file(file_id):
     file_id_len = utils.get_strlen(file_id)
     cmd = '00A40000' + file_id_len + file_id
-    return pcsc.send(cmd)
+    return pcsc.send_raw(cmd)
 
 store_count = 0
 def store_data(data,data_type,reset=False):
@@ -31,19 +51,14 @@ def store_data(data,data_type,reset=False):
     store_count += 1
     if data_type == "80":
         store_count = 0
-    return pcsc.send(cmd)
+    return pcsc.send_raw(cmd)
 
-def delete_app(aid):
-    aid_len = utils.get_strlen(aid)
-    data = '4F' + aid_len + aid
-    data_len = utils.get_strlen(data)
-    cmd = '80E40000' + data_len + data
-    return pcsc.send(cmd)
+
 
 def init_update(host_challenge, key_verson='00', key_id='00'):
     cmd_header = '8050' + key_verson + key_id
     cmd = cmd_header + utils.get_strlen(host_challenge) + host_challenge
-    return pcsc.send(cmd)
+    return pcsc.send_raw(cmd)
 
 def ext_auth(kmc,div_method,secure_level,host_challenge,init_update_data):
     cmd = ''
@@ -62,7 +77,9 @@ def ext_auth(kmc,div_method,secure_level,host_challenge,init_update_data):
     card_cryptogram_input = host_challenge + card_challenge
     card_mac = des.des3_full_mac(enc_session_key, card_cryptogram_input)
     if card_mac != card_cryptogram:
-        return '',(0x6300,'')
+        resp = pcsc.ApduResponse()
+        resp.sw = 0x6300
+        return '',resp
     host_cryptogram_input = card_challenge + host_challenge
     host_mac = des.des3_full_mac(enc_session_key,host_cryptogram_input)
     cmd += cmd_data_len + host_mac
@@ -71,6 +88,6 @@ def ext_auth(kmc,div_method,secure_level,host_challenge,init_update_data):
     else:	#scp == '02'
         mac = des.des3_mac(mac_session_key, cmd)
     cmd += mac
-    return dek_session_key,pcsc.send(cmd)
+    return dek_session_key,pcsc.send_raw(cmd)
 
 

@@ -40,16 +40,31 @@ class Rule:
                 break
         return self.cps
 
+    #处理DGI的映射
+    def process_dgi_map(self,src_dgi,dst_dgi):
+        for item in self.cps.dgi_list:
+            if item.dgi == src_dgi:
+                item.dgi = dst_dgi
+                value = item.get_value(src_dgi)
+                if value is not None:
+                    item.remove_tag(src_dgi)
+                    item.add_tag_value(dst_dgi,value)
+                return self.cps
+        return self.cps
+
     #解密数据
-    def process_decrypt(self,dgi,tag,key,key_type):
+    def process_decrypt(self,dgi,key,key_type,isDelete80=False):
         for item in self.cps.dgi_list:
             if item.dgi == dgi:
-                data = item.get_value(tag)
+                data = item.get_value(dgi)
                 if key_type == 'DES':
                     data = des.des3_ecb_decrypt(key,data)     
                 elif key_type == 'SM':
                     data = sm.sm4_ecb_decrypt(key,data)
-                item.modify_value(tag,data)
+                if isDelete80:
+                    index = data.rfind('80')
+                    data = data[0 : index]
+                item.modify_value(dgi,data)
                 return self.cps
         return self.cps
 
@@ -113,7 +128,13 @@ class Rule:
         else:
             for item in self.cps.dgi_list:
                 if item.dgi == dgi:
-                    item.add_tag_value(tag,value)
+                    if tag in item.tag_value_dict:
+                        old_value = item.get_value(tag)
+                        new_value = old_value[len(tag) + 2 :] + value
+                        new_value = tag + utils.get_strlen(new_value) + new_value
+                        item.modify_value(tag,new_value)
+                    else:
+                        item.add_tag_value(tag,value)
         return self.cps
 
     def process_assemble_tlv(self,dgi):
