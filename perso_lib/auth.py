@@ -9,7 +9,7 @@ def open_secure_channel(kmc,div_method=DIV_METHOD.NO_DIV,secure_level=SECURE_LEV
         sys.exit()
     dek_session_key,resp = apdu.ext_auth(kmc,div_method,secure_level,host_challenge,resp.response)
     if(resp.sw != 0x9000):
-        sys.exit()
+        sys.exit(1)
     return dek_session_key
 
 def modify_kmc(old_kmc,old_div_method,new_kmc,new_div_method):

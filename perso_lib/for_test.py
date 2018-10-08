@@ -1,4 +1,34 @@
-from perso_lib import utils
-from perso_lib.xml_parse import XmlParser
-from perso_lib.rule_file import RuleFile
+from perso_lib.pcsc import send,get_readers,open_reader
+from perso_lib import auth
+from perso_lib import cps_perso
+from perso_lib import apdu
+from perso_lib import szsm_dp
+import os
+import sys
 
+readers = get_readers()
+if open_reader(readers[0]):
+    send("00A40400","A000000003000000")
+    auth.open_secure_channel("404142434445464748494A4B4C4D4E4F")
+    apdu.delete_app('A0000000041010',(0x9000,0x6A88))
+    apdu.delete_app('315041592E5359532E4444463031',(0x9000,0x6A88))
+    apdu.delete_app('325041592E5359532E4444463031',(0x9000,0x6A88))
+
+    send("00A40400","A000000003000000")
+    auth.open_secure_channel("404142434445464748494A4B4C4D4E4F")
+    send("80E60C00","0CA0000000180F0000018330320BA0000000180F000001830307A0000000041010010003C9010000")
+    send("80E60C00","05315041592E0E315041592E5359532E44444630310E325041592E5359532E4444463031010003C9010000")
+    send("80E60C00","05315041592E0E315041592E5359532E44444630310E315041592E5359532E4444463031010003C9010000")
+    send("00A40400","315041592E5359532E4444463031")
+    auth.open_secure_channel("404142434445464748494A4B4C4D4E4F")
+    send("80E20000","010129702761254F07A0000000041010500A4D4153544552434152449F120A4D415354455243415244870101")
+    send("80E28001","910226A5248801015F2D02656E9F110101BF0C159F5D030101009F4D020B0A9F6E0700560000303000")
+    resp = send("00A40400","A0000000041010")
+    session_dek = auth.open_secure_channel("404142434445464748494A4B4C4D4E4F")
+
+    abs_dir = "D:/CardScript/"
+    dp_file = abs_dir + 'test_data/MC.txt'
+    dp_install_file = abs_dir + 'test_data/install.xml'
+    cps_perso.perso(dp_file,dp_install_file,session_dek)
+    # send("00A40400","315041592E5359532E4444463031")
+    resp = send("00A40400","A0000000041010")

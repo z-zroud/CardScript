@@ -46,7 +46,7 @@ def send_raw(cmd,resp_sw_list=(0x9000,)):
     for sw in resp_sw_list:
         if sw == apdu_response.sw:
             return apdu_response
-    sys.exit()
+    sys.exit(1)
 
 #Get all smard card readers
 def get_readers():

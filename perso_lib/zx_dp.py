@@ -27,28 +27,13 @@ def process_pse_and_ppse(dgi_name,dgi_data,dgi_node):
         dgi.add_tag_value(dgi_name,dgi_data)
     return dgi
 
-def process_rule(rule_file_name,cps):
-    rule = Rule(cps)
-    rule_file = RuleFile(rule_file_name)
-    decrypt_nodes = rule_file.get_nodes(rule_file.root_element,'Decrypt')
-    for node in decrypt_nodes:
-        attrs = rule_file.get_attributes(node)
-        delete80 = False
-        if 'delete80' in attrs:
-            delete80 = True if attrs['delete80'] == 'true' else False
-        rule.process_decrypt(attrs['DGI'],attrs['key'],attrs['type'],delete80)
-    fixed_tag_nodes = rule_file.get_nodes(rule_file.root_element,'AddFixedTag')
-    for node in fixed_tag_nodes:
-        attrs = rule_file.get_attributes(node)
-        rule.process_add_fixed_tag(attrs['srcDGI'],attrs['tag'],attrs['value'])
-    remove_dgi_nodes = rule_file.get_nodes(rule_file.root_element,'RemoveDGI')
-    for node in remove_dgi_nodes:
-        attrs = rule_file.get_attributes(node)
-        rule.process_remove_dgi(attrs['DGI'])
-    remove_tag_nodes = rule_file.get_nodes(rule_file.root_element,'RemoveTag')
-    for node in remove_tag_nodes:
-        attrs = rule_file.get_attributes(node)
-        rule.process_remove_tag(attrs['DGI'],attrs['tag'])
+def process_rule(rule_file_name,cps):   
+    rule_handle = RuleFile(rule_file_name)
+    rule = Rule(cps,rule_handle)
+    rule.wrap_process_decrypt()
+    rule.wrap_process_add_fixed_tag()
+    rule.wrap_process_remove_dgi()
+    rule.wrap_process_remove_tag()
     return rule.cps
 
 def process_zx_dp(dp_file,rule_file):
@@ -88,7 +73,7 @@ def process_zx_dp(dp_file,rule_file):
             elif item[0:4] == 'PPSE':
                 dgi = process_pse_and_ppse(dgi_name,dgi_data,'PPSE')
             else:
-                if n_dgi_seq <= 0x0B00 or (data_parse.is_tlv(dgi_data)):
+                if n_dgi_seq <= 0x0B00 or (data_parse.is_rsa(dgi_name) is False and data_parse.is_tlv(dgi_data)):
                     tlvs = data_parse.parse_tlv(dgi_data)
                     if len(tlvs) > 0 and tlvs[0].is_template is True:
                         value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)

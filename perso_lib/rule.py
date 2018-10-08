@@ -6,8 +6,9 @@ from perso_lib import sm
 from perso_lib import utils
 
 class Rule:
-    def __init__(self,cps):
+    def __init__(self,cps, rule_handle):
         self.cps = cps
+        self.rule_handle = rule_handle
 
     def _get_tag_value(self,dgi,tag):
         value = ''
@@ -61,6 +62,10 @@ class Rule:
                     data = des.des3_ecb_decrypt(key,data)     
                 elif key_type == 'SM':
                     data = sm.sm4_ecb_decrypt(key,data)
+                elif key_type == 'BASE64':
+                    data = utils.base64_to_bcd(data)
+                elif key_type == 'BCD':
+                    data = utils.str_to_bcd(data)
                 if isDelete80:
                     index = data.rfind('80')
                     data = data[0 : index]
@@ -163,4 +168,81 @@ class Rule:
                 return self.cps
         return self.cps
 
+    # 以下接口为对上面函数的封装，若需要处理细节，请使用上面接口，否则
+    # 请使用下面的接口函数
+    def wrap_process_add_tag(self):
+        add_tag_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'AddTag')
+        for node in add_tag_nodes:
+            attrs = self.rule_handle.get_attributes(node)
+            if 'srcTag' not in attrs:
+                attrs['srcTag'] = attrs['dstTag']
+            self.process_add_tag(attrs['srcDGI'],attrs['srcTag'],attrs['dstDGI'],attrs['dstTag'])
+        return self.cps
+        
+    def wrap_process_merge_tag(self):
+        merge_tag_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'MergeTag')
+        for node in merge_tag_nodes:
+            attrs = self.rule_handle.get_attributes(node)
+            self.process_merge_tag(attrs['srcDGI'],attrs['srcTag'],attrs['dstDGI'],attrs['dstTag']) 
+        return self.cps
+
+    def wrap_process_add_fixed_tag(self):
+        fixed_tag_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'AddFixedTag')
+        for node in fixed_tag_nodes:
+            attrs = self.rule_handle.get_attributes(node)
+            self.process_add_fixed_tag(attrs['srcDGI'],attrs['tag'],attrs['value'])
+        return self.cps
+
+    def wrap_process_decrypt(self):
+        decrypt_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'Decrypt')
+        for node in decrypt_nodes:
+            attrs = self.rule_handle.get_attributes(node)
+            delete80 = False
+            if 'delete80' in attrs:
+                delete80 = True if attrs['delete80'] == 'true' else False
+            if 'key' not in attrs:
+                attrs['key'] = ''
+            self.process_decrypt(attrs['DGI'],attrs['key'],attrs['type'],delete80)
+        return self.cps
+
+    def wrap_process_add_kcv(self):
+        kcv_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'AddKcv')
+        for node in kcv_nodes:  #需放在解密之后执行
+            attrs = self.rule_handle.get_attributes(node)
+            self.process_add_kcv(attrs['srcDGI'],attrs['dstDGI'],attrs['type'])
+        return self.cps
+
+    def wrap_process_exchange(self):
+        exchange_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'Exchange')
+        for node in exchange_nodes:
+            exchange_attrs = self.rule_handle.get_attributes(node)
+            self.process_exchange(exchange_attrs['srcDGI'],exchange_attrs['exchangedDGI'])
+        return self.cps
+
+    def wrap_process_assemble_tlv(self):
+        assmble_tlv_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'AssembleTlv')
+        for node in assmble_tlv_nodes:
+            attrs = self.rule_handle.get_attributes(node)
+            self.process_assemble_tlv(attrs['DGI'])
+        return self.cps
+    
+    def wrap_process_remove_dgi(self):
+        remove_dgi_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'RemoveDGI')
+        for node in remove_dgi_nodes:
+            attrs = self.rule_handle.get_attributes(node)
+            self.process_remove_dgi(attrs['DGI'])
+        return self.cps
+
+    def wrap_process_remove_tag(self):
+        remove_tag_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'RemoveTag')
+        for node in remove_tag_nodes:
+            attrs = self.rule_handle.get_attributes(node)
+            self.process_remove_tag(attrs['DGI'],attrs['tag'])
+        return self.cps
+
+    def wrap_process_dgi_map(self):
+        map_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'Map')
+        for node in map_nodes:  #需放在解密之前执行
+            attrs = self.rule_handle.get_attributes(node)
+            self.process_dgi_map(attrs['srcDGI'],attrs['dstDGI'])
     

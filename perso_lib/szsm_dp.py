@@ -60,47 +60,18 @@ def process_EF02(cps):
             cps.add_dgi(dgi)
     return cps
 
-def process_rule(rule_file_name,cps):
-    rule = Rule(cps)
-    rule_file = RuleFile(rule_file_name)
-    add_tag_nodes = rule_file.get_nodes(rule_file.root_element,'AddTag')
-    for node in add_tag_nodes:
-        attrs = rule_file.get_attributes(node)
-        if 'srcTag' not in attrs:
-            attrs['srcTag'] = attrs['dstTag']
-        rule.process_add_tag(attrs['srcDGI'],attrs['srcTag'],attrs['dstDGI'],attrs['dstTag'])
-    merge_tag_nodes = rule_file.get_nodes(rule_file.root_element,'MergeTag')
-    for node in merge_tag_nodes:
-        attrs = rule_file.get_attributes(node)
-        rule.process_merge_tag(attrs['srcDGI'],attrs['srcTag'],attrs['dstDGI'],attrs['dstTag'])   
-    fixed_tag_nodes = rule_file.get_nodes(rule_file.root_element,'AddFixedTag')
-    for node in fixed_tag_nodes:
-        attrs = rule_file.get_attributes(node)
-        rule.process_add_fixed_tag(attrs['srcDGI'],attrs['tag'],attrs['value'])
-    decrypt_nodes = rule_file.get_nodes(rule_file.root_element,'Decrypt')
-    for node in decrypt_nodes:
-        decrypt_attrs = rule_file.get_attributes(node)
-        rule.process_decrypt(decrypt_attrs['DGI'],decrypt_attrs['key'],decrypt_attrs['type'])
-    kcv_nodes = rule_file.get_nodes(rule_file.root_element,'AddKcv')
-    for node in kcv_nodes:  #需放在解密之后执行
-        attrs = rule_file.get_attributes(node)
-        rule.process_add_kcv(attrs['srcDGI'],attrs['dstDGI'],attrs['type'])
-    exchange_nodes = rule_file.get_nodes(rule_file.root_element,'Exchange')
-    for node in exchange_nodes:
-        exchange_attrs = rule_file.get_attributes(node)
-        rule.process_exchange(exchange_attrs['srcDGI'],exchange_attrs['exchangedDGI'])
-    assmble_tlv_nodes = rule_file.get_nodes(rule_file.root_element,'AssembleTlv')
-    for node in assmble_tlv_nodes:
-        attrs = rule_file.get_attributes(node)
-        rule.process_assemble_tlv(attrs['DGI'])
-    remove_dgi_nodes = rule_file.get_nodes(rule_file.root_element,'RemoveDGI')
-    for node in remove_dgi_nodes:
-        attrs = rule_file.get_attributes(node)
-        rule.process_remove_dgi(attrs['DGI'])
-    remove_tag_nodes = rule_file.get_nodes(rule_file.root_element,'RemoveTag')
-    for node in remove_tag_nodes:
-        attrs = rule_file.get_attributes(node)
-        rule.process_remove_tag(attrs['DGI'],attrs['tag'])
+def process_rule(rule_file_name,cps):    
+    rule_handle = RuleFile(rule_file_name)
+    rule = Rule(cps,rule_handle)
+    rule.wrap_process_add_tag()
+    rule.wrap_process_merge_tag()
+    rule.wrap_process_add_fixed_tag()
+    rule.wrap_process_decrypt()
+    rule.wrap_process_add_kcv()
+    rule.wrap_process_exchange()
+    rule.wrap_process_assemble_tlv()
+    rule.wrap_process_remove_dgi()
+    rule.wrap_process_remove_tag()
     return rule.cps
 
 def process_szsm_dp(dp_file,rule_file):
@@ -129,7 +100,7 @@ def process_szsm_dp(dp_file,rule_file):
         cps.add_dgi(dgi_q)
         cps = process_EF02(cps)
         if rule_file is not None:
-            process_rule(rule_file,cps)
+            cps = process_rule(rule_file,cps)
         cps_list.append(cps)
     return cps_list
 

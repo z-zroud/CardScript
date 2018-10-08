@@ -16,7 +16,10 @@ class RuleFile(XmlParser):
         return None,None
 
     def get_tag_link_attribute(self,attr,value):
-        '''<TagLink EMVTag="9206" SDDFTag="1010N103" EMVDataName="DGI9206" ValueFormat="TLV"/>'''
+        '''
+        根据属性=值匹配相应的TagLink节点
+        <TagLink EMVTag="9206" SDDFTag="1010N103" EMVDataName="DGI9206" ValueFormat="TLV"/>
+        '''
         nodes = self.get_nodes(self.root_element,'TagLink')
         for node in nodes:
             attr_value = self.get_attribute(node,attr)

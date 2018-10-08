@@ -5,6 +5,7 @@ from perso_lib.pcsc import ApduResponse
 from perso_lib import apdu
 from perso_lib import des
 from perso_lib import utils
+from perso_lib.cps import Cps,Dgi
 
 def _process_encrypted_data(dgi,data,key,config):
     xml = XmlParser(config)
@@ -43,8 +44,10 @@ def _assemble_options(ini,section):
         data += value
     return data
 
-def perso(cps_file,config,session_key):
-    '''个人化完整的数据，无需自己解析TLV及添加模板'''
+def perso_no_cps_format(cps_file,config,session_key):
+    '''
+    个人化完整的数据，无需自己解析TLV及添加模板
+    '''
     if len(cps_file) == 0 or len(config) == 0:
         return False
     ini = IniParser(cps_file)
@@ -52,6 +55,8 @@ def perso(cps_file,config,session_key):
     section_count = len(sections)
     count = 0
     for section in sections:
+        if section in ('PSE','PPSE'):
+            continue
         resp = ApduResponse()
         count += 1
         data_type = '00'
@@ -133,11 +138,27 @@ def perso_cps_mem(dgi_list,config_file,session_key):
             return False
     return True
 
-def psrso_pse(cps_file,config_file):
-    pass
+def get_cps(cps_file):
+    cps = Cps()
+    ini = IniParser(cps_file)
+    sections = ini.get_sections()
+    for section in sections:
+        dgi = Dgi()
+        dgi.dgi = section
+        options = ini.get_options(section)
+        for option in options:
+            value = ini.get_value(section,option)
+            dgi.add_tag_value(option,value)
+        cps.add_dgi(dgi)
+    return cps
 
-def perso_ppse(cps_file,config_file):
-    pass
+def perso_pse(cps_file):
+    cps = get_cps(cps_file)
+    perso_pse_mem(cps.get_dgi('PSE'))
+
+def perso_ppse(cps_file):
+    cps = get_cps(cps_file)
+    perso_ppse_mem(cps.get_dgi('PPSE'))
 
 def perso_cps(cps_file,config,session_key):
     '''个人化标准的CPS格式数据'''
@@ -148,6 +169,8 @@ def perso_cps(cps_file,config,session_key):
     section_count = len(sections)
     count = 0
     for section in sections:
+        if section in ('PSE','PPSE'):
+            continue
         resp = ApduResponse()
         count += 1
         data_type = '00'

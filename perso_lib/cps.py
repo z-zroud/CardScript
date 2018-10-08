@@ -87,6 +87,9 @@ class Cps:
                 ini.add_option(item.dgi,key,value)
 
     def save(self):
+        # index = self.dp_file_path.rfind('.')
+        # if index == -1:
+        #     index = len(self.dp_file_path)
         dp_dir = self.dp_file_path[:self.dp_file_path.rfind('.')]
         print('dp_dir',dp_dir)
         if os.path.exists(dp_dir) is False:
@@ -112,8 +115,26 @@ class Cps:
             dgis.append(item.dgi)
         return dgis
 
+    def get_first_app_dgi_list(self):
+        """
+        获取双应用中个人化第一个应用的DGI分组列表
+        """
+        dgis = []
+        for item in self.dgi_list:
+            if '_2' not in item.dgi and 'PSE' not in item.dgi and 'PPSE' not in item.dgi:
+                dgis.append(item)
+        return dgis
 
-
+    def get_second_app_dgi_list(self):
+        """
+        获取双应用中个人化第二个应用的DGI分组列表
+        """
+        dgis = []
+        for item in self.dgi_list:
+            if '_2' in item.dgi:
+                item.dgi = item.dgi[0:item.dgi.find('_2')]
+                dgis.append(item)
+        return dgis
 
 
 if __name__ == '__main__':

@@ -1,5 +1,8 @@
 <PersonlizeConfiguration>      
       <Encrypt dgi="8000" padding80="false"/>
+      <Encrypt dgi="8001" padding80="false"/>
+      <Encrypt dgi="A006" padding80="false"/>
+      <Encrypt dgi="A016" padding80="false"/>
       <Encrypt dgi="8201" padding80="true"/>
       <Encrypt dgi="8202" padding80="true"/>
       <Encrypt dgi="8203" padding80="true"/>

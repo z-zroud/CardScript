@@ -133,6 +133,12 @@ def is_tlv(buffer):
     ret = _data_parse_lib.IsTLV(bytes_buffer,buffer_len)
     return False if ret == 0 else True
 
+def is_rsa(dgi):
+    dgi_list = ['8201','8202','8203','8204','8205']
+    if dgi in dgi_list:
+        return True
+    return False
+
 def parse_tlv(buffer):
     tlvs = []
     bytes_buffer = str.encode(buffer)
