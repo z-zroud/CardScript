@@ -76,6 +76,10 @@ class Cps:
         for item in self.dgi_list:
             if dgi == item.dgi:
                 return item
+
+    def get_tag_value(self,dgi,tag):
+        dgi_item = self.get_dgi(dgi)
+        return dgi_item.get_value(tag)
     
     def _save(self,file_name,sort=_custom_sorted):
         open(file_name,'w+')    #make sure file is existed.

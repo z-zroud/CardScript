@@ -5,6 +5,8 @@ from perso_lib import data_parse
 from perso_lib import utils
 from perso_lib.rule import Rule
 
+do_not_parse_tlv_list = ['8201','8202','8203','8204','8205','8000','8202','8002','8302']
+
 def get_dgi_list(fh):
     dgi_list = []
     dgi_count = fh.read_int64_reverse(fh.current_offset)
@@ -56,8 +58,8 @@ def process_pse_and_ppse(fh,dgi_name,has_template):
 def process_rule(rule_file_name,cps):    
     rule_handle = RuleFile(rule_file_name)
     rule = Rule(cps,rule_handle)
-    rule.wrap_process_dgi_map()
     rule.wrap_process_decrypt()
+    rule.wrap_process_dgi_map()
     rule.wrap_process_exchange()
     rule.wrap_process_remove_dgi()
     rule.wrap_process_remove_tag()
@@ -99,7 +101,7 @@ def process_yinlian_dp(dp_file,rule_file):
                     return
                 next_len = get_next_len(fh)
             dgi_data = fh.read_binary(fh.current_offset,next_len)
-            if n_dgi_seq <= 0x0B00 or (data_parse.is_rsa(dgi_seq) is False and data_parse.is_tlv(dgi_data)):
+            if n_dgi_seq <= 0x0B00 or (dgi_seq not in do_not_parse_tlv_list and data_parse.is_tlv(dgi_data)):
                 tlvs = data_parse.parse_tlv(dgi_data)
                 if len(tlvs) > 0 and tlvs[0].is_template is True:
                     value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)

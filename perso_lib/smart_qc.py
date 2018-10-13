@@ -2,8 +2,9 @@ from perso_lib.xml_parse import XmlParser,XmlMode
 from perso_lib import data_parse
 from perso_lib import utils
 
-no_contain_list = ['9F46','93','90','92','9F48','9F36']
+no_contain_list = ['9F46','93','90','92','9F48','9F36','9F6C','8F','5F24','5F25']
 warn_list = ['57','9F1F','5F20','5A']
+no_must_contain_list = ['57','5F20','9F6C','5F34']
 
 tag_desc = {
     '4F':'Application Identifier (AID)',
@@ -170,19 +171,26 @@ class SmartQC_UICS:
     def _get_dgi_tags(self,dgi):
         tlv_list = []
         dgi_tags = self.cps.get_dgi(dgi)
+        if dgi_tags is None:
+            return tlv_list
         for _,value in dgi_tags.tag_value_dict.items():
-            tag = data_parse.parse_tlv(value)
-            if tag[0].tag not in no_contain_list:
-                tlv_list.append(tag[0])
+            tags = data_parse.parse_tlv(value)
+            for tag in tags:
+                if tag.tag not in no_contain_list and tag.is_template is False:
+                    tlv_list.append(tag)
         return tlv_list
 
-    def create_contact_case(self,case_id,name,algorithm,dgi_of_afl):       
-        case_node = self.smart_qc.create_case_node(case_id,name)
+    def create_contact_case(self,case_id,name,dll,algorithm,dgi_of_afl):       
+        case_node = self.smart_qc.create_case_node(case_id,name,dll)
         # <DeviceList>
         device_list_node = self.smart_qc.create_node(case_node,'DeviceList')
         self.smart_qc.create_device_node(device_list_node)
         # <Specification>
-        self.smart_qc.create_text_node(case_node,'Specification','..\\Config\\UICSSpec.xml')
+        specification_path = '..\\Config\\UICSSpec.xml'
+        if dll == 'PBOCCheck.dll' or dll == 'PBOCCheck_SM.dll':
+            specification_path = '..\\Config\\PBOCSpec.xml'
+
+        self.smart_qc.create_text_node(case_node,'Specification',specification_path)
         # <SpecialInputData>
         special_input_data_node = self.smart_qc.create_node(case_node,'SpecialInputData')
         
@@ -193,6 +201,8 @@ class SmartQC_UICS:
         pse_tags = self._get_pse_dgi_list()
         inter_tags = self._get_dgi_tags('0D01')
         inter_tags.extend(self._get_dgi_tags('0E01'))
+        inter_tags.extend(self._get_dgi_tags('3000'))
+        inter_tags.extend(self._get_dgi_tags('3001'))
         dgi_list = self._get_dgi_list(dgi_of_afl)
         record_tags = []
         for dgi in dgi_list:
@@ -203,28 +213,46 @@ class SmartQC_UICS:
             err_level = None
             if tag.tag in warn_list:
                 err_level = 'warning'
+            if tag.tag == '9F5D' and tag.value == '000000000001':   #9F5D需要特殊处理
+                tag.value = '000000000000'
             self.smart_qc.create_tag_node(compare_data_node,tag.tag,tag.value,desc,'BCD',err_level)
         inter_tag_list = ''
         for inter_tag in inter_tags:
-            inter_tag_list += inter_tag.tag + ','
+            if inter_tag.tag not in no_must_contain_list:
+                inter_tag_list += inter_tag.tag + ','
         inter_tag_list = inter_tag_list[0:-1]
         self.smart_qc.create_text_node(case_node,'MustContain',inter_tag_list)
         # <ShowCardFace>
         self.smart_qc.create_node(case_node,'ShowCardFace')
 
     def create_uics_sm_case(self,case_id,dgi_of_afl):
-        self.create_contact_case(case_id,'UICS国密接触检测','01',dgi_of_afl)
+        self.create_contact_case(case_id,'UICS国密接触检测','UICSCheck_SM.dll','01',dgi_of_afl)
 
     def create_uics_des_case(self,case_id):
-        self.create_contact_case(case_id,'UICS接触检测','00','9104')
+        self.create_contact_case(case_id,'UICS接触检测','UICSCheck.dll','00','9104')
 
-    def create_contactless_case(self,case_id,name):
-        case_node = self.smart_qc.create_case_node(case_id,name,'UICSCheck_CL.dll')
+    def create_pboc_des_case(self,case_id):
+        self.create_contact_case(case_id,'PBOC接触检测','PBOCCheck.dll','00','9104')
+
+    def create_pboc_sm_case(self,case_id,dgi_of_afl):
+        self.create_contact_case(case_id,'PBOC国密接触检测','PBOCCheck_SM.dll','01',dgi_of_afl)
+
+    def create_pboc_contactless_case(self,case_id):
+        self.create_contactless_case(case_id,'PBOC非接检测','PBOCCheck_CL.dll')
+    
+    def create_uics_contactless_case(self,case_id):
+        self.create_contactless_case(case_id,'UICS非接检测','UICSCheck_CL.dll')
+
+    def create_contactless_case(self,case_id,name,dll):
+        case_node = self.smart_qc.create_case_node(case_id,name,dll)
         # <DeviceList>
         device_list_node = self.smart_qc.create_node(case_node,'DeviceList')
         self.smart_qc.create_device_node(device_list_node,'PC Twin2')
         # <Specification>
-        self.smart_qc.create_text_node(case_node,'Specification','..\\Config\\UICSSpec.xml')
+        specification_path = '..\\Config\\UICSSpec.xml'
+        if dll == 'PBOCCheck.dll' or dll == 'PBOCCheck_SM.dll':
+            specification_path = '..\\Config\\PBOCSpec.xml'
+        self.smart_qc.create_text_node(case_node,'Specification',specification_path)
         # <SpecialInputData>
         special_input_data_node = self.smart_qc.create_node(case_node,'SpecialInputData')
         
@@ -250,6 +278,7 @@ class SmartQC_UICS:
         self.smart_qc.create_text_node(case_node,'Specification','..\\Config\\TrackSpec.xml')
 
     def create_cross_validation(self,case1_id,case2_id):
+        self.smart_qc.create_node(self.smart_qc.case_list_node,'IgnoreCheckTag57Len')
         cross_node = self.smart_qc.create_node(self.smart_qc.project_node,'CrossValidation')
         attrs = dict()
         attrs['1'] = ('algo','MatchIC_MS')

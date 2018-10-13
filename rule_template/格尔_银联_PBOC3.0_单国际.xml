@@ -1,0 +1,228 @@
+<Rule>
+	<Decrypt tag="90" type="BASE64"/>
+	<Decrypt tag="92" type="BASE64" />
+	<Decrypt tag="93" type="BASE64"/>
+	<Decrypt tag="9F48" type="BASE64"/>
+	<Decrypt tag="9F46" type="BASE64"/>
+	<Decrypt tag="EF02" type="BASE64"/>
+	<Decrypt tag="EF11" type="BASE64"/>
+	<Decrypt tag="EF12" type="BASE64"/>
+	<Decrypt tag="EF13" type="BASE64"/>
+	<Decrypt tag="EF14" type="BASE64"/>
+	<Decrypt tag="EF15" type="BASE64"/>
+	<Decrypt tag="EF16" type="BASE64"/>
+	<Decrypt tag="57" type="DES" key="0123456789ABCDEF0123456789ABCDEF" delete80="true"/>
+	<Decrypt tag="9F1F" type="DES" key="0123456789ABCDEF0123456789ABCDEF" delete80="true"/>
+	<Decrypt tag="9F61" type="DES" key="0123456789ABCDEF0123456789ABCDEF" delete80="true"/>
+	<Decrypt tag="EF04" type="DES" key="0123456789ABCDEF0123456789ABCDEF" />
+	<Decrypt tag="EF06" type="DES" key="0123456789ABCDEF0123456789ABCDEF" />
+	<Decrypt tag="EF08" type="DES" key="0123456789ABCDEF0123456789ABCDEF" />
+	<Decrypt tag="EF12" type="DES" key="0123456789ABCDEF0123456789ABCDEF" />
+	<Decrypt tag="EF13" type="DES" key="0123456789ABCDEF0123456789ABCDEF" />
+	<Decrypt tag="EF14" type="DES" key="0123456789ABCDEF0123456789ABCDEF" />
+	<Decrypt tag="EF15" type="DES" key="0123456789ABCDEF0123456789ABCDEF" />
+	<Decrypt tag="EF16" type="DES" key="0123456789ABCDEF0123456789ABCDEF"/>       
+	<Decrypt tag="5F2D" type="BCD"/>
+	<Decrypt tag="50" type="BCD"/>
+	<Decrypt tag="5F20" type="BCD"/>
+      
+	<!--PBOC ECC-->
+	<AddTag srcDGI="0101" dstDGI="01" dstTag="57"/>
+	<AddTag srcDGI="0101" dstDGI="01" dstTag="9F1F"/>
+	<AddTag srcDGI="0101" dstDGI="01" dstTag="8F"/>
+	<AddTag srcDGI="0101" dstDGI="01" dstTag="92"/>
+	<AddTag srcDGI="0101" dstDGI="01" dstTag="9F32"/>
+	<AddTagToValue DGI="0101"/>
+      
+	<!--PBOC ECC-->
+	<AddTag srcDGI="0102" dstDGI="01" dstTag="9F61"/>
+	<AddTag srcDGI="0102" dstDGI="01" dstTag="9F62"/>
+	<AddTag srcDGI="0102" dstDGI="01" dstTag="5F20"/> 
+	<AddTagToValue DGI="0102"/>
+           
+	<!--PBOC signature data-->
+	<AddTag srcDGI="0201" dstDGI="01" dstTag="5F24"/>  
+	<AddTag srcDGI="0201" dstDGI="01" dstTag="5A"/>
+	<AddTag srcDGI="0201" dstDGI="01" dstTag="5F34"/>
+	<AddTag srcDGI="0201" dstDGI="01" dstTag="9F07"/>  
+	<AddTag srcDGI="0201" dstDGI="01" dstTag="8E"/>  
+	<AddTag srcDGI="0201" dstDGI="01" dstTag="9F0D"/>  
+	<AddTag srcDGI="0201" dstDGI="01" dstTag="9F0E"/>  
+	<AddTag srcDGI="0201" dstDGI="01" dstTag="9F0F"/>  
+	<AddTag srcDGI="0201" dstDGI="01" dstTag="5F28"/>    
+	<AddTagToValue DGI="0201"/>
+      
+	<!--PBOC ICC certification-->
+	<AddTag srcDGI="0202" dstDGI="01" dstTag="9F46"/>
+	<AddTag srcDGI="0202" dstDGI="01" dstTag="9F47"/>
+	<AddTag srcDGI="0202" dstDGI="01" dstTag="9F48"/>
+	<AddTagToValue DGI="0202"/>
+      
+	<!--PBOC static app data-->
+	<AddTag srcDGI="0203" dstDGI="01" dstTag="93"/>
+	<AddTag srcDGI="0203" dstDGI="01" dstTag="5F25"/>
+	<AddTag srcDGI="0203" dstDGI="01" dstTag="9F4A"/>
+	<AddTag srcDGI="0203" dstDGI="01" dstTag="9F63"/>
+	<AddTagToValue DGI="0203"/>      
+	  
+	<!--ECC signature data-->
+	<AddTag srcDGI="0204" dstDGI="01" dstTag="5F24"/>
+	<AddTag srcDGI="0204" dstDGI="01" dstTag="5A"/>
+	<AddTag srcDGI="0204" dstDGI="01" dstTag="5F34"/>
+	<AddTag srcDGI="0204" dstDGI="01" dstTag="9F07"/>
+	<AddTag srcDGI="0204" dstDGI="01" dstTag="8E"/>
+	<AddTag srcDGI="0204" dstDGI="01" dstTag="9F0D"/>
+	<AddTag srcDGI="0204" dstDGI="01" dstTag="9F0E"/>     
+	<AddTag srcDGI="0204" dstDGI="01" dstTag="9F0F"/>
+	<AddTag srcDGI="0204" dstDGI="01" dstTag="5F28"/>
+	<AddTagToValue DGI="0204"/>      
+	
+	<!--ECC ICC certification-->
+	<AddTag srcDGI="0205" dstDGI="01" dstTag="9F46"/>
+	<AddTag srcDGI="0205" dstDGI="01" dstTag="9F47"/>
+	<AddTag srcDGI="0205" dstDGI="01" dstTag="9F48"/>
+	<AddTagToValue DGI="0205"/>  
+      
+	<!--ECC static app data-->
+	<AddTag srcDGI="0206" dstDGI="01" dstTag="93"/>
+	<AddTag srcDGI="0206" dstDGI="01" dstTag="5F25"/>
+	<AddTag srcDGI="0206" dstDGI="01" dstTag="9F4A"/>
+	<AddTag srcDGI="0206" dstDGI="01" dstTag="9F63"/>
+	<AddTagToValue DGI="0206"/>  
+	
+	<!--Issuer cert-->
+	<AddTag srcDGI="0301" dstDGI="01" dstTag="90"/>
+	<AddTagToValue DGI="0301"/>
+           
+	<!--PBOC ECC-->
+	<AddTag srcDGI="0302" dstDGI="01" dstTag="5F30"/>
+	<AddTag srcDGI="0302" dstDGI="01" dstTag="8C"/>
+	<AddTag srcDGI="0302" dstDGI="01" dstTag="8D"/>
+	<AddTag srcDGI="0302" dstDGI="01" dstTag="9F08"/>
+	<AddTag srcDGI="0302" dstDGI="01" dstTag="9F49"/>
+	<AddTagToValue DGI="0302"/>
+	
+	<!--qPBOC signature data-->
+	<AddTag srcDGI="0303" dstDGI="01" dstTag="5F24"/>
+	<AddTag srcDGI="0303" dstDGI="01" dstTag="5A"/>
+	<AddTag srcDGI="0303" dstDGI="01" dstTag="5F34"/>
+	<AddTag srcDGI="0303" dstDGI="01" dstTag="9F07"/>
+	<AddTag srcDGI="0303" dstDGI="01" dstTag="8E"/>
+	<AddTag srcDGI="0303" dstDGI="01" dstTag="9F0D"/>
+	<AddTag srcDGI="0303" dstDGI="01" dstTag="9F0E"/>     
+	<AddTag srcDGI="0303" dstDGI="01" dstTag="9F0F"/>
+	<AddTag srcDGI="0303" dstDGI="01" dstTag="5F28"/>
+	<AddTagToValue DGI="0303"/> 
+
+	<!--qPBOC ICC certification-->
+	<AddTag srcDGI="0304" dstDGI="01" dstTag="9F46"/>
+	<AddTag srcDGI="0304" dstDGI="01" dstTag="9F47"/>
+	<AddTag srcDGI="0304" dstDGI="01" dstTag="9F48"/>
+	<AddTag srcDGI="0304" dstDGI="01" dstTag="92"/>
+	<AddTagToValue DGI="0205"/> 	
+          
+	<!--qPBOC signature data-->
+	<AddTag srcDGI="0305" dstDGI="01" dstTag="93"/>
+	<AddTag srcDGI="0305" dstDGI="01" dstTag="5F25"/>
+	<AddTag srcDGI="0305" dstDGI="01" dstTag="9F4A"/>
+	<AddTag srcDGI="0305" dstDGI="01" dstTag="9F63"/> 
+	<AddTag srcDGI="0305" dstDGI="01" dstTag="9F08"/>     
+	<AddTag srcDGI="0305" dstDGI="01" dstTag="8F"/>
+	<AddTag srcDGI="0305" dstDGI="01" dstTag="9F32"/>      
+	<AddTagToValue DGI="0305"/>
+	
+	<!--common-->
+	<AddTag srcDGI="0401" dstDGI="01" dstTag="9F14"/>
+	<AddTag srcDGI="0401" dstDGI="01" dstTag="9F23"/>
+	<AddTagToValue DGI="0401"/> 
+	
+	<!--qPBOC ECC-->
+	<AddTag srcDGI="0501" dstDGI="01" dstTag="9F74"/>
+	<AddTag srcDGI="0501" dstDGI="01" dstTag="9F69"/>
+	<AddTagToValue DGI="0501"/> 
+      
+	<!--internal data-->
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="9F56"/>
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="9F57"/>
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="9F58"/>  
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="9F59"/>
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="9F59"/>
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="9F72"/>
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="9F75"/>    
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="9F36"/>
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="9F13"/>
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="DF4F"/>  
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="DF62"/>
+	<AddTag srcDGI="0D01" dstDGI="01" dstTag="DF63"/>	
+	<AddTagToValue DGI="0D01"/>
+	
+	<!--internal data-->
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="57"/>
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="5F20"/>
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="5F34"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F1F"/>
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F4F"/>
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F51"/>
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F52"/> 
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F53"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F54"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F5C"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F5D"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F68"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F6B"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F6C"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F6D"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F77"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F78"/>  
+	<AddTag srcDGI="0E01" dstDGI="01" dstTag="9F79"/>  	
+	<AddTagToValue DGI="0E01"/>
+      
+	<!--8000-->
+	<MergeTag srcDGI="8000" srcTag="8000" dstDGI="01" dstTag="EF04"/>
+	<MergeTag srcDGI="8000" srcTag="8000" dstDGI="01" dstTag="EF08"/>
+	<MergeTag srcDGI="8000" srcTag="8000" dstDGI="01" dstTag="EF06"/>
+      
+	<!--KCV-->
+	<MergeTag srcDGI="9000" srcTag="9000" dstDGI="01" dstTag="EF24"/>
+	<MergeTag srcDGI="9000" srcTag="9000" dstDGI="01" dstTag="EF28"/>
+	<MergeTag srcDGI="9000" srcTag="9000" dstDGI="01" dstTag="EF26"/>
+      
+	<!--RSA-->
+	<AddTag srcDGI="8201" srcTag="8201" dstDGI="01" dstTag="EF16"/>
+	<AddTag srcDGI="8202" srcTag="8202" dstDGI="01" dstTag="EF15"/>
+	<AddTag srcDGI="8203" srcTag="8203" dstDGI="01" dstTag="EF14"/>
+	<AddTag srcDGI="8204" srcTag="8204" dstDGI="01" dstTag="EF13"/>
+	<AddTag srcDGI="8205" srcTag="8205" dstDGI="01" dstTag="EF12"/>
+    
+	<!--PBOC GPO data-->
+	<AddTag srcDGI="9104" dstDGI="01" dstTag="82"/>
+	<AddFixedTag srcDGI="9104" tag="94" tagValue="080102001001040118010200"/>
+	<AddTagToValue DGI="9104"/>
+      
+	<!--PBOC ECC-->    
+	<AddTag srcDGI="9200" dstDGI="01" dstTag="9F10"/>
+	<AddTagToValue DGI="9200"/>  
+	
+	<!--ECC GPO data-->
+	<AddTag srcDGI="9203" dstDGI="01" dstTag="82"/>
+	<AddFixedTag srcDGI="9203" tag="94" tagValue="080102001001040118010200"/>
+	<AddTagToValue DGI="9203"/>
+	
+	<!--qPBOC GPO data-->
+	<AddTag srcDGI="9207" dstDGI="01" dstTag="82"/>
+	<AddFixedTag srcDGI="9203" tag="94" tagValue="080102001001040118010200"/>
+	<AddTag srcDGI="9207" dstDGI="01" dstTag="9F10"/>
+	<AddTagToValue DGI="9203"/>
+	
+	<!--接触FCI-->
+	<MergeTag srcDGI="9104" dstDGI="01" dstTag="50"/>
+	<MergeTag srcDGI="9104" dstDGI="01" dstTag="87"/>
+	<MergeTag srcDGI="9104" dstDGI="01" dstTag="9F11"/>
+	<!--MergeTag srcDGI="9104" dstDGI="01" dstTag="9F12"/-->
+	<MergeTag srcDGI="9104" dstDGI="01" dstTag="BF0C"/>
+	<AssembleTlv DGI="9104"/>
+     
+	<DeletedDGI DGI="01"/>
+	<DeletedDGI DGI="02"/>
+	<DeletedDGI DGI="03"/>
+</Rule>

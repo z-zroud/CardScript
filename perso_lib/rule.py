@@ -54,10 +54,12 @@ class Rule:
         return self.cps
 
     #解密数据
-    def process_decrypt(self,dgi,key,key_type,isDelete80=False):
+    def process_decrypt(self,dgi,tag,key,key_type,isDelete80=False):
         for item in self.cps.dgi_list:
             if item.dgi == dgi:
-                data = item.get_value(dgi)
+                data = item.get_value(tag)
+                if data is None:    #说明DGI中不包含该数据，直接返回
+                    return self.cps
                 if key_type == 'DES':
                     data = des.des3_ecb_decrypt(key,data)     
                 elif key_type == 'SM':
@@ -69,7 +71,7 @@ class Rule:
                 if isDelete80:
                     index = data.rfind('80')
                     data = data[0 : index]
-                item.modify_value(dgi,data)
+                item.modify_value(tag,data)
                 return self.cps
         return self.cps
 
@@ -168,6 +170,30 @@ class Rule:
                 return self.cps
         return self.cps
 
+    def process_assemble_dgi(self,src_dgi,src_tag,format_str):
+        data = ""
+        tag_list = format_str.split(',')
+        for tag in tag_list[::-1]:
+            if '.' not in tag:  #说明是模板
+                data = tag + utils.get_strlen(data) + data
+            else:
+                dst_dgi = tag.split('.')[0]
+                dst_tag = tag.split('.')[1]
+                if dst_dgi == '':
+                    data = dst_tag + data
+                elif dst_dgi[len(dst_dgi) - 1] == 'v':
+                    value = self.cps.get_tag_value(dst_dgi[0: len(dst_dgi) - 1],dst_tag)
+                    data = value + data
+                else:
+                    value = self.cps.get_tag_value(dst_dgi,dst_tag)
+                    tag_len = utils.get_strlen(value)
+                    data = dst_tag + tag_len + value + data
+        dgi = Dgi()
+        dgi.dgi = src_dgi
+        dgi.add_tag_value(src_tag,data)
+        self.cps.add_dgi(dgi)
+        return self.cps
+
     # 以下接口为对上面函数的封装，若需要处理细节，请使用上面接口，否则
     # 请使用下面的接口函数
     def wrap_process_add_tag(self):
@@ -202,7 +228,10 @@ class Rule:
                 delete80 = True if attrs['delete80'] == 'true' else False
             if 'key' not in attrs:
                 attrs['key'] = ''
-            self.process_decrypt(attrs['DGI'],attrs['key'],attrs['type'],delete80)
+            if 'tag' not in attrs:
+                self.process_decrypt(attrs['DGI'],attrs['DGI'],attrs['key'],attrs['type'],delete80)
+            else:
+                self.process_decrypt(attrs['DGI'],attrs['tag'],attrs['key'],attrs['type'],delete80)
         return self.cps
 
     def wrap_process_add_kcv(self):
@@ -224,6 +253,13 @@ class Rule:
         for node in assmble_tlv_nodes:
             attrs = self.rule_handle.get_attributes(node)
             self.process_assemble_tlv(attrs['DGI'])
+        return self.cps
+
+    def wrap_process_assemble_dgi(self):
+        assmble_dgi_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'AssembleDgi')
+        for node in assmble_dgi_nodes:
+            attrs = self.rule_handle.get_attributes(node)
+            self.process_assemble_dgi(attrs['srcDGI'],attrs['srcTag'],attrs['format'])
         return self.cps
     
     def wrap_process_remove_dgi(self):
