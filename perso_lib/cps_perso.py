@@ -7,18 +7,25 @@ from perso_lib import des
 from perso_lib import utils
 from perso_lib.cps import Cps,Dgi
 
-def _process_encrypted_data(dgi,data,key,config):
-    xml = XmlParser(config)
-    encrypted_nodes = xml.get_nodes(xml.root_element,'Encrypt')
-    for encrypted_node in encrypted_nodes:
-        attr = xml.get_attribute(encrypted_node,'DGI')
-        if dgi == attr:
-            padding80 = xml.get_attribute(encrypted_node,'padding80')
-            if padding80 == 'true':
+def _process_encrypted_data(dgi,data,key,encrypt_dgi_list):
+    # xml = XmlParser(config)
+    # encrypted_nodes = xml.get_nodes(xml.root_element,'Encrypt')
+    # for encrypted_node in encrypted_nodes:
+    #     attr = xml.get_attribute(encrypted_node,'DGI')
+    #     if dgi == attr:
+    #         padding80 = xml.get_attribute(encrypted_node,'padding80')
+    #         if padding80 == 'true':
+    #             data += '80'
+    #             zero_count = len(data) % 16
+    #             data += '0' * (16 - zero_count)
+    #         return True, des.des3_ecb_encrypt(key,data)
+    for encrypt_dgi in encrypt_dgi_list:
+        if encrypt_dgi[0] == dgi:
+            if encrypt_dgi[1]:
                 data += '80'
                 zero_count = len(data) % 16
                 data += '0' * (16 - zero_count)
-            return True, des.des3_ecb_encrypt(key,data)
+            return True,des.des3_ecb_encrypt(key,data)
     return False, data
 
 def _process_template_and_dgi(dgi,data):
@@ -44,11 +51,11 @@ def _assemble_options(ini,section):
         data += value
     return data
 
-def perso_no_cps_format(cps_file,config,session_key):
+def perso_no_cps_format(cps_file,encrypt_dgi_list,session_key):
     '''
     个人化完整的数据，无需自己解析TLV及添加模板
     '''
-    if len(cps_file) == 0 or len(config) == 0:
+    if len(cps_file) == 0:
         return False
     ini = IniParser(cps_file)
     sections = ini.get_sections()
@@ -62,7 +69,7 @@ def perso_no_cps_format(cps_file,config,session_key):
         data_type = '00'
         reset = True if count == 1 else False
         data = ini.get_first_option_value(section)
-        is_encrypted_data, data = _process_encrypted_data(section,data,session_key,config)
+        is_encrypted_data, data = _process_encrypted_data(section,data,session_key,encrypt_dgi_list)
         data = _process_template_and_dgi(section,data)
         if is_encrypted_data:
             data_type = '60'
@@ -105,7 +112,7 @@ def perso_pse_mem(pse_dgi):
 def perso_ppse_mem(ppse_dgi):
     return perso_pse_mem(ppse_dgi)
 
-def perso_cps_mem(dgi_list,config_file,session_key):
+def perso_cps_mem(dgi_list,encrypt_dgi_list,session_key):
     '''个人化缓存中的数据'''
     count = 0
     dgi_count = len(dgi_list)
@@ -113,7 +120,7 @@ def perso_cps_mem(dgi_list,config_file,session_key):
         data = ''
         for _,value in dgi.tag_value_dict.items():
             data += value
-        is_encrypted_data, data = _process_encrypted_data(dgi.dgi,data,session_key,config_file)
+        is_encrypted_data, data = _process_encrypted_data(dgi.dgi,data,session_key,encrypt_dgi_list)
         data = _process_template_and_dgi(dgi.dgi,data)
         resp = ApduResponse()
         count += 1
@@ -160,9 +167,9 @@ def perso_ppse(cps_file):
     cps = get_cps(cps_file)
     perso_ppse_mem(cps.get_dgi('PPSE'))
 
-def perso_cps(cps_file,config,session_key):
+def perso_cps(cps_file,encrypt_dgi_list,session_key):
     '''个人化标准的CPS格式数据'''
-    if len(cps_file) == 0 or len(config) == 0:
+    if len(cps_file) == 0:
         return False
     ini = IniParser(cps_file)
     sections = ini.get_sections()
@@ -176,7 +183,7 @@ def perso_cps(cps_file,config,session_key):
         data_type = '00'
         reset = True if count == 1 else False
         data = _assemble_options(ini,section)
-        is_encrypted_data, data = _process_encrypted_data(section,data,session_key,config)
+        is_encrypted_data, data = _process_encrypted_data(section,data,session_key,encrypt_dgi_list)
         data = _process_template_and_dgi(section,data)
         if is_encrypted_data:
             data_type = '60'

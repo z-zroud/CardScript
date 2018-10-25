@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: perso-lib
+Version: 0.0.1
+Summary: A lib for parse dp data
+Home-page: https://github.com/z-zroud/CardScript
+Author: z_road
+Author-email: 489469935@qq.com
+License: UNKNOWN
+Description: # CardScript
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown

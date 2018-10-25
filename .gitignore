@@ -15,5 +15,6 @@ PersoLib.egg-info/
 perso_lib/__pycache__/
 ipch/
 .vs/
+.vscode/
 bin/
 /UpgradeLog.htm

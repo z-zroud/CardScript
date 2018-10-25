@@ -11,6 +11,29 @@ class Dgi:
         if tag not in self.tag_value_dict.keys():
             self.tag_value_dict[tag] = value
 
+    def insert_after(self,after_tag,tag,value):
+        if after_tag not in self.tag_value_dict.keys():
+            self.add_tag_value(tag,value)
+        else:
+            temp_dict = self.tag_value_dict.copy()
+            self.tag_value_dict.clear()
+            for existed_tag,existed_value in temp_dict.items():
+                self.add_tag_value(existed_tag,existed_value)
+                if existed_tag == after_tag:
+                    self.add_tag_value(tag,value)
+
+    def insert_before(self,before_tag,tag,value):
+        if before_tag not in self.tag_value_dict.keys():
+            self.add_tag_value(tag,value)
+        else:
+            temp_dict = self.tag_value_dict.copy()
+            self.tag_value_dict.clear()
+            for existed_tag,existed_value in temp_dict.items():
+                if existed_tag == before_tag:
+                    self.add_tag_value(tag,value)
+                self.add_tag_value(existed_tag,existed_value)
+                    
+
     def modify_value(self,tag,value):
         if tag in self.tag_value_dict.keys():
             self.tag_value_dict[tag] = value
@@ -43,6 +66,8 @@ def _custom_sorted(dgi):
         return 0xAFFFFF
     elif dgi.dgi == 'A001': #扩展应用应放在8020应用秘钥之前
         return 0x8019
+    elif dgi.dgi == '9010': #9010需放在8010前面个人化 自主产品 同方
+        return 0x8009
     elif '_' in dgi.dgi:
         value = dgi.dgi.replace('_','0')
         number = utils.hex_str_to_int(value)

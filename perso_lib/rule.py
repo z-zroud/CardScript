@@ -53,26 +53,37 @@ class Rule:
                 return self.cps
         return self.cps
 
+    def _process_decrypt(self,key,key_type,data,is_delete80):
+        if key_type == 'DES':
+            data = des.des3_ecb_decrypt(key,data)     
+        elif key_type == 'SM':
+            data = sm.sm4_ecb_decrypt(key,data)
+        elif key_type == 'BASE64':
+            data = utils.base64_to_bcd(data)
+        elif key_type == 'BCD':
+            data = utils.str_to_bcd(data)
+        if is_delete80:
+            index = data.rfind('80')
+            data = data[0 : index]
+        return data
+
     #解密数据
-    def process_decrypt(self,dgi,tag,key,key_type,isDelete80=False):
-        for item in self.cps.dgi_list:
-            if item.dgi == dgi:
+    def process_decrypt(self,dgi,tag,key,key_type,is_delete80=False):
+        if dgi == '':
+            for item in self.cps.dgi_list:
                 data = item.get_value(tag)
-                if data is None:    #说明DGI中不包含该数据，直接返回
+                if data is not None and data != '':
+                    data = self._process_decrypt(key,key_type,data,is_delete80)
+                    item.modify_value(tag,data)
+        else:
+            for item in self.cps.dgi_list:
+                if item.dgi == dgi:
+                    data = item.get_value(tag)
+                    if data is None:    #说明DGI中不包含该数据，直接返回
+                        return self.cps
+                    data = self._process_decrypt(key,key_type,data,is_delete80)
+                    item.modify_value(tag,data)
                     return self.cps
-                if key_type == 'DES':
-                    data = des.des3_ecb_decrypt(key,data)     
-                elif key_type == 'SM':
-                    data = sm.sm4_ecb_decrypt(key,data)
-                elif key_type == 'BASE64':
-                    data = utils.base64_to_bcd(data)
-                elif key_type == 'BCD':
-                    data = utils.str_to_bcd(data)
-                if isDelete80:
-                    index = data.rfind('80')
-                    data = data[0 : index]
-                item.modify_value(tag,data)
-                return self.cps
         return self.cps
 
     #将目标tag添加到源tag(源tag不存在)
@@ -125,7 +136,7 @@ class Rule:
         return self.cps
 
     #向dgi中指定的tag添加固定值
-    def process_add_fixed_tag(self,dgi,tag,value):
+    def process_add_fixed_tag(self,dgi,tag,value,before_tag,after_tag):
         dgis = self.cps.get_all_dgis()
         if dgi not in dgis:
             new_dgi = Dgi()
@@ -141,7 +152,12 @@ class Rule:
                         new_value = tag + utils.get_strlen(new_value) + new_value
                         item.modify_value(tag,new_value)
                     else:
-                        item.add_tag_value(tag,value)
+                        if before_tag is not '':
+                            item.insert_before(before_tag,tag,value)
+                        elif after_tag is not '':
+                            item.insert_after(after_tag,tag,value)
+                        else:
+                            item.add_tag_value(tag,value)
         return self.cps
 
     def process_assemble_tlv(self,dgi):
@@ -216,7 +232,11 @@ class Rule:
         fixed_tag_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'AddFixedTag')
         for node in fixed_tag_nodes:
             attrs = self.rule_handle.get_attributes(node)
-            self.process_add_fixed_tag(attrs['srcDGI'],attrs['tag'],attrs['value'])
+            if 'afterTag' not in attrs:
+                attrs['afterTag'] = ''
+            if 'beforeTag' not in attrs:
+                attrs['beforeTag'] = ''
+            self.process_add_fixed_tag(attrs['srcDGI'],attrs['tag'],attrs['value'],attrs['beforeTag'],attrs['afterTag'])
         return self.cps
 
     def wrap_process_decrypt(self):
@@ -228,6 +248,8 @@ class Rule:
                 delete80 = True if attrs['delete80'] == 'true' else False
             if 'key' not in attrs:
                 attrs['key'] = ''
+            if 'DGI' not in attrs:
+                attrs['DGI'] = ''
             if 'tag' not in attrs:
                 self.process_decrypt(attrs['DGI'],attrs['DGI'],attrs['key'],attrs['type'],delete80)
             else:
@@ -263,7 +285,7 @@ class Rule:
         return self.cps
     
     def wrap_process_remove_dgi(self):
-        remove_dgi_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'RemoveDGI')
+        remove_dgi_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'RemoveDgi')
         for node in remove_dgi_nodes:
             attrs = self.rule_handle.get_attributes(node)
             self.process_remove_dgi(attrs['DGI'])
