@@ -85,6 +85,14 @@ def base64_to_bcd(base64):
     _tool_lib.Base64ToBcd(bytes_base64,bcd,1024 * 2)
     return bytes.decode(bcd.value)
 
+def assemble_tlv(tag,data):
+    '''拼接TLV格式，不考虑数据长度超过0xFF的情况'''
+    data_len = len(data)
+    if data_len >= 0x80 * 2:
+        return tag + '81' + get_strlen(data) + data
+    else:
+        return tag + get_strlen(data) + data
+
 if __name__ == '__main__':
     print(str_to_bcd('000PRN'))
     print(bcd_to_str("30303038"))

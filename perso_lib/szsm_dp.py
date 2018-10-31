@@ -74,7 +74,7 @@ def process_rule(rule_file_name,cps):
     rule.wrap_process_remove_tag()
     return rule.cps
 
-def process_szsm_dp(dp_file,rule_file):
+def process_dp(dp_file,rule_file):
     fh = FileHandle(dp_file,'r+')
     flag_dc = '[01]'
     flag_ec = '[02]'
@@ -107,7 +107,7 @@ def process_szsm_dp(dp_file,rule_file):
 
 
 if __name__ == '__main__':
-    cps_list = process_szsm_dp('./test_data/szsm.dp','./test_data/rule1.xml')
+    cps_list = process_dp('./test_data/szsm.dp','./test_data/rule1.xml')
     for cps in cps_list:
         account = cps.get_account()
         path = 'D://' + account + 'txt'

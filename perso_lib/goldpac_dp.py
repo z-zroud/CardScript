@@ -327,7 +327,7 @@ def parse_pse_and_ppse(xml,pse_dgi_list,ppse_dgi_list,goldpac_dgi_list):
     return pse_dgi,ppse_dgi
    
 #返回处理后的文件列表
-def process_goldpac_dp(dp_file,rule_file):
+def process_dp(dp_file,rule_file):
     cps_list = []
     fh = FileHandle(dp_file,'rb+')
     dp_header = fh.read_binary(fh.current_offset, 26)
@@ -382,5 +382,5 @@ def process_goldpac_dp(dp_file,rule_file):
 
 
 if __name__ == '__main__':
-    process_goldpac_dp('goldpac.dp','金邦达测试.xml')
+    process_dp('goldpac.dp','金邦达测试.xml')
     

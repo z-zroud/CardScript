@@ -65,7 +65,7 @@ def process_rule(rule_file_name,cps):
     rule.wrap_process_remove_tag()
     return rule.cps
     
-def process_yinlian_dp(dp_file,rule_file):
+def process_dp(dp_file,rule_file):
     fh = FileHandle(dp_file,'rb+')
     fh.read(fh.current_offset,8596) #reserved
     dgi_list = get_dgi_list(fh)
@@ -119,7 +119,7 @@ def process_yinlian_dp(dp_file,rule_file):
     return cps_list
 
 if __name__ == '__main__':
-    cps_list = process_yinlian_dp('./test_data/yinlian.dp','./test_data/rule2.xml')
+    cps_list = process_dp('./test_data/yinlian.dp','./test_data/rule2.xml')
     for cps in cps_list:
         account = cps.get_account()
         path = 'D://' + account + 'txt'

@@ -89,54 +89,7 @@ def get_dgi_list(fh):
     log_dgi_list_len = fh.read_int(fh.current_offset)
     fh.read_binary(fh.current_offset,log_dgi_list_len) #暂时不需要log DGI记录
     return dgi_list,encrypt_dgi_list
-
-def process_card_data_1(fh,rule_file):
-    cps = Cps()
-    flag = fh.read_str(fh.current_offset,6)
-    if flag != '000EMV':
-        return False,cps
-    card_data_len = fh.read_int64(fh.current_offset)
-    app_count = utils.hex_str_to_int(fh.read_binary(fh.current_offset,1))
-    for app in range(app_count):
-        aid_len = utils.hex_str_to_int(fh.read_binary(fh.current_offset,1))
-        aid = fh.read_binary(fh.current_offset,aid_len)
-        app_data_len = fh.read_int64(fh.current_offset)
-        dgi_list, encrypt_dgi_list = get_dgi_list(fh)
-        print('encrypt dgi list :', encrypt_dgi_list)
-        for item in dgi_list:
-            card_dgi = Dgi()
-            dgi = fh.read_binary(fh.current_offset,2)
-            dgi_len = utils.hex_str_to_int(fh.read_binary(fh.current_offset,1))
-            dgi_data = fh.read_binary(fh.current_offset,dgi_len)
-            n_dgi = utils.hex_str_to_int(dgi)
-            card_dgi.dgi = dgi
-            if dgi == '0098' or dgi == '0099':
-                dgi = process_pse(dgi,dgi_data)
-            elif dgi == '0100':
-                dgi = process_ppse(dgi,dgi_data)
-            else:
-                if n_dgi < 0x0B01:
-                    if dgi_data[0:2] != '70':
-                        return False,cps
-                    if dgi_data[2:4] == '81':
-                        dgi_data = dgi_data[6:]
-                    else:
-                        dgi_data = dgi_data[4:]
-                if data_parse.is_rsa(dgi) is False and data_parse.is_tlv(dgi_data):
-                    tlvs = data_parse.parse_tlv(dgi_data)
-                    if len(tlvs) > 0 and tlvs[0].is_template is True:
-                        value = card_dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
-                        card_dgi.add_tag_value(dgi,value)
-                    else:
-                        for tlv in tlvs:
-                            value = process_tag_decrypt(rule_file,tlv.tag,tlv.value)
-                            value = card_dgi.assemble_tlv(tlv.tag,value)
-                            card_dgi.add_tag_value(tlv.tag,value)
-                else:
-                    card_dgi.add_tag_value(dgi,dgi_data)
-            cps.add_dgi(card_dgi)
-    return True,cps
-
+    
 def process_card_data(fh,rule_file):
     cps = Cps()
     flag = fh.read_str(fh.current_offset,6)
@@ -184,28 +137,13 @@ def process_card_data(fh,rule_file):
             cps.add_dgi(card_dgi)
     return True,cps
 
-def process_ht_dp(dp_file,rule_file):
+def process_dp(dp_file,rule_file):
     cps_list = []
     fh = FileHandle(dp_file,'rb+')
     move_to_flag(fh,'000PRN')   #直接移到卡片数据位置处理，前面的数据直接忽略
     process_prn_data(fh)
     process_mag_data(fh)
     ret,cps = process_card_data(fh,rule_file)
-    if ret is False:
-        return None
-    cps.dp_file_path = dp_file
-    if rule_file is not None:
-        cps = process_rule(rule_file,cps)
-    cps_list.append(cps)
-    return cps_list
-
-def process_ht_dp1(dp_file,rule_file):
-    cps_list = []
-    fh = FileHandle(dp_file,'rb+')
-    move_to_flag(fh,'000PRN')   #直接移到卡片数据位置处理，前面的数据直接忽略
-    process_prn_data(fh)
-    process_mag_data(fh)
-    ret,cps = process_card_data_1(fh,rule_file)
     if ret is False:
         return None
     cps.dp_file_path = dp_file

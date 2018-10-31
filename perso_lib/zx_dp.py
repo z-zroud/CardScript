@@ -36,7 +36,7 @@ def process_rule(rule_file_name,cps):
     rule.wrap_process_remove_tag()
     return rule.cps
 
-def process_zx_dp(dp_file,rule_file):
+def process_dp(dp_file,rule_file):
     cps_list = []
     fh = FileHandle(dp_file,'rb+')
     dp_flag = fh.read_binary(fh.current_offset,7)

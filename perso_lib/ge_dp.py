@@ -27,7 +27,7 @@ def process_rule(rule_file_name,cps):
     rule.wrap_process_remove_tag()
     return rule.cps
 
-def process_ge_dp(dp_file,rule_file):
+def process_dp(dp_file,rule_file):
     fh = FileHandle(dp_file,'r+')
     cps_list = []
     cps = Cps()

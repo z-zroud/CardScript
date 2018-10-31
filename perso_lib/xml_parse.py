@@ -3,6 +3,7 @@
  
 from xml.dom.minidom import parse
 from xml.dom import minidom
+from xml.dom import Node
 from enum import Enum
 
 class XmlMode(Enum):
@@ -79,6 +80,17 @@ class XmlParser:
           
     def get_nodes(self,parent_node,node_name):
         return parent_node.getElementsByTagName(node_name)
+
+    def get_child_nodes(self,parent_node,node_name=None):
+        child_nodes = []
+        for child_node in parent_node.childNodes:
+            if child_node.nodeType == Node.ELEMENT_NODE:
+                if node_name:
+                    if child_node.nodeName == node_name:
+                        child_nodes.append(child_node)
+                else:
+                    child_nodes.append(child_node)
+        return child_nodes           
 
     def get_first_node(self,parent_node,node_name):
         nodes = self.get_nodes(parent_node,node_name)

@@ -27,6 +27,12 @@ class FileHandle:
         self._file.seek(offset,0)
         return self._file.read(read_len)
 
+    def read_pos(self,start,end):
+        if start > 0:
+            start = start - 1   #从1开始
+        read_len = end - start
+        return self.read(start,read_len)
+
     def read_str(self,offset,read_len):
         '''读取二进制文件，并转换为字符串形式'''
         data = self.read(offset,read_len)

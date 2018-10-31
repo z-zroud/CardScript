@@ -11,6 +11,12 @@ class Dgi:
         if tag not in self.tag_value_dict.keys():
             self.tag_value_dict[tag] = value
 
+    def append_tag_value(self,tag,value):
+        if tag not in self.tag_value_dict.keys():
+            self.tag_value_dict[tag] = value
+        else:
+            self.tag_value_dict[tag] += value
+
     def insert_after(self,after_tag,tag,value):
         if after_tag not in self.tag_value_dict.keys():
             self.add_tag_value(tag,value)
