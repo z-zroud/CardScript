@@ -53,11 +53,12 @@ def process_ppse(dgi,data):
 def process_rule(rule_file_name,cps):
     rule_handle = RuleFile(rule_file_name)
     rule = Rule(cps,rule_handle)
+    rule.wrap_process_decrypt()
     rule.wrap_process_add_tag() 
     rule.wrap_process_add_fixed_tag()
     rule.wrap_process_dgi_map()
-    rule.wrap_process_decrypt()
     rule.wrap_process_exchange()
+    rule.wrap_process_assemble_dgi()
     rule.wrap_process_remove_dgi()
     rule.wrap_process_remove_tag()
     return rule.cps

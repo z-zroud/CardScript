@@ -4,6 +4,7 @@ from perso_lib.cps import Cps,Dgi
 from perso_lib import des
 from perso_lib import sm
 from perso_lib import utils
+from perso_lib import data_parse
 
 class Rule:
     def __init__(self,cps, rule_handle):
@@ -201,7 +202,15 @@ class Rule:
                     value = self.cps.get_tag_value(dst_dgi[0: len(dst_dgi) - 1],dst_tag)
                     data = value + data
                 else:
-                    value = self.cps.get_tag_value(dst_dgi,dst_tag)
+                    value = ''
+                    if dst_dgi in ('9102','9103'):  #对于9103,9102需要特殊处理
+                        tlvs = data_parse.parse_tlv(self.cps.get_tag_value(dst_dgi,dst_dgi))
+                        for tlv in tlvs:
+                            if tlv.tag == dst_tag:
+                                value = tlv.value
+                                break
+                    else:
+                        value = self.cps.get_tag_value(dst_dgi,dst_tag)
                     tag_len = utils.get_strlen(value)
                     data = dst_tag + tag_len + value + data
         dgi = Dgi()
