@@ -7,6 +7,11 @@ class Dgi:
         self.dgi = ''
         self.tag_value_dict = dict()
 
+    def is_empty(self):
+        if len(self.tag_value_dict) == 0:
+            return True
+        return False
+
     def add_tag_value(self,tag,value):
         if tag not in self.tag_value_dict.keys():
             self.tag_value_dict[tag] = value

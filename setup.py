@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="perso_lib",
-    version="0.0.1",
+    version="1.5",
     author="z_road",
     author_email="489469935@qq.com",
     description="A lib for parse dp data",
@@ -15,8 +15,7 @@ setuptools.setup(
     # packages=setuptools.find_packages(),
     packages=['perso_lib'],
     package_data={
-        '':['*.py'],
-        '':['dll/*.dll']
+        '':['dll/*'],
     },
     classifiers=[
         "Programming Language :: Python :: 3",

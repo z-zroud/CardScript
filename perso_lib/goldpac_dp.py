@@ -19,8 +19,12 @@ def get_pse_and_ppse_dgi_list(sddf_dgi_list):
     global _aid_list_info
     pse_dgi_list = []
     ppse_dgi_list = []
-    pse_index,_ = _aid_list_info['315041592E5359532E4444463031']
-    ppse_index,_ = _aid_list_info['325041592E5359532E4444463031']
+    pse_index,_ = _aid_list_info.get('315041592E5359532E4444463031',('F','')) #_aid_list_info['315041592E5359532E4444463031']
+    ppse_index,_ = _aid_list_info.get('325041592E5359532E4444463031',('F','')) #_aid_list_info['325041592E5359532E4444463031']
+    if pse_index == 'F':
+        print('无法获取PSE DGI相关列表')
+    if ppse_index == 'F':
+        print('无法获取PPSE DGI相关列表')
     for dgi in sddf_dgi_list:
         if dgi[4] == pse_index:
             pse_dgi_list.append(dgi)
@@ -94,11 +98,11 @@ def get_tag_link_attribute(xml,sddf_tag):
             return node_dgi,value_format
     return ('','')
 
-def get_sddf_tag(xml,emv_tag):
+def get_sddf_tag(xml,attr,value):
     tag_link_nodes = xml.get_nodes(xml.root_element,'TagLink')
     for node in tag_link_nodes:
-        tag = xml.get_attribute(node,'EMVTag')
-        if tag == emv_tag:
+        tag = xml.get_attribute(node,attr)
+        if tag == value:
             return xml.get_attribute(node,'SDDFTag')
     return None
 
@@ -131,11 +135,15 @@ def process_jetco_special_dgi(xml,goldpac_dgi_list,cps):
         if 'srcTag' not in attrs:
             attrs['srcTag'] = attrs['dstTag']
         data = ''
+        is_second_app = False
+        if '_2' in dgi.dgi:
+            is_second_app = True
+        # 对DF20,DF27做特殊处理
         if attrs['dstDGI'] == 'DF20':
             _,sddf_tag_DF18,_ = rule_file_handle.get_tag_link_attribute('EMVTag','DF18')
             _,sddf_tag_DF19,_ = rule_file_handle.get_tag_link_attribute('EMVTag','DF19')
-            data_DF18 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF18,True)
-            data_DF19 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF19,True)
+            data_DF18 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF18,is_second_app)
+            data_DF19 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF19,is_second_app)
             data = data_DF18 + data_DF19
             data = data[0:data.find('20')]
             data = utils.bcd_to_str(data)
@@ -146,12 +154,18 @@ def process_jetco_special_dgi(xml,goldpac_dgi_list,cps):
         elif attrs['dstDGI'] == 'DF27':
             _,sddf_tag_DF25,_ = rule_file_handle.get_tag_link_attribute('EMVTag','DF25')
             _,sddf_tag_DF26,_ = rule_file_handle.get_tag_link_attribute('EMVTag','DF26')
-            data_DF25 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF25,True)
-            data_DF26 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF26,True)
-            data = data_DF25 + data_DF26 
+            data_DF25 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF25,is_second_app)
+            data_DF26 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF26,is_second_app)
+            data = data_DF25 + data_DF26
+            data = data[0:data.find('20')]
+            data = utils.bcd_to_str(data)
+            if len(data) // 2 > 0x7F:
+                data = attrs['dstDGI'] + '81' + utils.get_strlen(data) + data
+            else:
+                data = attrs['dstDGI'] + utils.get_strlen(data) + data 
         else:
             _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVTag',attrs['dstTag'])
-            data = get_goldpac_data(goldpac_dgi_list,sddf_tag,True)
+            data = get_goldpac_data(goldpac_dgi_list,sddf_tag,is_second_app)
         dgi.add_tag_value(attrs['srcTag'],data)
         cps.add_dgi(dgi)
     return cps
@@ -194,19 +208,22 @@ def parse_sddf_data(xml, sddf_tag, goldpac_dgi_list=[]):
         data = data_parse.remove_dgi(sddf_data,node_dgi)
         if need_remove_template:
             data = data_parse.remove_template70(data)
-        tlvs = data_parse.parse_tlv(data)
-        if len(tlvs) > 0 and tlvs[0].is_template is True:
-            value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
-            dgi.add_tag_value(dgi.dgi,value)
+        if utils.str_to_int(node_dgi) > 0xA000 or not data_parse.is_tlv(data):
+            dgi.add_tag_value(dgi.dgi,data)
         else:
-            for tlv in tlvs:
-                if tlv.len > 0x7F:
-                    value = tlv.tag + '81' + utils.int_to_hex_str(tlv.len) + tlv.value
-                else:
-                    value = tlv.tag + utils.int_to_hex_str(tlv.len) + tlv.value
-                dgi.add_tag_value(tlv.tag,value)
+            tlvs = data_parse.parse_tlv(data)
+            if len(tlvs) > 0 and tlvs[0].is_template is True:
+                value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
+                dgi.add_tag_value(dgi.dgi,value)
+            else:
+                for tlv in tlvs:
+                    if tlv.len > 0x7F:
+                        value = tlv.tag + '81' + utils.int_to_hex_str(tlv.len) + tlv.value
+                    else:
+                        value = tlv.tag + utils.int_to_hex_str(tlv.len) + tlv.value
+                    dgi.add_tag_value(tlv.tag,value)
     elif value_format == 'V':
-        dgi.add_tag_value(dgi,sddf_data)
+        dgi.add_tag_value(dgi.dgi,sddf_data)
     return dgi
 
 def get_rsa_dgi_len(data):
@@ -231,12 +248,20 @@ def get_rsa_dgi_value(data, dgi_len):
 def split_rsa(xml,goldpac_dgi_list,is_second_app):
     rule_file_handle = RuleFile(xml.file_name)
     _,key = rule_file_handle.get_decrypted_attribute('RSA')
-    _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVTag','DF70')
+    sddf_tag = ''
+    if is_second_app:
+        index = str(get_second_app_index())
+        _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair_' + index)
+    else:
+        index = str(get_first_app_index())
+        _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair_' + index)
     if is_second_app:
         sddf_tag = sddf_tag[0:4] + get_second_app_index() + sddf_tag[5:8]
     else:
         sddf_tag = sddf_tag[0:4] + get_first_app_index() + sddf_tag[5:8]
     encrypted_data = get_goldpac_data(goldpac_dgi_list,sddf_tag,is_second_app)
+    if encrypted_data is None:
+        print('无法获取RSA数据[tag' + sddf_tag + ']缺少数据')
     decrypted_data = des.des3_ecb_decrypt(key,encrypted_data)
     if len(decrypted_data) <= 2 or decrypted_data[0:2] != '30':
         print('RSA解密失败')
@@ -281,9 +306,9 @@ def get_goldpac_data(goldpac_dgi_list,sddf_tag,is_second_app):
     return None
 
 def parse_8000(xml,goldpac_dgi_list,is_second_app):
-    sddf_8000_ac = get_sddf_tag(xml,'DF60')
-    sddf_8000_mac = get_sddf_tag(xml,'DF62')
-    sddf_8000_enc = get_sddf_tag(xml,'DF64')
+    sddf_8000_ac = get_sddf_tag(xml,'EMVDataName','Kac')
+    sddf_8000_mac = get_sddf_tag(xml,'EMVDataName','Ksmi')
+    sddf_8000_enc = get_sddf_tag(xml,'EMVDataName','Ksmc')
     dgi = Dgi()
     if is_second_app:
         dgi.dgi = '8000_2'
@@ -299,9 +324,9 @@ def parse_8000(xml,goldpac_dgi_list,is_second_app):
     return dgi
 
 def parse_9000(xml,goldpac_dgi_list,is_second_app):
-    sddf_9000_ac = get_sddf_tag(xml,'DF61')
-    sddf_9000_mac = get_sddf_tag(xml,'DF63')
-    sddf_9000_enc = get_sddf_tag(xml,'DF65')
+    sddf_9000_ac = get_sddf_tag(xml,'EMVDataName','Checksum Kac')
+    sddf_9000_mac = get_sddf_tag(xml,'EMVDataName','Checksum Ksmi')
+    sddf_9000_enc = get_sddf_tag(xml,'EMVDataName','Checksum Ksmc')
     dgi = Dgi()
     if is_second_app:
         dgi.dgi = '9000_2'
@@ -365,8 +390,9 @@ def process_dp(dp_file,rule_file):
     for rsa_dgi in rsa_dgi_list:
         cps.add_dgi(rsa_dgi)
     pse_dgi,ppse_dgi = parse_pse_and_ppse(xml,pse_dgi_list,ppse_dgi_list,goldpac_dgi_list)
-    cps.add_dgi(pse_dgi)
-    if ppse_dgi is not None:
+    if pse_dgi.is_empty() is False:
+        cps.add_dgi(pse_dgi)
+    if ppse_dgi.is_empty() is False:
         cps.add_dgi(ppse_dgi)
     if constans_second_app:
         cps = process_jetco_special_dgi(xml,goldpac_dgi_list,cps)

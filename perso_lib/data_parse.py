@@ -130,7 +130,10 @@ def remove_template70(buffer):
 def is_tlv(buffer):
     buffer_len = len(buffer)
     bytes_buffer = str.encode(buffer)
+    _data_parse_lib.IsTLV.restype = c_bool
     ret = _data_parse_lib.IsTLV(bytes_buffer,buffer_len)
+    # print(ret)
+    # print('   ' + buffer)
     return False if ret == 0 else True
 
 def is_rsa(dgi):
@@ -146,7 +149,9 @@ def parse_tlv(buffer):
     _tlvs = tlv_arr()
     tlv_count = c_uint(30)
     _data_parse_lib.ParseTLV.restype = c_bool
-    ret = _data_parse_lib.ParseTLV(bytes_buffer,_tlvs,byref(tlv_count))   
+    ret = _data_parse_lib.ParseTLV(bytes_buffer,_tlvs,byref(tlv_count))
+    if ret is False:
+        return tlvs
     for index in range(tlv_count.value):
         _tlv = TLV()
         _tlv.is_template = _tlvs[index].is_template

@@ -14,7 +14,14 @@ CDLL(dll_depends)
 CDLL(dll_depends2)
 _authencation_lib = CDLL(dll_name)
 
+
 def gen_rsa(cert_len,cert_exp):
+    '''
+    同时生成STD和CRT模式的公私钥对
+    cert_len 公钥长度
+    cert_exp 生成RSA公钥指数
+    返回 D,N,P,Q,DP,DQ,Qinv
+    '''
     byte_cert_exp = str.encode(cert_exp)
     d = create_string_buffer(2048)
     n = create_string_buffer(2048)
@@ -42,9 +49,30 @@ def _gen_cert(p_d,p_n,n,exp,format_flag,issue_bin,expiry_date):
 
 
 def gen_issuer_cert(ca_d,ca_n,issuer_n,issuer_exp,issuer_bin,expiry_date=1220):
+    '''
+    生成发卡行证书 
+    ca_d CA D
+    ca_n CA N
+    issuer_n 发卡行 公钥
+    issuer_exp 发卡行公钥指数
+    issuer_bin 发卡行 Bin号
+    expiry_date 证书失效日期 可选，默认2020年12月
+    返回 tag90,92
+    '''
     return _gen_cert(ca_d,ca_n,issuer_n,issuer_exp,"02",issuer_bin,expiry_date)
 
 def gen_icc_cert(issuer_d,issuer_n,icc_n,icc_exp,pan,sig_data,expiry_date=1220):
+    '''
+    生成IC卡公钥证书
+    issuer_d  发卡行 D
+    issuer_n  发卡行 N
+    icc_n IC卡公钥
+    icc_exp IC卡公钥指数
+    pan 账号
+    sig_data 签名数据(该参数应包括tag82,也就是这个是完整的签名数据)
+    expiry_date 证书失效日期 可选，默认2020年12月
+    返回tag9F46 9F48
+    '''
     byte_issuer_d = str.encode(issuer_d)
     byte_issuer_n = str.encode(issuer_n)
     byte_card_no = str.encode(pan)
@@ -58,6 +86,14 @@ def gen_icc_cert(issuer_d,issuer_n,icc_n,icc_exp,pan,sig_data,expiry_date=1220):
     return bytes.decode(cert.value),bytes.decode(remainder.value)
 
 def gen_tag93(d,n,sig_data,tag82,dac='DAC1'):
+    '''
+    生成静态签名数据
+    d 发卡行 D
+    n 发卡行 N
+    sig_data 签名数据
+    tag82 用于签名
+    返回tag93
+    '''
     byte_d = str.encode(d)
     byte_n = str.encode(n)
     byte_sig_data = str.encode(sig_data)

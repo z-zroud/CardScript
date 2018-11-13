@@ -20,9 +20,12 @@ def init():
     global _pcsc_lib
     if _has_init == False:
         dll_name = 'PCSC.dll'
+        dll_name_depends = 'Log.dll'
         dll_path = os.path.dirname(os.path.abspath(__file__))
         dir_list = dll_path.split(os.path.sep)
         dll_path = os.path.sep.join(dir_list) + os.path.sep + "dll" + os.path.sep + dll_name
+        dll_path_depends = os.path.sep.join(dir_list) + os.path.sep + "dll" + os.path.sep + dll_name_depends
+        CDLL(dll_path_depends)
         _pcsc_lib = CDLL(dll_path)
         if _pcsc_lib is not None:
             _has_init = True
@@ -42,7 +45,7 @@ def send_raw(cmd,resp_sw_list=(0x9000,)):
     apdu_response.sw = _pcsc_lib.SendApdu(bytes_cmd,resp_data,resp_len)
     apdu_response.response = bytes.decode(resp_data.value)
     apdu_response.request = cmd
-    # sys.exit()
+    print('%X'%apdu_response.sw)
     for sw in resp_sw_list:
         if sw == apdu_response.sw:
             return apdu_response
