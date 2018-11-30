@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="perso_lib",
-    version="1.5",
+    version="1.8",
     author="z_road",
     author_email="489469935@qq.com",
     description="A lib for parse dp data",

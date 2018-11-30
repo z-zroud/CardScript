@@ -5,7 +5,6 @@ from perso_lib import data_parse
 from perso_lib import utils
 from perso_lib.rule import Rule
 from perso_lib import des
-import os
 
 def move_to_flag(fh,flag):   
     bcd_flag = utils.str_to_bcd(flag)
@@ -29,7 +28,6 @@ def process_prn_data(fh):
 def process_mag_data(fh,rule_file_name):
     rule_file = RuleFile(rule_file_name)
     mag_node = rule_file.get_first_node(rule_file.root_element,'Magstrip')
-    
     mag_flag = fh.read_str(fh.current_offset,6)
     if mag_flag != '000MAG':
         return False
@@ -40,8 +38,6 @@ def process_mag_data(fh,rule_file_name):
     track_flag_list.append(fh.read(fh.current_offset + 1,1))
     mag_data = fh.read_binary(fh.current_offset,mag_data_len - 5)
     mag_data_list = [x for x in mag_data.split('7C') if len(x) > 0]
-    print('decrypt mag data: ',end='')
-    print(mag_data_list)
     dgi = Dgi()
     dgi.dgi = 'Magstrip'
     if mag_node is not None:
@@ -51,14 +47,12 @@ def process_mag_data(fh,rule_file_name):
             data = utils.bcd_to_str(data)
             data = des.des3_ecb_decrypt(mag_key,data)
             data = utils.bcd_to_str(data)
-            data_len = int(data[0:4])
-            data = data[4:data_len + 4].rstrip()
-            decrypt_mag_list.append(data)
+            decrypt_mag_list.append(data.replace('%','')) #去掉%，防止写入ini失败
         pos = 1
         for mag in decrypt_mag_list:
             for index in range(pos,4):
                 pos += 1
-                option = 'mag' + str(pos)
+                option = 'mag' + str(index)
                 if track_flag_list[index - 1] == '0':
                     dgi.add_tag_value(option,'')
                     continue
@@ -66,6 +60,8 @@ def process_mag_data(fh,rule_file_name):
                 break
         print('decrypt mag data: ',end='')
         print(decrypt_mag_list)
+    print('encrypt mag data: ',end='')
+    print(mag_data_list)
     return dgi
 
 def process_pse(dgi,data):
@@ -104,15 +100,21 @@ def process_tag_decrypt(rule_file_name,tag,data):
     for node in tag_decrypt_nodes:
         attrs = rule_file.get_attributes(node)
         if attrs['tag'] == tag:
+            start_pos = 0
+            data_len = 0
+            delete80 = False
+            is_bcd = False
             data = des.des3_ecb_decrypt(attrs['key'],data)
-            if 'startPos' in attrs:
-                start_pos = int(attrs['startPos'])
-            else:
-                start_pos = 0
-            if 'len' in attrs:
-                data_len = int(attrs['len'])
-            else:
-                data_len = len(data)
+            start_pos = int(attrs['startPos']) if 'startPos' in attrs else 0
+            data_len = int(attrs['len']) if 'len' in attrs else len(data)
+            delete80 = True if 'delete80' in attrs else False
+            is_bcd = True if 'bcd' in attrs else False
+            if delete80:
+                index = data.rfind('80')
+                if index != -1:
+                    data = data[:42]
+            if is_bcd:
+                data = utils.bcd_to_str(data)
             data = data[start_pos : start_pos + data_len]
             return data
     return data
@@ -123,14 +125,24 @@ def get_dgi_list(fh):
     dgi_list = []
     for i in range(0,dgi_list_len * 2,4):
         dgi_list.append(dgi_list_str[i : i + 4])
-    encrypt_dgi_list_len = fh.read_int(fh.current_offset)
-    encrypt_dgi_list_str = fh.read_binary(fh.current_offset,encrypt_dgi_list_len)
-    encrypt_dgi_list = []
-    for i in range(0,encrypt_dgi_list_len * 2,4):
-        encrypt_dgi_list.append(encrypt_dgi_list_str[i : i + 4])
+
+    des_encrypt_dgi_list_len = fh.read_int(fh.current_offset)
+    des_encrypt_dgi_list_str = fh.read_binary(fh.current_offset,des_encrypt_dgi_list_len)
+    des_encrypt_dgi_list = []
+    for i in range(0,des_encrypt_dgi_list_len * 2,4):
+        des_encrypt_dgi_list.append(des_encrypt_dgi_list_str[i : i + 4])
+
+    sm_encrypt_dgi_list_len = fh.read_int(fh.current_offset)
+    sm_encrypt_dgi_list_str = fh.read_binary(fh.current_offset,sm_encrypt_dgi_list_len)
+    sm_encrypt_dgi_list = []
+    for i in range(0,sm_encrypt_dgi_list_len * 2,4):
+        sm_encrypt_dgi_list.append(sm_encrypt_dgi_list_str[i : i + 4])
+    print('sm encrypt dgi list: ',end=' ')
+    print(sm_encrypt_dgi_list)
+    des_encrypt_dgi_list.extend(sm_encrypt_dgi_list)
     log_dgi_list_len = fh.read_int(fh.current_offset)
     fh.read_binary(fh.current_offset,log_dgi_list_len) #暂时不需要log DGI记录
-    return dgi_list,encrypt_dgi_list
+    return dgi_list,des_encrypt_dgi_list
     
 def process_card_data(fh,rule_file):
     cps = Cps()

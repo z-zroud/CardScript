@@ -2,9 +2,12 @@ import os
 from ctypes import *
 
 dll_name = 'ChineseSM.dll'
+dll_depends = 'libeay32.dll'
 dll_path = os.path.dirname(os.path.abspath(__file__))
 dir_list = dll_path.split(os.path.sep)
 dll_path = os.path.sep.join(dir_list) + os.path.sep + "dll" + os.path.sep + dll_name
+dll_depends_path = os.path.sep.join(dir_list) + os.path.sep + "dll" + os.path.sep + dll_depends
+CDLL(dll_depends_path)
 _sm_lib = CDLL(dll_path)
 
 def sm4_ecb_decrypt(key,data):

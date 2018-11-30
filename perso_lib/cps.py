@@ -79,6 +79,12 @@ def _custom_sorted(dgi):
         return 0x8019
     elif dgi.dgi == '9010': #9010需放在8010前面个人化 自主产品 同方
         return 0x8009
+    elif dgi.dgi == 'Magstrip':
+        return 0x0003
+    elif dgi.dgi == 'Aid':
+        return 0x0001
+    elif dgi.dgi == 'Aid_2':
+        return 0x0002
     elif '_' in dgi.dgi:
         value = dgi.dgi.replace('_','0')
         number = utils.hex_str_to_int(value)
@@ -90,6 +96,7 @@ class Cps:
     def __init__(self):
         self.dgi_list = []
         self.dp_file_path = ''
+        self.aid = ''
 
     def add_dgi(self,dgi):
         '''添加DGI分组，若该DGI分组存在,则直接合并其中的tag'''

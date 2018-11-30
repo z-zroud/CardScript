@@ -7,18 +7,9 @@ from perso_lib import des
 from perso_lib import utils
 from perso_lib.cps import Cps,Dgi
 
+is_need_ff00_prefix = False
+
 def _process_encrypted_data(dgi,data,key,encrypt_dgi_list):
-    # xml = XmlParser(config)
-    # encrypted_nodes = xml.get_nodes(xml.root_element,'Encrypt')
-    # for encrypted_node in encrypted_nodes:
-    #     attr = xml.get_attribute(encrypted_node,'DGI')
-    #     if dgi == attr:
-    #         padding80 = xml.get_attribute(encrypted_node,'padding80')
-    #         if padding80 == 'true':
-    #             data += '80'
-    #             zero_count = len(data) % 16
-    #             data += '0' * (16 - zero_count)
-    #         return True, des.des3_ecb_encrypt(key,data)
     for encrypt_dgi in encrypt_dgi_list:
         if encrypt_dgi[0] == dgi:
             if encrypt_dgi[1]:
@@ -30,16 +21,16 @@ def _process_encrypted_data(dgi,data,key,encrypt_dgi_list):
 
 def _process_template_and_dgi(dgi,data):
     int_dgi = utils.hex_str_to_int(dgi)
+    data_len = len(data)
     if int_dgi <= 0x0B01:
-        data_len = len(data)
         if data_len >= 0xFF * 2:
             data = '7082' + utils.get_strlen(data) + data
         elif data_len > 0x80 * 2:
             data = '7081' + utils.get_strlen(data) + data
         else:
             data = '70' + utils.get_strlen(data) + data
-    # if dgi == '0201':
-    #     dgi += 'FF00'
+    if data_len > 0x80 * 2 and is_need_ff00_prefix:
+        dgi += 'FF00'
     data = dgi + utils.get_strlen(data) + data
     return data
 
@@ -54,16 +45,18 @@ def _assemble_options(ini,section):
 def perso_no_cps_format(cps_file,encrypt_dgi_list,session_key):
     '''
     个人化完整的数据，无需自己解析TLV及添加模板
+    示例:
+    0101=700557009F1000
+    0201=70055F20202F
     '''
     if len(cps_file) == 0:
         return False
     ini = IniParser(cps_file)
     sections = ini.get_sections()
-    section_count = len(sections)
+    filter_sections = [x for x in sections if x.dgi not in ('PSE','PPSE','Magstrip','Aid')]
+    section_count = len(filter_sections)
     count = 0
-    for section in sections:
-        if section in ('PSE','PPSE'):
-            continue
+    for section in filter_sections:
         resp = ApduResponse()
         count += 1
         data_type = '00'
@@ -90,6 +83,23 @@ def perso_no_cps_format(cps_file,encrypt_dgi_list,session_key):
             return False
     return True
 
+def get_cps(cps_file):
+    '''
+    通过cps文件获取cps数据
+    '''
+    cps = Cps()
+    ini = IniParser(cps_file)
+    sections = ini.get_sections()
+    for section in sections:
+        dgi = Dgi()
+        dgi.dgi = section
+        options = ini.get_options(section)
+        for option in options:
+            value = ini.get_value(section,option)
+            dgi.add_tag_value(option,value)
+        cps.add_dgi(dgi)
+    return cps
+
 def perso_pse_mem(pse_dgi):
     data_list = []
     for key,value in pse_dgi.tag_value_dict.items():
@@ -115,16 +125,17 @@ def perso_ppse_mem(ppse_dgi):
 def perso_cps_mem(dgi_list,encrypt_dgi_list,session_key):
     '''个人化缓存中的数据'''
     count = 0
-    dgi_count = len(dgi_list)
-    for dgi in dgi_list:
+    filter_dgi_list = [x for x in dgi_list if x.dgi not in ('PSE','PPSE','Magstrip','Aid')]
+    dgi_count = len(filter_dgi_list)
+    for dgi in filter_dgi_list:
+        count += 1
+        reset = True if count == 1 else False
         data = ''
         for _,value in dgi.tag_value_dict.items():
             data += value
         is_encrypted_data, data = _process_encrypted_data(dgi.dgi,data,session_key,encrypt_dgi_list)
         data = _process_template_and_dgi(dgi.dgi,data)
         resp = ApduResponse()
-        count += 1
-        reset = True if count == 1 else False
         data_type = '00'
         if is_encrypted_data:
             data_type = '60'
@@ -145,20 +156,6 @@ def perso_cps_mem(dgi_list,encrypt_dgi_list,session_key):
             return False
     return True
 
-def get_cps(cps_file):
-    cps = Cps()
-    ini = IniParser(cps_file)
-    sections = ini.get_sections()
-    for section in sections:
-        dgi = Dgi()
-        dgi.dgi = section
-        options = ini.get_options(section)
-        for option in options:
-            value = ini.get_value(section,option)
-            dgi.add_tag_value(option,value)
-        cps.add_dgi(dgi)
-    return cps
-
 def perso_pse(cps_file):
     cps = get_cps(cps_file)
     perso_pse_mem(cps.get_dgi('PSE'))
@@ -173,11 +170,10 @@ def perso_cps(cps_file,encrypt_dgi_list,session_key):
         return False
     ini = IniParser(cps_file)
     sections = ini.get_sections()
-    section_count = len(sections)
+    filter_sections = [x for x in sections if x.dgi not in ('PSE','PPSE','Magstrip','Aid')]
+    section_count = len(filter_sections)
     count = 0
-    for section in sections:
-        if section in ('PSE','PPSE'):
-            continue
+    for section in filter_sections:
         resp = ApduResponse()
         count += 1
         data_type = '00'

@@ -74,6 +74,9 @@ def open_reader(reader):
     result = _pcsc_lib.OpenReader(name)
     return result
 
+def close_reader():
+    _pcsc_lib.CloseReader()
+
 def warm_reset():
     _pcsc_lib.WarmReset.restype = c_bool
     return _pcsc_lib.WarmReset()

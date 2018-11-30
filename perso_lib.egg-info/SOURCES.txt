@@ -15,6 +15,7 @@ perso_lib/gen_goldpac_dp.py
 perso_lib/gen_kmc_session.py
 perso_lib/goldpac_dp.py
 perso_lib/ht_dp.py
+perso_lib/ht_tong_lian_dp.py
 perso_lib/ini_parse.py
 perso_lib/kms.py
 perso_lib/pcsc.py
@@ -40,4 +41,3 @@ perso_lib/dll/PCSC.dll
 perso_lib/dll/Tool.dll
 perso_lib/dll/libeay32.dll
 perso_lib/dll/sqlite3.dll
-perso_lib/dll/Configuration/pcsc.db
