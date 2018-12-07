@@ -19,7 +19,7 @@ class Kms():
             self.issuer_bin = issuer_bin
             self.tags['9F32'] = self.exp
             self.tags['9F47'] = self.exp
-            self.tags['8F'] = '50'  #默认索引为50
+            self.tags['8F'] = 'AA'  #默认索引为AA
             self.issuer_d,self.issuer_n,*_ = algorithm.gen_rsa(1024,self.exp)
             _,self.icc_n,tag8205,tag8204,tag8203,tag8202,tag8201 = algorithm.gen_rsa(1024,self.exp)
             self.tags['8201'] = tag8201

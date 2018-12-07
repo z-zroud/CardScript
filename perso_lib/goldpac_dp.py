@@ -152,11 +152,11 @@ def process_jetco_special_dgi(xml,goldpac_dgi_list,cps):
             else:
                 data = attrs['dstDGI'] + utils.get_strlen(data) + data
         elif attrs['dstDGI'] == 'DF27':
-            _,sddf_tag_DF25,_ = rule_file_handle.get_tag_link_attribute('EMVTag','DF25')
-            _,sddf_tag_DF26,_ = rule_file_handle.get_tag_link_attribute('EMVTag','DF26')
-            data_DF25 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF25,is_second_app)
-            data_DF26 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF26,is_second_app)
-            data = data_DF25 + data_DF26
+            _,sddf_tag_DF16,_ = rule_file_handle.get_tag_link_attribute('EMVTag','DF16')
+            _,sddf_tag_DF17,_ = rule_file_handle.get_tag_link_attribute('EMVTag','DF17')
+            data_DF16 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF16,is_second_app)
+            data_DF17 = get_goldpac_data(goldpac_dgi_list,sddf_tag_DF17,is_second_app)
+            data = data_DF16 + data_DF17
             data = data[0:data.find('20')]
             data = utils.bcd_to_str(data)
             if len(data) // 2 > 0x7F:
@@ -249,12 +249,13 @@ def split_rsa(xml,goldpac_dgi_list,is_second_app):
     rule_file_handle = RuleFile(xml.file_name)
     _,key = rule_file_handle.get_decrypted_attribute('RSA')
     sddf_tag = ''
-    if is_second_app:
-        index = str(get_second_app_index())
-        _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair_' + index)
-    else:
-        index = str(get_first_app_index())
-        _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair_' + index)
+    # if is_second_app:
+    #     index = str(get_second_app_index())
+    #     _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair_' + index)
+    # else:
+    #     index = str(get_first_app_index())
+    #     _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair_' + index)
+    _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair')
     if is_second_app:
         sddf_tag = sddf_tag[0:4] + get_second_app_index() + sddf_tag[5:8]
     else:

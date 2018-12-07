@@ -41,6 +41,8 @@ class IniParser:
         self.add_section(section)
         if self.ini.has_option(section,key):
             return False
+        if not key:
+            print('保存文件是，ini文件存在值为None的option节点')
         self.ini.set(section,key,value)
         self.ini.write(open(self.file_name,'w+'),False)
         return True

@@ -164,8 +164,12 @@ class Rule:
     def process_assemble_tlv(self,dgi):
         for item in self.cps.dgi_list:
             if dgi == item.dgi:
-                for key in item.tag_value_dict.keys():
-                    data_len = int(len(item.tag_value_dict[key]) / 2)
+                for key,value in item.tag_value_dict.items():
+                    if not key:
+                        print('dgi' + dgi + '存在非法的None Tag')
+                    if not value:
+                        print('dgi' + dgi + ' tag' + key + '值为None,请检查配置文件对该值是否配置正确')
+                    data_len = int(len(value) / 2)
                     if data_len > 0x80:
                         item.tag_value_dict[key] = key + '81' + utils.int_to_hex_str(data_len) + item.tag_value_dict[key]
                     else:
@@ -199,7 +203,10 @@ class Rule:
                 if dst_dgi == '':
                     data = dst_tag + data
                 elif dst_dgi[len(dst_dgi) - 1] == 'v':
-                    value = self.cps.get_tag_value(dst_dgi[0: len(dst_dgi) - 1],dst_tag)
+                    dst_dgi = dst_dgi[0: len(dst_dgi) - 1]
+                    value = self.cps.get_tag_value(dst_dgi,dst_tag)
+                    if not value:
+                        print('dgi %s tag %s 不存在'%(dst_dgi,dst_tag))
                     data = value + data
                 else:
                     value = ''
@@ -211,6 +218,8 @@ class Rule:
                                 break
                     else:
                         value = self.cps.get_tag_value(dst_dgi,dst_tag)
+                    if not value:
+                        print('dgi %s tag %s 不存在'%(dst_dgi,dst_tag))
                     tag_len = utils.get_strlen(value)
                     data = dst_tag + tag_len + value + data
         dgi = Dgi()
