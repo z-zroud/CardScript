@@ -43,6 +43,8 @@ class IniParser:
             return False
         if not key:
             print('保存文件是，ini文件存在值为None的option节点')
+        if not value:
+            print('DGI%s的值为None,请检查DP是否配置正确' %key)
         self.ini.set(section,key,value)
         self.ini.write(open(self.file_name,'w+'),False)
         return True

@@ -95,14 +95,16 @@ def xor(data1, data2):
 	_des_lib.str_xor(output,bytes_data2,data_len)
 	return bytes.decode(output.value)
 
+def dcdd(tag56,tag9F6B,key):
+	tagDC = des3_mac(key,tag56)
+	tagDD = des3_mac(key,tag9F6B)
+	return tagDC[-4:] + tagDD[-4:]
+
 
 if __name__ == "__main__":
-	encrypted_data = des3_ecb_encrypt("11111111111111111111111111111111","12436579889876543223456788867765")
-	decrypted_data = des3_ecb_decrypt("11111111111111111111111111111111",encrypted_data)
-	xorRet = xor(encrypted_data,decrypted_data)
-	print(xorRet)
-	mac = des3_mac("11111111111111111111111111111112","12436579889876543223456788867765")
-	mac = des3_full_mac("11111111111111111111111111111112","12436579889876543223456788867765")
-	print(mac)
+	key = 'F6241FCA77459F62ACB2CA38CDFD7175'
+	tag56 = '42353335383932303030303030313730375E4249522F544553542020202020202020202020202020202020205E3233313232303130303030303030303030313030'
+	tag9F6B = '5358920000001707D2312201000000000010'
+	print(dcdd(tag56,tag9F6B,key))
 
 

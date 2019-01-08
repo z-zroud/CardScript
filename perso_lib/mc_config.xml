@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root>
+	<Bin value="53376662"/>
+	<App id="">
+		<Sig id="1">
+			<Tag name="5A" type="file" format="TLV"/>
+			<Tag name="5F24" type="file" format="TLV"/>
+			<Tag name="5F25" type="file" format="TLV"/>
+			<Tag name="5F28" type="fixed" value="0344" format="TLV" comment=""/>
+			<Tag name="5F34" type="file" format="TLV"/>
+			<Tag name="8C" type="fixed" value="9F02069F03069F1A0295055F2A029A039C019F37049F35019F45029F4C089F34039F21039F7C14" format="TLV" comment=""/>
+			<Tag name="8D" type="fixed" value="910A8A0295059F37049F4C08" format="TLV" comment=""/>
+			<Tag name="8E" type="fixed" value="000000000000000042011E0342031F03" format="TLV" comment=""/>
+			<Tag name="9F07" type="fixed" value="FFC0" format="TLV" comment=""/>
+			<Tag name="9F0D" type="fixed" value="BC509C0800" format="TLV" comment=""/>
+			<Tag name="9F0E" type="fixed" value="0000000000" format="TLV" comment=""/>
+			<Tag name="9F0F" type="fixed" value="BC709C9800" format="TLV" comment=""/>
+			<Tag name="9F42" type="fixed" value="0344" format="TLV" comment=""/>
+			<Tag name="9F4A" type="fixed" value="82" format="TLV" comment=""/>
+			<Tag name="82" type="fixed" value="3900" format="V" comment=""/>
+		</Sig>
+		<Sig id="2">
+			<Tag name="57" type="file" format="TLV"/>
+			<Tag name="5A" type="file" format="TLV"/>
+			<Tag name="5F24" type="file" format="TLV"/>
+			<Tag name="5F25" type="file" format="TLV"/>
+			<Tag name="5F28" type="fixed" value="0344" format="TLV" comment=""/>
+			<Tag name="5F34" type="file" format="TLV"/>
+			<Tag name="8C" type="fixed" value="9F02069F03069F1A0295055F2A029A039C019F37049F35019F45029F4C089F34039F21039F7C14" format="TLV" comment=""/>
+			<Tag name="8D" type="fixed" value="910A8A0295059F37049F4C08" format="TLV" comment=""/>
+			<Tag name="8E" type="fixed" value="00000000000000001E0342031F03" format="TLV" comment=""/>
+			<Tag name="9F07" type="fixed" value="FFC0" format="TLV" comment=""/>
+			<Tag name="9F08" type="fixed" value="0002" format="TLV" comment=""/>
+			<Tag name="9F0D" type="fixed" value="B450840000" format="TLV" comment=""/>
+			<Tag name="9F0E" type="fixed" value="0000000000" format="TLV" comment=""/>
+			<Tag name="9F0F" type="fixed" value="B470848000" format="TLV" comment=""/>
+			<Tag name="9F42" type="fixed" value="0344" format="TLV" comment=""/>
+			<Tag name="9F4A" type="fixed" value="82" format="TLV" comment=""/>
+			<Tag name="D8" type="fixed" value="1980" format="V" comment=""/>
+		</Sig>
+		<DGI name="A005" comment="MC GPO响应数据">
+			<Tag name="82" type="fixed" value="3900" format="V" comment=""/>
+			<Tag name="94" type="fixed" value="080202001801030120010200" format="V"/>
+		</DGI>
+		<DGI name="B005" comment="Paypass GPO响应数据">
+			<Tag name="D8" type="fixed" value="1980" format="V" comment=""/>
+			<Tag name="D9" type="fixed" value="1001020120010200" format="V"/>
+		</DGI>
+		<DGI name="0102" comment="MC 磁条数据及持卡人姓名">
+			<Tag name="57" type="file" format="TLV"/>
+			<Tag name="9F1F" type="file" format="TLV"/>
+			<Tag name="5F20" type="file" format="TLV"/>
+		</DGI>
+		<DGI name="0201" comment="Paypass 参与静态签名数据认证的数据">
+			<Tag name="57" type="file" format="TLV"/>
+			<Tag name="5A" type="file" format="TLV"/>
+			<Tag name="5F24" type="file" format="TLV"/>
+			<Tag name="5F25" type="file" format="TLV"/>
+			<Tag name="5F28" type="fixed" value="0344" format="TLV" comment=""/>
+			<Tag name="5F34" type="file" format="TLV"/>
+			<Tag name="8C" type="fixed" value="9F02069F03069F1A0295055F2A029A039C019F37049F35019F45029F4C089F34039F21039F7C14" format="TLV" comment=""/>
+			<Tag name="8D" type="fixed" value="910A8A0295059F37049F4C08" format="TLV" comment=""/>
+			<Tag name="8E" type="fixed" value="00000000000000001E0342031F03" format="TLV" comment=""/>
+			<Tag name="9F07" type="fixed" value="FFC0" format="TLV" comment=""/>
+			<Tag name="9F08" type="fixed" value="0002" format="TLV" comment=""/>
+			<Tag name="9F0D" type="fixed" value="B450840000" format="TLV" comment=""/>
+			<Tag name="9F0E" type="fixed" value="0000000000" format="TLV" comment=""/>
+			<Tag name="9F0F" type="fixed" value="B470848000" format="TLV" comment=""/>
+			<Tag name="9F42" type="fixed" value="0344" format="TLV" comment=""/>
+			<Tag name="9F4A" type="fixed" value="82" format="TLV" comment=""/>
+		</DGI>
+		<DGI name="0202" comment="Paypass IC卡公钥数据">
+			<Tag name="9F46" type="kms" sig_id="2" format="TLV"/>
+			<Tag name="9F47" type="kms" format="TLV"/>
+			<Tag name="9F48" type="kms" sig_id="2" format="TLV"/>
+		</DGI>
+		<DGI name="0301" comment="MC 参与静态签名数据认证的数据">
+			<Tag name="5A" type="file" format="TLV"/>
+			<Tag name="5F24" type="file" format="TLV"/>
+			<Tag name="5F25" type="file" format="TLV"/>
+			<Tag name="5F28" type="fixed" value="0344" format="TLV" comment=""/>
+			<Tag name="5F34" type="file" format="TLV"/>
+			<Tag name="8C" type="fixed" value="9F02069F03069F1A0295055F2A029A039C019F37049F35019F45029F4C089F34039F21039F7C14" format="TLV" comment=""/>
+			<Tag name="8D" type="fixed" value="910A8A0295059F37049F4C08" format="TLV" comment=""/>
+			<Tag name="8E" type="fixed" value="000000000000000042011E0342031F03" format="TLV" comment=""/>
+			<Tag name="9F07" type="fixed" value="FFC0" format="TLV" comment=""/>
+			<Tag name="9F0D" type="fixed" value="BC509C0800" format="TLV" comment=""/>
+			<Tag name="9F0E" type="fixed" value="0000000000" format="TLV" comment=""/>
+			<Tag name="9F0F" type="fixed" value="BC709C9800" format="TLV" comment=""/>
+			<Tag name="9F42" type="fixed" value="0344" format="TLV" comment=""/>
+			<Tag name="9F4A" type="fixed" value="82" format="TLV" comment=""/>
+		</DGI>
+		<DGI name="0302" comment="MC 应用版本及服务码">
+			<Tag name="9F08" type="fixed" value="0002" format="TLV" comment=""/>
+			<Tag name="5F30" type="file" format="TLV"/>
+		</DGI>
+		<DGI name="0303" comment="MC IC卡公钥数据">
+			<Tag name="9F46" type="kms" sig_id="1" format="TLV"/>
+			<Tag name="9F47" type="kms" format="TLV"/>
+			<Tag name="9F48" type="kms" sig_id="1" format="TLV"/>
+			<Tag name="9F49" type="fixed" value="9F3704" format="TLV" comment=""/>
+		</DGI>
+		<DGI name="0401" comment="通用 发卡行公钥证书">
+			<Tag name="90" type="kms" format="TLV"/>
+		</DGI>
+		<DGI name="0402" comment="通用 静态数据认证数据">
+			<Tag name="9F32" type="kms" format="TLV"/>
+			<Tag name="92" type="kms" format="TLV"/>
+			<Tag name="8F" type="kms" format="TLV"/>
+		</DGI>
+		<DGI name="A002" comment="风险管理数据参数">
+			<Tag name="C9" type="fixed" value="0344" format="V" comment="Accumulator 1 Currency Code"/>
+			<Tag name="D1" type="fixed" value="03440001000344000100034400010003440001000344000100" format="V" comment="Accumulator 1 Currency Conversion Table"/>
+			<Tag name="CA" type="fixed" value="000000000000" format="V" comment="Accumulator 1 Lower Limit"/>
+			<Tag name="CB" type="fixed" value="000000000000" format="V" comment="Accumulator 1 Upper Limit"/>
+			<Tag name="DF16" type="fixed" value="0999" format="V" comment="Accumulator 2 Currency Code"/>
+			<Tag name="DF17" type="fixed" value="09990001000999000100099900010009990001000999000100" format="V" comment="Accumulator 2 Currency Conversion Table"/>
+			<Tag name="DF18" type="fixed" value="000000000000" format="V" comment="Accumulator 2 Lower Limit"/>
+			<Tag name="DF19" type="fixed" value="000000000000" format="V" comment="Accumulator 2 Upper Limit"/>
+			<Tag name="D3" type="fixed" value="000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" format="V" comment="Additional Control (Contact)"/>
+			<Tag name="C7" type="fixed" value="42" format="V" comment="CDOL1 Related Data Length"/>
+			<Tag name="9F14" type="fixed" value="00" format="V" comment="Counter 1 Lower Limit"/>
+			<Tag name="9F23" type="fixed" value="00" format="V" comment="Counter 1 Upper Limit"/>
+			<Tag name="DF1F" type="fixed" value="00" format="V" comment="Counter 2 Lower Limit"/>
+			<Tag name="DF21" type="fixed" value="00" format="V" comment="Counter 2 Upper Limit"/>
+			<Tag name="C8" type="fixed" value="0344" format="V" comment="Counter 2 Upper Limit"/>
+			<Tag name="CVN" type="fixed" value="00" format="V" comment="Cryptogram Version Number V2.x"/>
+			<Tag name="D6" type="fixed" value="0010" format="V" comment="Default ARPC Response Code"/>
+			<Tag name="DF30" type="fixed" value="03" format="V" comment="Interface Enabling Switch"/>
+			<Tag name="DF24" type="fixed" value="0999" format="V" comment="MTA CVM(Contact)"/>
+			<Tag name="DF27" type="fixed" value="0000" format="V" comment="Number Of Days Offline Limit"/>
+		</DGI>
+		<DGI name="A004" comment="IC卡公钥长度">
+			<Tag name="--" type="fixed" value="90" format="V" comment="Length Of ICC Public Key Modulus"/>
+			<Tag name="--" type="fixed" value="00" format="V" comment="Length Of ICC PIN Encipherment Public Key Modulus"/>
+		</DGI>
+		<DGI name="A012" comment="MC 卡片风险管理参数">
+			<Tag name="DF11" type="fixed" value="C1" format="V" comment="Accumulator 1 Control(Contact)"/>
+			<Tag name="DF28" type="fixed" value="000000" format="V" comment="Accumulator 1 CVR Dependency Data(Contact)"/>
+			<Tag name="DF14" type="fixed" value="00" format="V" comment="Accumulator 2 Control(Contact)"/>
+			<Tag name="DF2A" type="fixed" value="000000" format="V" comment="Accumulator 2 CVR Dependency Data(Contact)"/>
+			<Tag name="DF1A" type="fixed" value="C1" format="V" comment="Counter 1 Control(Contact)"/>
+			<Tag name="DF2C" type="fixed" value="000000" format="V" comment="Counter 1 CVR Dependency Data(Contact)"/>
+			<Tag name="DF1D" type="fixed" value="00" format="V" comment="Counter 2 Control(Contact)"/>
+			<Tag name="DF2E" type="fixed" value="000000" format="V" comment="Counter 2 CVR Dependency Data(Contact)"/>
+			<Tag name="DF3C" type="fixed" value="00" format="V" comment="CVR Issuer Discretionary Data(Contact)"/>
+			<Tag name="--" type="fixed" value="00" format="V" comment="Interface Identifier (Contact)"/>
+			<Tag name="DF22" type="fixed" value="000000000000" format="V" comment="MTA CVM(Contact)"/>
+			<Tag name="DF25" type="fixed" value="000000000000" format="V" comment="MTA NoCVM(Contact)"/>
+		</DGI>
+		<DGI name="A013" comment="MC Application control">
+			<Tag name="D5" type="fixed" value="800080000603" format="V" comment="Application Control(Contact)"/>
+		</DGI>
+		<DGI name="A014" comment="MC Read Record Filter">
+			<Tag name="DF3F" type="fixed" value="00000000" format="V" comment="Read Record Filter(Contact)"/>
+		</DGI>
+		<DGI name="A015" comment="MC Card Issuer Action Codes">
+			<Tag name="C3" type="fixed" value="000000" format="V" comment="Card Issuer Action Code(Contact)-Decline"/>
+			<Tag name="C4" type="fixed" value="005000" format="V" comment="Card Issuer Action Code(Contact)-Default"/>
+			<Tag name="C5" type="fixed" value="06FB00" format="V" comment="Card Issuer Action Code(Contact)-Online"/>
+		</DGI>
+		<DGI name="A022" comment="MC Card Issuer Action Codes">
+			<Tag name="DF12" type="fixed" value="C1" format="V" comment="Accumulator 1 Control(Contactless)"/>
+			<Tag name="DF29" type="fixed" value="000000" format="V" comment="Accumulator 1 CVR Dependency Data(Contactless)"/>
+			<Tag name="DF15" type="fixed" value="00" format="V" comment="Accumulator 2 Control(Contactless)"/>
+			<Tag name="DF2B" type="fixed" value="000000" format="V" comment="Accumulator 2 CVR Dependency Data(Contactless)"/>
+			<Tag name="DF1B" type="fixed" value="C1" format="V" comment="Counter 1 Control(Contactless)"/>
+			<Tag name="DF2D" type="fixed" value="000000" format="V" comment="Counter 1 CVR Dependency Data(Contactless)"/>
+			<Tag name="DF1E" type="fixed" value="00" format="V" comment="Counter 2 Control(Contactless)"/>
+			<Tag name="DF2F" type="fixed" value="000000" format="V" comment="Counter 2 CVR Dependency Data(Contactless)"/>
+			<Tag name="DF3D" type="fixed" value="00" format="V" comment="CVR Issuer Discretionary Data(Contactless)"/>
+			<Tag name="--" type="fixed" value="01" format="V" comment="Interface Identifier (Contactless)"/>
+			<Tag name="DF23" type="fixed" value="000000000000" format="V" comment="MTA CVM(Contactless)"/>
+			<Tag name="DF26" type="fixed" value="000000000000" format="V" comment="MTA NoCVM(Contactless)"/>
+		</DGI>
+		<DGI name="A023" comment="Paypass Application control">
+			<Tag name="D7" type="fixed" value="000080000603" format="V" comment="Application Control(Contactless)"/>
+		</DGI>
+		<DGI name="A024" comment="Paypass Read Record Filter">
+			<Tag name="DF40" type="fixed" value="18020200" format="V" comment="Read Record Filter(Contactless)"/>
+		</DGI>
+		<DGI name="A025" comment="Paypass Card Issuer Action Codes">
+			<Tag name="CF" type="fixed" value="000000" format="V" comment="Card Issuer Action Code(Contactless)-Decline"/>
+			<Tag name="CD" type="fixed" value="005800" format="V" comment="Card Issuer Action Code(Contactless)-Default"/>
+			<Tag name="CE" type="fixed" value="06F800" format="V" comment="Card Issuer Action Code(Contactless)-Online"/>
+		</DGI>
+		<DGI name="A007" comment="ATC Limit and Pre Transaction History">
+			<Tag name="--" type="fixed" value="4E20" format="V" comment="Application Transaction Counter Limit"/>
+			<Tag name="--" type="fixed" value="00" format="V" comment="Previous Transaction History"/>
+		</DGI>
+		<DGI name="A017" comment="MC Session key limits">
+			<Tag name="DF3A" type="fixed" value="4E20" format="V" comment="AC Session Key Counter Limit(Contact)"/>
+			<Tag name="--" type="fixed" value="01" format="V" comment="Key Derivation Index (Contact)"/>
+			<Tag name="DF32" type="fixed" value="0400" format="V" comment="SMI Session Key Counter Limit(Contact)"/>
+		</DGI>
+		<DGI name="A027" comment="Paypass Session key limits">
+			<Tag name="DF34" type="fixed" value="4E20" format="V" comment="AC Session Key Counter Limit(Contactless)"/>
+			<Tag name="--" type="fixed" value="01" format="V" comment="Key Derivation Index (Contactless)"/>
+			<Tag name="DF33" type="fixed" value="0400" format="V" comment="SMI Session Key Counter Limit(Contactless)"/>
+		</DGI>
+		<DGI name="A009" comment="Paypass Session key limits">
+			<Tag name="9F7E" type="fixed" value="file" format="V" comment="Application Life Cycle Data"/>
+		</DGI>
+		<DGI name="A00E" comment="Data Storage Configuration">
+			<Tag name="--" type="fixed" value="20" format="V" comment="DS Management Control"/>
+			<Tag name="--" type="fixed" value="00" format="V" comment="DS Number of slots"/>
+			<Tag name="--" type="fixed" value="000000000000000000000000" format="V" comment="DSPK"/>
+		</DGI>
+		<DGI name="8000" comment="MC 对称秘钥">
+			<Tag name="8000" type="kms" format="V"/>
+		</DGI>
+		<DGI name="8001" comment="Paypass 对称秘钥">
+			<Tag name="8001" type="kms" format="V"/>
+		</DGI>
+		<DGI name="9000">
+			<Tag name="9000" type="kms" format="V"/>
+		</DGI>
+		<DGI name="9001">
+			<Tag name="9001" type="kms" format="V"/>
+		</DGI>
+		<DGI name="A006" comment="MC IDN Master Key">
+			<Tag name="A006" type="kms" format="V"/>
+		</DGI>
+		<DGI name="A016" comment="Paypass IDN Master Key">
+			<Tag name="A016" type="kms" format="V"/>
+		</DGI>
+		<DGI name="8400" comment="KDCVC3">
+			<Tag name="8401" type="kms" format="V"/>
+		</DGI>
+		<DGI name="8401" comment="KDCVC3">
+			<Tag name="8401" type="kms" format="V"/>
+		</DGI>
+		<DGI name="9010" comment="PIN try limit">
+			<Tag name="--" type="fixed" value="01" format="V" comment="PIN Try Counter"/>
+			<Tag name="--" type="fixed" value="01" format="V" comment="PIN Try Limit"/>
+		</DGI>
+		<DGI name="8201">
+			<Tag name="8201" type="kms" format="V"/>
+		</DGI>
+		<DGI name="8202">
+			<Tag name="8202" type="kms" format="V"/>
+		</DGI>
+		<DGI name="8203">
+			<Tag name="8203" type="kms" format="V"/>
+		</DGI>
+		<DGI name="8204">
+			<Tag name="8204" type="kms" format="V"/>
+		</DGI>
+		<DGI name="8205">
+			<Tag name="8205" type="kms" format="V"/>
+		</DGI>
+		<DGI name="9102">
+			<Template name="A5">
+				<Tag name="50" type="fixed" value="4465626974204D617374657263617264" format="TLV" comment=""/>
+				<Tag name="87" type="fixed" value="01" format="TLV" comment=""/>
+				<Tag name="5F2D" type="fixed" value="656E" format="TLV" comment=""/>
+				<Tag name="9F11" type="fixed" value="01" format="TLV" comment=""/>
+				<Tag name="9F12" type="fixed" value="4465626974204D617374657263617264" format="TLV" comment=""/>
+				<Template name="BF0C">
+					<Tag name="9F5D" type="fixed" value="010000" format="TLV" comment=""/>
+					<Tag name="9F6E" type="fixed" value="03440000303000" format="TLV" comment=""/>
+				</Template>
+			</Template>
+		</DGI>
+		<PSE>
+			<DGI name="0101">
+				<Template name="61">
+					<Tag name="4F" type="fixed" value="A0000000041010" format="TLV" comment=""/>
+					<Tag name="50" type="fixed" value="4465626974204D617374657263617264" format="TLV" comment=""/>
+					<Tag name="87" type="fixed" value="01" format="TLV" comment=""/>
+				</Template>
+			</DGI>
+			<DGI name="9102">
+				<Template name="A5">
+					<Tag name="88" type="fixed" value="01" format="TLV"/>
+					<Tag name="5F2D" type="fixed" value="656E" format="TLV" comment=""/>
+					<Tag name="9F11" type="fixed" value="01" format="TLV" comment=""/>
+				</Template>
+			</DGI>
+		</PSE>
+		<PPSE>
+			<DGI name="9102">
+				<Template name="A5">
+					<Template name="BF0C">
+						<Template name="61">
+							<Tag name="4F" type="fixed" value="A0000000041010" format="TLV" comment=""/>
+							<Tag name="50" type="fixed" value="4465626974204D617374657263617264" format="TLV" comment=""/>
+							<Tag name="87" type="fixed" value="01" format="TLV" comment=""/>
+						</Template>
+					</Template>
+				</Template>
+			</DGI>
+		</PPSE>
+	</App>
+</Root>

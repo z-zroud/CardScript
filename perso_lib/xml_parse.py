@@ -6,6 +6,40 @@ from xml.dom import minidom
 from xml.dom import Node
 from enum import Enum
 
+# ==由于minidom默认的writexml()函数在读取一个xml文件后，修改后重新写入如果加了newl='\n',
+# 会将原有的xml中写入多余的行  
+#　 ==因此使用下面这个函数来代替  
+def fixed_writexml(self, writer, indent="", addindent="", newl=""):  
+    # indent = current indentation
+    # addindent = indentation to add to higher levels
+    # newl = newline string
+    writer.write(indent+"<" + self.tagName)  
+
+    attrs = self._get_attributes()  
+    a_names = attrs.keys()  
+    # a_names.sort()  
+
+
+    for a_name in a_names:  
+        writer.write(" %s=\"" % a_name)  
+        minidom._write_data(writer, attrs[a_name].value)  
+        writer.write("\"")  
+    if self.childNodes:  
+        if len(self.childNodes) == 1 and self.childNodes[0].nodeType == minidom.Node.TEXT_NODE:  
+            writer.write(">")  
+            self.childNodes[0].writexml(writer, "", "", "")  
+            writer.write("</%s>%s" % (self.tagName, newl))  
+            return  
+        writer.write(">%s"%(newl))  
+        for node in self.childNodes:  
+            if node.nodeType is not minidom.Node.TEXT_NODE:  
+                node.writexml(writer,indent+addindent,addindent,newl)  
+        writer.write("%s</%s>%s" % (indent,self.tagName,newl))  
+    else:  
+        writer.write("/>%s"%(newl))  
+
+minidom.Element.writexml = fixed_writexml
+
 class XmlMode(Enum):
     READ = 1
     WRITE = 2
@@ -44,6 +78,7 @@ class XmlParser:
         text_node = self.__dom.createTextNode(text)
         node.appendChild(text_node)
 
+
     # def writexml(self, writer, indent="", addindent="", newl=""):
     #     # indent = current indentation
     #     # addindent = indentation to add to higher levels
@@ -79,9 +114,16 @@ class XmlParser:
             print('xml保存失败：{0}'.format(err))
           
     def get_nodes(self,parent_node,node_name):
+        '''
+        获取父节点下所有node_name指定名称的节点，包含迭代子节点
+        '''
         return parent_node.getElementsByTagName(node_name)
 
     def get_child_nodes(self,parent_node,node_name=None):
+        '''
+        获取父节点直接子节点名称为node_name的子节点，如果node_name
+        为None,则获取所有直接子节点
+        '''
         child_nodes = []
         for child_node in parent_node.childNodes:
             if child_node.nodeType == Node.ELEMENT_NODE:
@@ -97,7 +139,7 @@ class XmlParser:
         for node in nodes:
             return node
     
-    def get_attribute(self,node,attr_name):
+    def get_attribute(self,node,attr_name,default=None):
         if node.hasAttribute(attr_name):
             return node.getAttribute(attr_name)
 
@@ -107,6 +149,14 @@ class XmlParser:
             attr = node.attributes[key]
             dict_attr[attr.name] = attr.value
         return dict_attr
+
+    def remove_attribute(self,node,name):
+        if name in node.attributes:
+            node.removeAttribute(name)
+
+    def set_attribute(self,node,name,value):
+        node.setAttribute(name,value)
+
 
 
 if __name__ == '__main__':

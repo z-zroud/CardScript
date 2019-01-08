@@ -22,6 +22,7 @@ def process_rule(rule_file_name,cps):
     rule.wrap_process_add_kcv()
     rule.wrap_process_exchange()
     rule.wrap_process_assemble_tlv()
+    rule.wrap_process_add_value()
     rule.wrap_process_assemble_dgi()
     rule.wrap_process_remove_dgi()
     rule.wrap_process_remove_tag()

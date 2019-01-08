@@ -8,12 +8,16 @@ from perso_lib.rule import Rule
 from perso_lib import des
 
 class GoldpacDgi:
+    '''
+    该类用于表示金邦达DP数据结构
+    '''
     def __init__(self):
         self.goldpac_dgi = ''
         self.data = ''
         self.data_len = ''
 
 _aid_list_info = dict()
+_is_mc_app = False
 
 def get_pse_and_ppse_dgi_list(sddf_dgi_list):
     global _aid_list_info
@@ -249,12 +253,6 @@ def split_rsa(xml,goldpac_dgi_list,is_second_app):
     rule_file_handle = RuleFile(xml.file_name)
     _,key = rule_file_handle.get_decrypted_attribute('RSA')
     sddf_tag = ''
-    # if is_second_app:
-    #     index = str(get_second_app_index())
-    #     _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair_' + index)
-    # else:
-    #     index = str(get_first_app_index())
-    #     _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair_' + index)
     _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair')
     if is_second_app:
         sddf_tag = sddf_tag[0:4] + get_second_app_index() + sddf_tag[5:8]
@@ -306,6 +304,17 @@ def get_goldpac_data(goldpac_dgi_list,sddf_tag,is_second_app):
             return item.data
     return None
 
+def parse_A006(xml,goldpac_dgi_list):
+    sddf_A006 = get_sddf_tag(xml,'EMVDataName','Kidn')
+    dgi = Dgi()
+    dgi.dgi = 'A006'
+    data = get_goldpac_data(goldpac_dgi_list,sddf_A006,False)
+    rule_file_handle = RuleFile(xml.file_name)
+    _,key = rule_file_handle.get_decrypted_attribute('A006')    #顺带解密
+    data = des.des3_ecb_decrypt(key,data)
+    dgi.add_tag_value(dgi.dgi,data)
+    return dgi
+
 def parse_8000(xml,goldpac_dgi_list,is_second_app):
     sddf_8000_ac = get_sddf_tag(xml,'EMVDataName','Kac')
     sddf_8000_mac = get_sddf_tag(xml,'EMVDataName','Ksmi')
@@ -353,7 +362,9 @@ def parse_pse_and_ppse(xml,pse_dgi_list,ppse_dgi_list,goldpac_dgi_list):
     return pse_dgi,ppse_dgi
    
 #返回处理后的文件列表
-def process_dp(dp_file,rule_file):
+def process_dp(dp_file,rule_file,is_mc_app=False):
+    global _is_mc_app
+    _is_mc_app = is_mc_app
     cps_list = []
     fh = FileHandle(dp_file,'rb+')
     dp_header = fh.read_binary(fh.current_offset, 26)
@@ -385,8 +396,25 @@ def process_dp(dp_file,rule_file):
             cps_dgi = parse_sddf_data(xml,sddf_tag,goldpac_dgi_list)
             if cps_dgi != None:
                 cps.add_dgi(cps_dgi)
-    cps.add_dgi(parse_8000(xml,goldpac_dgi_list,False))
-    cps.add_dgi(parse_9000(xml,goldpac_dgi_list,False))
+    dgi_8000 = parse_8000(xml,goldpac_dgi_list,False)
+    dgi_9000 = parse_9000(xml,goldpac_dgi_list,False)
+    cps.add_dgi(dgi_8000)
+    cps.add_dgi(dgi_9000)
+    if is_mc_app:
+        dgi_A006 = parse_A006(xml,goldpac_dgi_list)
+        cps.add_dgi(dgi_A006)
+        dgi_A016 = Dgi()
+        dgi_A016.dgi = 'A016'
+        dgi_A016.add_tag_value('A016',dgi_A006.get_value('A006'))
+        dgi_8001 = Dgi()
+        dgi_8001.dgi = '8001'
+        dgi_8001.add_tag_value('8001',dgi_8000.get_value('8000'))
+        dgi_9001 = Dgi()
+        dgi_9001.dgi = '9001'
+        dgi_9001.add_tag_value('9001',dgi_9000.get_value('9000'))
+        cps.add_dgi(dgi_8001)
+        cps.add_dgi(dgi_9001)
+        cps.add_dgi(dgi_A016)
     rsa_dgi_list = split_rsa(xml,goldpac_dgi_list,False)
     for rsa_dgi in rsa_dgi_list:
         cps.add_dgi(rsa_dgi)

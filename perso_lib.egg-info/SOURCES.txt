@@ -9,6 +9,7 @@ perso_lib/cps.py
 perso_lib/cps_perso.py
 perso_lib/data_parse.py
 perso_lib/des.py
+perso_lib/excel.py
 perso_lib/file_handle.py
 perso_lib/ge_dp.py
 perso_lib/gen_goldpac_dp.py
@@ -18,6 +19,7 @@ perso_lib/ht_dp.py
 perso_lib/ht_tong_lian_dp.py
 perso_lib/ini_parse.py
 perso_lib/kms.py
+perso_lib/mc_1156_table.py
 perso_lib/pcsc.py
 perso_lib/rule.py
 perso_lib/rule_file.py

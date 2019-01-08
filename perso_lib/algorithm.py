@@ -103,6 +103,15 @@ def gen_tag93(d,n,sig_data,tag82,dac='DAC1'):
     _authencation_lib.GenSSDA(byte_d,byte_n,byte_sig_data,byte_tag82,byte_dac,tag93)
     return bytes.decode(tag93.value)
 
+def gen_kcv(app_key,algorithm_type='DES'):
+    byte_key = str.encode(app_key)
+    kcv_key = create_string_buffer(33)
+    if algorithm_type == 'DES':
+        _authencation_lib.GenDesKcv(byte_key,kcv_key,33)
+    else:
+        _authencation_lib.GenSmKcv(byte_key,kcv_key,33)
+    return bytes.decode(kcv_key.value)[0:6]
+
 def gen_app_key_kcv(app_key,algorithm_type='DES'):
     byte_ac = str.encode(app_key[0:32])
     byte_mac = str.encode(app_key[32:64])

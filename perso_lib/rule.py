@@ -161,6 +161,10 @@ class Rule:
                             item.add_tag_value(tag,value)
         return self.cps
 
+    #向dgi中指定的tag添加固定值
+    def process_add_value(self,dgi,tag,value,before_tag,after_tag):
+        return self.process_add_fixed_tag(dgi,tag,value,before_tag,after_tag)
+
     def process_assemble_tlv(self,dgi):
         for item in self.cps.dgi_list:
             if dgi == item.dgi:
@@ -255,6 +259,17 @@ class Rule:
             if 'beforeTag' not in attrs:
                 attrs['beforeTag'] = ''
             self.process_add_fixed_tag(attrs['srcDGI'],attrs['tag'],attrs['value'],attrs['beforeTag'],attrs['afterTag'])
+        return self.cps
+    
+    def wrap_process_add_value(self):
+        fixed_tag_nodes = self.rule_handle.get_nodes(self.rule_handle.root_element,'AddValue')
+        for node in fixed_tag_nodes:
+            attrs = self.rule_handle.get_attributes(node)
+            if 'afterTag' not in attrs:
+                attrs['afterTag'] = ''
+            if 'beforeTag' not in attrs:
+                attrs['beforeTag'] = ''
+            self.process_add_value(attrs['srcDGI'],attrs['tag'],attrs['value'],attrs['beforeTag'],attrs['afterTag'])
         return self.cps
 
     def wrap_process_decrypt(self):

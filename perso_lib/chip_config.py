@@ -88,7 +88,7 @@ tf_G8C140026_pboc_debit = dict(packet='F062732E50424F432E415050',applet='F062732
 tf_G8C140026_pboc_credit = dict(packet='F062732E50424F432E415050',applet='F062732E50424F432E41505001',inst='A000000333010102',priviliage='10',param='C9018A')
 tf_G8C140026_mc = dict(packet='A0000000180F000001833032',applet='A0000000180F0000018303',inst='A0000000041010',priviliage='10',param='C90100')
 tf_G8C140026_visa = dict(packet='A00000000310',applet='A0000000031056',inst='A0000000031010',priviliage='10',param='C900')
-tf_G8C140026_jetco = dict(packet='A00000033301',applet='A0000003330103',inst='A00000047400000001',priviliage='10',param='C906200400000001')
+tf_G8C140026_jetco = dict(packet='A00000033301',applet='A0000003330103',inst='A00000047400000001',priviliage='10',param='C906200000000001')
 
 
 tf_G8C140031_pse = dict(packet='F062732E50424F432E505345',applet='F062732E50424F432E50534501',inst='315041592E5359532E4444463031',priviliage='00',param='C900')
@@ -100,11 +100,11 @@ tf_G8C140031_pboc_credit = dict(packet='F062732E50424F432E415050',applet='F06273
 
 tf_G8C140046_pse = dict(packet='315041592E',applet='315041592E5359532E4444463031',inst='315041592E5359532E4444463031',priviliage='00',param='C900')
 tf_G8C140046_ppse = dict(packet='315041592E',applet='315041592E5359532E4444463031',inst='325041592E5359532E4444463031',priviliage='00',param='C900')
-tf_G8C140046_uics_debit = dict(packet='A000000333010130',applet='A0000003330101',inst='A000000333010101',priviliage='10',param='C9022A03')
-tf_G8C140046_uics_credit = dict(packet='A000000333010130',applet='A0000003330101',inst='A000000333010102',priviliage='10',param='C9022A03')
-tf_G8C140046_pboc_debit = dict(packet='A000000333010130',applet='A0000003330101',inst='A000000333010101',priviliage='10',param='C9022803')
-tf_G8C140046_pboc_credit = dict(packet='A000000333010130',applet='A0000003330101',inst='A000000333010102',priviliage='10',param='C9022803')
-tf_G8C140046_jetco = dict(packet='A000000333010130',applet='A0000003330101',inst='A00000047400000001',priviliage='10',param='C906380300000001')
+tf_G8C140046_uics_debit = dict(packet='A000000333010130',applet='A0000003330101',inst='A000000333010101',priviliage='10',param='C9022204')
+tf_G8C140046_uics_credit = dict(packet='A000000333010130',applet='A0000003330101',inst='A000000333010102',priviliage='10',param='C9022204')
+tf_G8C140046_pboc_debit = dict(packet='A000000333010130',applet='A0000003330101',inst='A000000333010101',priviliage='10',param='C9022804')
+tf_G8C140046_pboc_credit = dict(packet='A000000333010130',applet='A0000003330101',inst='A000000333010102',priviliage='10',param='C9022804')
+tf_G8C140046_jetco = dict(packet='A000000333010130',applet='A0000003330101',inst='A00000047400000001',priviliage='10',param='C906200000000001')
 
 class Chip:
     tf_G8C140026 = 'tf_G8C140026'

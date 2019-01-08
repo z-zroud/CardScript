@@ -16,6 +16,9 @@ class ApduResponse:
 
 #init the smart card reader context
 def init():
+    '''
+    初始化读卡器环境，True表示初始化成功，失败返回False
+    '''
     global _has_init
     global _pcsc_lib
     if _has_init == False:
@@ -33,11 +36,22 @@ def init():
     return False
 
 def send(cmd_header,data,resp_sw_list=(0x9000,)):
+    '''
+    在连接读卡器后，发送APDU指令。
+    cmd_header 表示指令头
+    data 表示要发送给终端的数据
+    resp_sw_list 表示期望的响应返回码列表，若返回不是期望的响应码，则自动退出APDU的交互
+    '''
     cmd = cmd_header + utils.get_strlen(data) + data
     return send_raw(cmd,resp_sw_list)
 
 #send apdu command
 def send_raw(cmd,resp_sw_list=(0x9000,)):
+    '''
+    在连接读卡器后，发送APDU指令。
+    cmd 表示要发送的APDU命令，包括命令头，数据长度，数据。
+    resp_sw_list 表示期望的响应返回码列表，若返回不是期望的响应码，则自动退出APDU的交互
+    '''
     apdu_response = ApduResponse()
     bytes_cmd = str.encode(cmd)
     resp_len = c_int(2048)
@@ -53,6 +67,9 @@ def send_raw(cmd,resp_sw_list=(0x9000,)):
 
 #Get all smard card readers
 def get_readers():
+    '''
+    获取读卡器名称列表
+    '''
     readers = []
     if init() is False:
         return readers
@@ -66,8 +83,11 @@ def get_readers():
 
 # Open the specified name reader,now
 # you can communicate with APDU command
-# after call this function witch returns true
+# after call this function
 def open_reader(reader):
+    '''
+    打开指定名称的读卡器，与之交互
+    '''
     #print('selected reader: ', readerName)
     name = str.encode(reader)
     _pcsc_lib.OpenReader.restype = c_bool
@@ -75,9 +95,15 @@ def open_reader(reader):
     return result
 
 def close_reader():
+    '''
+    使用完读卡器后，需要关闭资源，防止资源泄露
+    '''
     _pcsc_lib.CloseReader()
 
 def warm_reset():
+    '''
+    热复位
+    '''
     _pcsc_lib.WarmReset.restype = c_bool
     return _pcsc_lib.WarmReset()
 
