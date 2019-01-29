@@ -1,5 +1,6 @@
 from perso_lib.excel import ExcelMode,ExcelOp
 from perso_lib import utils
+from perso_lib.file_handle import FileHandle
 from enum import Enum
 
 class DataType(Enum):
@@ -19,7 +20,16 @@ class DataItem:
         self.data_type = None   #根据1156表分类
         self.used = False   #设置是否已被个人化
 
-class VisaTable:
+class TagPosItem:
+    def __init__(self):
+        self.name = ''
+        self.tag = ''
+        self.convert_ascii = False
+        self.prefix = ''
+        self.suffix = ''
+        self.pos_list = []
+
+class VisaForm:
     def __init__(self,table_name):
         self.excel = ExcelOp(table_name)
         self.data_list = []
@@ -48,7 +58,7 @@ class VisaTable:
             item.value = self.excel.read_cell_value(row,start_col + 5)
             if item.value:
                 item.tag = str(item.tag)
-                print(str(item.data_type) + '||' + item.tag + '||' + item.value)
+                print(str(item.data_type) + '||' + item.tag + '||' + item.name)
                 self.data_list.append(item)
                 if item.tag == '84':
                     item4F = item
@@ -71,9 +81,7 @@ class VisaTable:
                     break
         return self.data_list
             
-
-
-class McTable:
+class McForm:
     def __init__(self,tablename):
         self.excel = ExcelOp(tablename)
         self.data_list = []
@@ -98,10 +106,11 @@ class McTable:
         return utils.str_to_bcd(data)
 
     def print_unused_data(self):
-        print('====================1156 table unused tag list====================')
+        print('====================1156 form unused tag list====================')
         for item in self.data_list:
             if not item.used:
-                print(str(item.data_type) + '||' + item.tag + '||' + item.value + '||' + item.name)
+                #print(str(item.data_type) + '||' + item.tag + '||' + item.value + '||' + item.name)
+                print("%-20s||%-10s||%-60s||%-100s" % (str(item.data_type),item.tag,item.value,item.name))
 
     def get_data(self,tag,data_type,desc=None):
         for item in self.data_list:
@@ -110,7 +119,6 @@ class McTable:
                 return item.value
         return None
                 
-
     def get_data_by_desc(self,desc,data_type):
         '''
         某些MCA数据没有标签一栏，可以通过desc描述找到对应的tag值，
@@ -151,15 +159,15 @@ class McTable:
                     item.value = '80'
             if item.value:
                 item.tag = str(item.tag)
-                print(str(item.data_type) + '||' + item.tag + '||' + item.value)
+                #print(str(item.data_type) + '||' + item.tag + '||' + item.value + '||' + item.name)
+                print("%-20s||%-10s||%-60s||%-100s" % (str(item.data_type),item.tag,item.value,item.name))
                 self.data_list.append(item)
                 if item.tag == '84':
                     item4F = item
                     item4F.tag = '4F'
                     self.data_list.append(item4F)
         return self.data_list
-
-
+    
     # 处理FCI数据
     def get_fci_data(self,sheet_name='FCI (1)',start_row=5,start_col=2):
         if self.excel.open_worksheet(sheet_name):
@@ -171,7 +179,6 @@ class McTable:
             ignore_template_list = ['6F','A5','BF0C']
             self.fci_data = self._get_data(DataType.FCI,start_row,start_col,ignore_template_list)
         return self.fci_data
-
 
     def get_mca_data(self,sheet_name='MCA data objects (1)',start_row=5,start_col=2):
         if self.excel.open_worksheet(sheet_name):
@@ -223,9 +230,8 @@ class McTable:
             self.shared_data = self._get_data(DataType.SHARED,start_row,start_col + 2)
         return self.shared_data
     
-
     def read_all_table_data(self):
-        print('====================1156 table tag list====================')
+        print('====================1156 form tag list====================')
         self.get_fci_data()
         self.get_mca_data()
         self.get_contact_data()
@@ -233,9 +239,62 @@ class McTable:
         self.get_mag_data()
         self.get_shared_data()
 
+class PosForm:
+    def __init__(self,table_name):
+        self.excel = ExcelOp(table_name)
+        self.data_list = []
+
+    def read_form_data(self,sheet_name='pos_sheet',start_row=1,start_col=1):
+        if self.excel.open_worksheet(sheet_name):
+            header = self.excel.read_cell_value(start_row,start_col)
+            if str(header).strip() != 'Name':
+                print('can not get pos sheet header')
+                return None
+            for i in range(start_row + 1,20):
+                item = TagPosItem()
+                item.name = self.excel.read_cell_value(i,start_col)
+                item.tag = self.excel.read_cell_value(i,start_col + 1)
+                if item.tag:
+                    item.tag = str(item.tag)
+                item.convert_ascii = self.excel.read_cell_value(i,start_col + 2)
+                item.prefix = self.excel.read_cell_value(i,start_col + 3)
+                item.suffix = self.excel.read_cell_value(i,start_col + 4)
+                if item.prefix and isinstance(item.prefix,int):
+                    item.prefix = str(item.prefix)
+                if item.suffix and isinstance(item.suffix,int):
+                    item.suffix = str(item.suffix)
+                for col_pos in range(start_col + 5,20):
+                    pos = self.excel.read_cell_value(i,col_pos)
+                    if not pos:
+                        break
+                    item.pos_list.append(str(pos))
+                self.data_list.append(item)
+        return self.data_list
+
+    def get_dki(self):
+        pass
+
+    def get_tag_info(self,tag):
+        for item in self.data_list:
+            if tag == item.tag:
+                return item
+        return None
+
+    # def get_value(self,tag):
+    #     value = ''
+    #     for item in self.data_list:
+    #         if tag == item.tag:
+    #             if item.prefix:
+    #                 value = item.prefix + value
+    #             for index in range(0,len(item.pos_list) - 2,2):
+    #                 start_pos = int(item.pos_list[index])
+    #                 end_pos = int(item.pos_list[index + 1])
+    #                 value += self.emboss_file_handle.read_pos(start_pos,end_pos)
+    #             if item.suffix
+
         
 if __name__ == '__main__':
     import os
     cwd = os.path.dirname(os.path.abspath(__file__))
-    visaTable = VisaTable(cwd + '\\ProjectName_Visa_4DF_Template.xlsx')
-    visaTable.read_data()
+    pos_form = PosForm(cwd + '\\TagPosConfirm.xlsx')
+    pos_form.read_form_data()

@@ -4,8 +4,10 @@ from perso_lib.cps import Cps,Dgi
 from perso_lib import data_parse
 from perso_lib import utils
 from perso_lib.rule import Rule
+from perso_lib import des
+from perso_lib import algorithm
 
-do_not_parse_tlv_list = ['8201','8202','8203','8204','8205','8000','8202','8002','8302']
+do_not_parse_tlv_list = ['8201','8202','8203','8204','8205','8000','9000','8202','8002','8302']
 
 def get_dgi_list(fh):
     dgi_list = []
@@ -64,6 +66,68 @@ def process_rule(rule_file_name,cps):
     rule.wrap_process_remove_dgi()
     rule.wrap_process_remove_tag()
     return rule.cps
+
+def process_rule_eps(rule_file_name,cps):
+    key = '0123456789ABCDEF1111111111111111' #默认解密key
+    rule_handle = RuleFile(rule_file_name)
+    handle8020_node = rule_handle.get_first_node(rule_handle.root_element,'Handle8020')
+    if not handle8020_node:
+        return cps
+    key = rule_handle.get_attribute(handle8020_node,'key')
+    for dgi_item in cps.dgi_list:
+        if dgi_item.dgi == '8020':
+            tag8020 = ''
+            tagA001 = ''
+            value = dgi_item.get_value('8020')
+            dgi_len = len(value)
+            for i in range(0,dgi_len,34):
+                tagA001 += value[i:i + 2] + '010000FF0000'
+                data = des.des3_ecb_decrypt(key,value[i + 2: i + 34])
+                tag8020 += data
+            dgi_item.modify_value('8020',tag8020)
+            dgiA001 = Dgi()
+            dgiA001.dgi = 'A001'
+            dgiA001.add_tag_value('A001',tagA001)
+            cps.add_dgi(dgiA001)
+        if dgi_item.dgi == '9020':
+            tag9020 = ''
+            value = dgi_item.get_value('9020')
+            for i in range(0,len(value),8):
+                tag9020 += value[i + 2:i + 8]
+            dgi_item.modify_value('9020',tag9020)
+    return cps    
+
+def process_rule_A001(rule_file_name,cps):
+    key = '0123456789ABCDEF1111111111111111' #默认解密key
+    rule_handle = RuleFile(rule_file_name)
+    handleA001_node = rule_handle.get_first_node(rule_handle.root_element,'HandleA001')
+    if not handleA001_node:
+        return cps
+    key = rule_handle.get_attribute(handleA001_node,'key')
+    for dgi_item in cps.dgi_list:
+        if dgi_item.dgi == 'A001':
+            tag8020 = ''
+            tag9020 = ''
+            tagA001 = ''
+            value = dgi_item.get_value('A001')
+            dgi_len = len(value)
+            for i in range(0,dgi_len,34):
+                tagA001 += value[i:i + 2] + '010000FF0000'
+                data = des.des3_ecb_decrypt(key,value[i + 2: i + 34])
+                tag8020 += data
+                tag9020 += algorithm.gen_kcv(data)
+            dgi_item.modify_value('A001',tagA001)
+            dgi8020 = Dgi()
+            dgi8020.dgi = '8020'
+            dgi8020.add_tag_value('8020',tag8020)
+            dgi9020 = Dgi()
+            dgi9020.dgi = '9020'
+            dgi9020.add_tag_value('8020',tag9020)
+            cps.add_dgi(dgi8020)
+            cps.add_dgi(dgi9020)
+            break
+    return cps
+
     
 def process_dp(dp_file,rule_file):
     fh = FileHandle(dp_file,'rb+')
@@ -115,6 +179,8 @@ def process_dp(dp_file,rule_file):
             cps.add_dgi(dgi)
         if rule_file is not None:
             process_rule(rule_file,cps)
+            process_rule_A001(rule_file,cps)
+            process_rule_eps(rule_file,cps)
         cps_list.append(cps)
     return cps_list
 

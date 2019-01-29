@@ -6,12 +6,15 @@ from perso_lib import sm
 from perso_lib import utils
 from perso_lib.kms import Kms
 from perso_lib.xml_parse import XmlParser,XmlMode
-from perso_lib.tempalte_form import McTable,DataItem,DataType
+from perso_lib.dp_form import McForm,DataItem,DataType
 from perso_lib.word import Docx
+from perso_lib.file_handle import FileHandle
 from xml.dom import Node
 import importlib
 import os
 import shutil
+
+card_bin = '' #由于生成的模板无法获取具体的bin号，在此处需要手动设置
 
 class GenDpRequirementDoc:
     def __init__(self,config_file,doc_file):
@@ -28,11 +31,6 @@ class GenDpRequirementDoc:
         for col in range(4):
             cell = self.doc.get_cell(new_table,0,col)
             self.doc.set_cell_property(cell,'FFCA00')
-        # for row in range(1,3):
-        #     for col in range(4):
-        #         cell = self.doc.get_cell(new_table,row,col)
-        #         self.doc.set_cell_text(cell,'AA')
-        # self.doc.save_as('demo.docx')
         tag_nodes = self.xml_handle.get_child_nodes(dgi_node)
         for tag_node in tag_nodes:
             tag_name = self.xml_handle.get_attribute(tag_node,'name')
@@ -128,12 +126,35 @@ class GenVisaConfig:
         new_xml_handle.save(char_set)
         return None
 
+class EmbossItem:
+    '''
+    该类用于表示需要从emboss file文件中取值的tag结构
+    tag 需要从文件中获取值的tag
+    convert_to_ascii 是否需要转换为ASCII码
+    value 一种描述取值方式的字符串,例如 "[10,20]001[12,33]"
+    表示从emboss file中取位置10到20的字符串 + 固定字符串001 + 从emboss file取位置12到33的字符串
+    '''
+    def __init__(self,tag,convert_to_ascii,replace_equal_by_D,value):
+        self.tag = tag
+        self.convert_to_ascii = convert_to_ascii
+        self.replace_equal_by_D = replace_equal_by_D
+        self.value = value
+
 class GenMcDpConfig:
-    def __init__(self,template_config,mc_table_obj):
+    def __init__(self,template_xml,mc_table_obj,emboss_items):
         self.mc_table_obj = mc_table_obj
-        self.template_config = template_config
-        self.template_handle = XmlParser(template_config)
+        self.template_xml = template_xml
+        self.template_handle = XmlParser(template_xml)
+        self.emboss_items = emboss_items
         self.not_found_data = []
+
+    def _get_emboss_item(self,tag):
+        if self.emboss_items:
+            for emboss_item in self.emboss_items:
+                if emboss_item.tag == tag:
+                    return emboss_item
+        return None
+
 
     def _get_data(self,tag,source_type,desc=None):
         data_type = None
@@ -173,10 +194,12 @@ class GenMcDpConfig:
         fpath,fname = os.path.split(dp_config)    #分离文件名和路径
         if not os.path.exists(fpath):
             os.makedirs(fpath)
-        shutil.copyfile(self.template_config,dp_config)      #复制文件
+        shutil.copyfile(self.template_xml,dp_config)      #复制文件
         new_xml_handle = XmlParser(dp_config,XmlMode.READ)
         tag_nodes = new_xml_handle.get_nodes(new_xml_handle.root_element,'Tag')
         comm_node = new_xml_handle.get_first_node(new_xml_handle.root_element,'Common')
+        global card_bin
+        new_xml_handle.set_attribute(comm_node,'bin',card_bin)
         for tag_node in tag_nodes:
             attr_type = new_xml_handle.get_attribute(tag_node,'type')
             attr_tag = new_xml_handle.get_attribute(tag_node,'name')
@@ -206,6 +229,18 @@ class GenMcDpConfig:
                             new_xml_handle.set_attribute(comm_node,'rsa',data)
                     else:
                         self.not_found_data.append((attr_tag,attr_source,attr_desc))
+            elif attr_type == 'file':
+                item = self._get_emboss_item(attr_tag)
+                if item:
+                    new_xml_handle.remove_attribute(tag_node,'comment')
+                    new_xml_handle.remove_attribute(tag_node,'format')
+                    new_xml_handle.set_attribute(tag_node,'value',item.value)
+                    if item.convert_to_ascii:
+                        new_xml_handle.set_attribute(tag_node,'convert_ascii','true')
+                    if item.replace_equal_by_D:
+                        new_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
+                    new_xml_handle.set_attribute(tag_node,'format',attr_format)
+                    new_xml_handle.set_attribute(tag_node,'comment',attr_desc)
             else:
                 data = self._get_data(attr_tag,attr_source,attr_desc)
                 if not data:
@@ -214,18 +249,42 @@ class GenMcDpConfig:
         new_xml_handle.save(char_set)
         return None
 
+
 class MockCps:
-    def __init__(self,xml_file,process_dp_file_module):
+    '''
+    根据xml配置文件及emboss file模拟生成CPS格式的测试卡数据
+    '''
+    def __init__(self,xml_file,emboss_file,process_emboss_file_module=None):
         self.cps = Cps()
         self.cps.dp_file_path = xml_file
         self.xml_handle = XmlParser(xml_file)
-        self.process_dp_file_module = process_dp_file_module
+        self.process_emboss_file_module = process_emboss_file_module
+        if emboss_file:
+            self.emboss_file_handle = FileHandle(emboss_file,'r+')
 
     def _get_value(self,tag,data,vlaue_format):
         if vlaue_format == 'TLV':
             return utils.assemble_tlv(tag,data)
         else:
             return data
+
+    def _parse_pos_value(self,value):
+        data = ''
+        index = 0
+        while index < len(value):
+            start_index = str(value).find('[',index)
+            if start_index == -1:
+                data += value[index:]
+                return data
+            else:
+                data += value[index:start_index]
+            end_index = str(value).find(']',start_index)
+            pos_str = value[start_index + 1:end_index]
+            start_pos = int(pos_str.split(',')[0])
+            end_pos = int(pos_str.split(',')[1])
+            data += self.emboss_file_handle.read_pos(start_pos,end_pos)
+            index = end_index + 1
+        return data
 
     def _parse_tag_value(self,tag_node,kms=None):
         attrs = self.xml_handle.get_attributes(tag_node)
@@ -244,11 +303,27 @@ class MockCps:
                     tmp = tmp + '_' + attrs['sig_id']
                 value = self._get_value(tag,kms.get_value(tmp),value_format)
         elif value_type == 'file':
-            mod_obj = importlib.import_module(self.process_dp_file_module)
-            if mod_obj:
-                if hasattr(mod_obj,'process_tag' + tag):
-                    func = getattr(mod_obj,'process_tag' + tag)
-                    value = self._get_value(tag,func(),value_format)
+            value = self.xml_handle.get_attribute(tag_node,'value')
+            if value:
+                value = self._parse_pos_value(value)
+                replaceD = self.xml_handle.get_attribute(tag_node,'replace_equal_by_D')
+                if replaceD:
+                    value = value.replace('=','D')
+                convert_ascii = self.xml_handle.get_attribute(tag_node,'convert_ascii')
+                if convert_ascii and convert_ascii.lower() == 'true':
+                    value = utils.str_to_bcd(value)
+                if len(value) % 2 != 0:
+                    value += 'F'
+                value = self._get_value(tag,value,value_format)
+            else:
+                if self.process_emboss_file_module:
+                    mod_obj = importlib.import_module(self.process_emboss_file_module)
+                    if mod_obj:
+                        if hasattr(mod_obj,'process_tag' + tag):
+                            func = getattr(mod_obj,'process_tag' + tag)
+                            value = self._get_value(tag,func(),value_format)
+                        else:
+                            print('can not process tag' + tag)
                 else:
                     print('can not process tag' + tag)
         return tag,value
@@ -324,6 +399,11 @@ class MockCps:
                 dgi.append_tag_value(dgi.dgi,template_value)
             else:
                 print('unrecognize node' + child_node.nodeName)
+        if dgi.dgi == '0101' and dgi.is_existed('56') and dgi.is_existed('9F6B'):
+            # 说明是MC应用，且支持MSD,这时需要生成对应的DC,DD
+            tag56 = dgi.get_value('56')[4:] # 偷懒，不需要解析TLV
+            tag9F6B = dgi.get_value('9F6B')[6:]
+            kms.gen_mc_cvc3(tag56,tag9F6B)
         return dgi
 
     def _process_pse(self,pse_node):
@@ -361,14 +441,5 @@ class MockCps:
             kms.close()
         return self.cps
 
-
 if __name__ == '__main__':
     import os
-    cwd = os.path.dirname(os.path.abspath(__file__))
-    gen_doc_obj = GenDpRequirementDoc(cwd + '\\mc_config.xml',cwd + '\\DP.docx')
-    gen_doc_obj.gen_dp_doc()
-    # mc_table_obj = McTable(cwd + '\\1156.xlsm')
-    # mc_table_obj.read_all_table_data()
-    # dp_config = GenMcDpConfig(cwd + '\\mc_THD88_双界面_without_MSD.xml',mc_table_obj)
-    # dp_config.save(cwd + '\\mc_THD88_双界面_without_MSD_copy.xml')
-    # mc_table_obj.print_unused_data()

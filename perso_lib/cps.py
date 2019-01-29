@@ -7,6 +7,11 @@ class Dgi:
         self.dgi = ''
         self.tag_value_dict = dict()
 
+    def is_existed(self,tag):
+        if tag in self.tag_value_dict.keys():
+            return True
+        return False
+
     def is_empty(self):
         if len(self.tag_value_dict) == 0:
             return True

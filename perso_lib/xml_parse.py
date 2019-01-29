@@ -157,11 +157,18 @@ class XmlParser:
     def set_attribute(self,node,name,value):
         node.setAttribute(name,value)
 
+    def get_text(self,node):
+        if node:
+            for child_node in node.childNodes:
+                if child_node.nodeName == '#text':
+                    return child_node.data
+        return None
+
 
 
 if __name__ == '__main__':
-    xml_parse = XmlParser('install.xml')
-    nodes = xml_parse.get_nodes(xml_parse.root_element,'App')
-    node = xml_parse.get_first_node(xml_parse.root_element,'App')
-    attr = xml_parse.get_attribute(node,'type')
-    xml_parse.get_nodes(xml_parse.root_element,"Encrypt")
+    xml_parse = XmlParser('D:\\xml_test.xml')
+    book_node = xml_parse.get_first_node(xml_parse.root_element,'book')
+    name_node = xml_parse.get_first_node(book_node,'name')
+    value = xml_parse.get_text(name_node)
+    exit(1)

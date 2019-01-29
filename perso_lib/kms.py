@@ -1,4 +1,5 @@
 from perso_lib import algorithm
+from perso_lib import des
 
 # 此类用于自动生成个人化脱机数据认证相关的数据，每一次只生成一个发卡行
 # 公钥证书，可以通过多次调用gen_new_icc_cert生成多个IC卡公钥证书
@@ -18,7 +19,7 @@ class Kms():
         self.exp = '03'
         self.expiry_date = '1250'    #失效日期2050年12月
 
-    def init(self,issuer_bin,rsa_len=1024):
+    def init(self,issuer_bin,rsa_len=1152):
         if not self.is_init:
             self.issuer_bin = issuer_bin
             self.tags['9F32'] = self.exp
@@ -63,5 +64,10 @@ class Kms():
         self.tags[key93] = tag93
         return tag93
 
+    def gen_mc_cvc3(self,tag56,tag9F6B):
+        self.tags['DC'] = des.des3_mac(self.kdcvc3,tag56)[-4:]
+        self.tags['DD'] = des.des3_mac(self.kdcvc3,tag9F6B)[-4:]
+        return self.tags['DC'] + self.tags['DD']
+        
     def get_value(self,tag):
         return self.tags.get(tag,'')

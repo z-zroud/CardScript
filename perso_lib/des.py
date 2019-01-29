@@ -62,6 +62,15 @@ def des3_ecb_encrypt(key,data):
 	_des_lib.Des3_ECB(output,bytes_key,bytes_data,data_len)
 	return bytes.decode(output.value)
 
+
+def des3_cbc_encrypt(key,data):
+	data_len = len(data)
+	output = create_string_buffer(data_len + 1)
+	bytes_key = str.encode(key)
+	bytes_data = str.encode(data)
+	_des_lib.Des3_CBC(output,bytes_key,bytes_data,data_len)
+	return bytes.decode(output.value)	
+
 # algorithm description:
 # step1. initData xor block1  + key(L) ==> result1
 # step2. result1 xor next block + key(L) ==> result2

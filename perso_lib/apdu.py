@@ -54,6 +54,20 @@ def store_data(data,data_type,reset=False):
     return pcsc.send_raw(cmd)
 
 
+def store_data_mac(data,data_type,dek_session_key,mac_key,reset=False):
+    global store_count
+    if reset:
+        store_count = 0
+    cmd_header = "84E2" + data_type
+    cmd_header += utils.int_to_hex_str(store_count)
+    data = des.des3_cbc_encrypt(dek_session_key,data)
+    cmd = cmd_header + utils.get_strlen(data) + data
+    store_count += 1
+    if data_type == "80":
+        store_count = 0
+    return pcsc.send_raw(cmd)
+
+
 
 def init_update(host_challenge, key_verson='00', key_id='00'):
     cmd_header = '8050' + key_verson + key_id
