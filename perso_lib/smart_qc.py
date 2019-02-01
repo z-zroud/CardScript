@@ -1,5 +1,4 @@
 from perso_lib.xml_parse import XmlParser,XmlMode
-from perso_lib import data_parse
 from perso_lib import utils
 
 no_contain_list = ['9F46','93','90','92','9F48','9F36','9F6C','8F','5F24','5F25']
@@ -130,7 +129,7 @@ class SmartQC_UICS:
 
     def _get_aid(self):
         dgi = self.cps.get_dgi('PSE')
-        dgi_0101_tags = data_parse.parse_tlv(dgi.get_value('0101'))
+        dgi_0101_tags = utils.parse_tlv(dgi.get_value('0101'))
         for tag in dgi_0101_tags:
             if tag.tag == '4F':
                 return tag.value
@@ -138,8 +137,8 @@ class SmartQC_UICS:
     def _get_pse_dgi_list(self):
         tlv_list = []
         dgi = self.cps.get_dgi('PSE')
-        dgi_0101_tags = data_parse.parse_tlv(dgi.get_value('0101'))
-        dgi_9102_tags = data_parse.parse_tlv(dgi.get_value('9102'))
+        dgi_0101_tags = utils.parse_tlv(dgi.get_value('0101'))
+        dgi_9102_tags = utils.parse_tlv(dgi.get_value('9102'))
         for tag in dgi_0101_tags:
             if tag.is_template is False and tag.len > 0:
                 tlv_list.append(tag)
@@ -151,7 +150,7 @@ class SmartQC_UICS:
     def _get_ppse_dgi_list(self):
         tlv_list = []
         dgi = self.cps.get_dgi('PPSE')
-        dgi_9102_tags = data_parse.parse_tlv(dgi.get_value('9102'))
+        dgi_9102_tags = utils.parse_tlv(dgi.get_value('9102'))
         for tag in dgi_9102_tags:
             if tag.is_template is False and tag.len > 0:
                 tlv_list.append(tag)
@@ -160,8 +159,8 @@ class SmartQC_UICS:
     def _get_dgi_list(self,dgi_of_afl):
         dgi_list = []
         dgi = self.cps.get_dgi(dgi_of_afl)
-        tag94 = data_parse.parse_tlv(dgi.get_value('94'))
-        afls = data_parse.parse_afl(tag94[0].value)
+        tag94 = utils.parse_tlv(dgi.get_value('94'))
+        afls = utils.parse_afl(tag94[0].value)
         for afl in afls:
             sfi = utils.int_to_hex_str(afl.sfi)
             record = utils.int_to_hex_str(afl.record_no)
@@ -174,7 +173,7 @@ class SmartQC_UICS:
         if dgi_tags is None:
             return tlv_list
         for _,value in dgi_tags.tag_value_dict.items():
-            tags = data_parse.parse_tlv(value)
+            tags = utils.parse_tlv(value)
             for tag in tags:
                 if tag.tag not in no_contain_list and tag.is_template is False:
                     tlv_list.append(tag)

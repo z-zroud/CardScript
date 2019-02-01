@@ -1,10 +1,7 @@
 from perso_lib.file_handle import FileHandle
-from perso_lib.rule_file import RuleFile
 from perso_lib.cps import Cps,Dgi
-from perso_lib import data_parse
 from perso_lib import utils
-from perso_lib.rule import Rule
-from perso_lib import des
+from perso_lib.rule import Rule,RuleXml
 from perso_lib import algorithm
 
 do_not_parse_tlv_list = ['8201','8202','8203','8204','8205','8000','9000','8202','8002','8302']
@@ -58,7 +55,7 @@ def process_pse_and_ppse(fh,dgi_name,has_template):
     return dgi
 
 def process_rule(rule_file_name,cps):    
-    rule_handle = RuleFile(rule_file_name)
+    rule_handle = RuleXml(rule_file_name)
     rule = Rule(cps,rule_handle)
     rule.wrap_process_decrypt()
     rule.wrap_process_dgi_map()
@@ -69,7 +66,7 @@ def process_rule(rule_file_name,cps):
 
 def process_rule_eps(rule_file_name,cps):
     key = '0123456789ABCDEF1111111111111111' #默认解密key
-    rule_handle = RuleFile(rule_file_name)
+    rule_handle = RuleXml(rule_file_name)
     handle8020_node = rule_handle.get_first_node(rule_handle.root_element,'Handle8020')
     if not handle8020_node:
         return cps
@@ -82,7 +79,7 @@ def process_rule_eps(rule_file_name,cps):
             dgi_len = len(value)
             for i in range(0,dgi_len,34):
                 tagA001 += value[i:i + 2] + '010000FF0000'
-                data = des.des3_ecb_decrypt(key,value[i + 2: i + 34])
+                data = algorithm.des3_ecb_decrypt(key,value[i + 2: i + 34])
                 tag8020 += data
             dgi_item.modify_value('8020',tag8020)
             dgiA001 = Dgi()
@@ -99,7 +96,7 @@ def process_rule_eps(rule_file_name,cps):
 
 def process_rule_A001(rule_file_name,cps):
     key = '0123456789ABCDEF1111111111111111' #默认解密key
-    rule_handle = RuleFile(rule_file_name)
+    rule_handle = RuleXml(rule_file_name)
     handleA001_node = rule_handle.get_first_node(rule_handle.root_element,'HandleA001')
     if not handleA001_node:
         return cps
@@ -113,7 +110,7 @@ def process_rule_A001(rule_file_name,cps):
             dgi_len = len(value)
             for i in range(0,dgi_len,34):
                 tagA001 += value[i:i + 2] + '010000FF0000'
-                data = des.des3_ecb_decrypt(key,value[i + 2: i + 34])
+                data = algorithm.des3_ecb_decrypt(key,value[i + 2: i + 34])
                 tag8020 += data
                 tag9020 += algorithm.gen_kcv(data)
             dgi_item.modify_value('A001',tagA001)
@@ -165,8 +162,8 @@ def process_dp(dp_file,rule_file):
                     return
                 next_len = get_next_len(fh)
             dgi_data = fh.read_binary(fh.current_offset,next_len)
-            if n_dgi_seq <= 0x0B00 or (dgi_seq not in do_not_parse_tlv_list and data_parse.is_tlv(dgi_data)):
-                tlvs = data_parse.parse_tlv(dgi_data)
+            if n_dgi_seq <= 0x0B00 or (dgi_seq not in do_not_parse_tlv_list and utils.is_tlv(dgi_data)):
+                tlvs = utils.parse_tlv(dgi_data)
                 if len(tlvs) > 0 and tlvs[0].is_template is True:
                     value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
                     dgi.add_tag_value(dgi_seq,value)

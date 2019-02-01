@@ -1,12 +1,7 @@
 import os
 import sys
 from ctypes import *
-
-_dll_name = 'Tool.dll'
-_dll_path = os.path.dirname(os.path.abspath(__file__))
-_dir_list = _dll_path.split(os.path.sep)
-_dll_path = os.path.sep.join(_dir_list) + os.path.sep + "dll" + os.path.sep + _dll_name
-_tool_lib = CDLL(_dll_path)
+from perso_lib import data_parse_lib,tool_lib
 
 # convert int value to hex string type
 # eg. 48 => '30'
@@ -64,14 +59,6 @@ def str_to_bcd(s):
         bcd += int_to_hex_str(asc)
     return bcd
 
-# def str_to_bcd(s):
-#     bcd_len = 2048
-#     bcd = create_string_buffer(bcd_len)
-#     bytes_s = str.encode(s)
-#     bytes_s_len = len(bytes_s)
-#     _tool_lib.StrToBcd(bytes_s,bytes_s_len,bcd,bcd_len)
-#     return bytes.decode(bcd.value)
-
 def is_hex_str(hex_str):
     str_list = '0123456789ABCDEF'
     for c in hex_str:
@@ -82,7 +69,7 @@ def is_hex_str(hex_str):
 def base64_to_bcd(base64):
     bcd = create_string_buffer(1024 * 2)
     bytes_base64 = str.encode(base64)
-    _tool_lib.Base64ToBcd(bytes_base64,bcd,1024 * 2)
+    tool_lib.Base64ToBcd(bytes_base64,bcd,1024 * 2)
     return bytes.decode(bcd.value)
 
 def assemble_tlv(tag,data):
@@ -92,6 +79,157 @@ def assemble_tlv(tag,data):
         return tag + '81' + get_strlen(data) + data
     else:
         return tag + get_strlen(data) + data
+
+class _TL(Structure):
+    _fields_ = [("tag",c_char_p),("len",c_uint)]
+
+class TL:
+    def __init__(self):
+        self.tag = ''
+        self.len = 0
+
+class _AFL(Structure):
+    _fields_ = [("sfi",c_int),
+                ("record_no",c_int),
+                ("is_static_sign_data",c_bool)
+        ]
+
+class AFL:
+    def __init__(self):
+        self.sfi = 0
+        self.record_no = 0
+        self.is_static_sign_data = False
+
+# this comment shows how to construct self-embed construct
+# base on C/C++ strut
+# # # # # # # class TLVEntity(Structure):
+# # # # # # #     pass
+
+# # # # # # # TLVEntity._fields_ = [("tag",c_char_p),
+# # # # # # #                 ("length",c_char_p),
+# # # # # # #                 ("value",c_char_p),
+# # # # # # #                 ("tag_size",c_uint),
+# # # # # # #                 ("len_size",c_uint),
+# # # # # # #                 ("is_template",c_bool),
+# # # # # # #                 ("subTLVEntity",POINTER(TLVEntity)),
+# # # # # # #                 ("subTLVnum",c_uint)
+# # # # # # #         ]
+
+class _TLV(Structure):
+    _fields_ = [("is_template",c_bool),
+                ("level",c_int),
+                ("tag",c_char_p),
+                ("len",c_uint),
+                ("value",c_char_p)
+        ]
+
+class TLV:
+    def __init__(self):
+        self.is_template = False
+        self.level = 0
+        self.tag = ''
+        self.len = 0
+        self.value = ''
+
+class TV:
+    def __init__(self,tag,value):
+        self.tag = tag
+        self.value = value
+
+# parse tl struct 
+def parse_tl(buffer):
+    tls = []
+    bytes_buffer = str.encode(buffer)
+    tl_arr = _TL * 30
+    _tls = tl_arr()
+    tls_count = c_int(30)
+    data_parse_lib.ParseTL(bytes_buffer,_tls,byref(tls_count))
+    for index in range(tls_count.value):
+        tl = TL()
+        tl.tag = bytes.decode(_tls[index].tag)
+        tl.len = _tls[index].len
+        tls.append(tl)
+        #print("TL tag=",tl.tag," len=",tl.len)
+    return tls
+
+# parse afl struct
+def parse_afl(buffer):
+    afls = []
+    bytes_buffer = str.encode(buffer)
+    afl_arr = _AFL * 30
+    _afls = afl_arr()
+    afl_count = c_int(30)
+    data_parse_lib.ParseAFL(bytes_buffer,_afls,byref(afl_count))
+    for index in range(afl_count.value):
+        afl = AFL()
+        afl.is_static_sign_data = _afls[index].is_static_sign_data
+        afl.record_no = _afls[index].record_no
+        afl.sfi = _afls[index].sfi
+        afls.append(afl)
+    return afls
+
+def remove_dgi(buffer,dgi):
+    if len(buffer) < 4:
+        return buffer
+    buffer_dgi = buffer[0:len(dgi)]
+    if buffer_dgi != dgi:
+        return buffer
+    else:
+        buffer = buffer[len(dgi) : len(buffer)]
+        if buffer[0:2] == '81':
+            return buffer[4:len(buffer)]
+        elif buffer[0:2] == '82':
+            return buffer[6:len(buffer)]
+        else:
+            return buffer[2:len(buffer)]
+
+def remove_template70(buffer):
+    if len(buffer) < 4 or buffer[0:2] != '70':
+        return buffer
+    buffer = buffer[2:len(buffer)]
+    if buffer[0:2] == '81':
+        return buffer[4:len(buffer)]
+    elif buffer[0:2] == '82':
+        return buffer[6:len(buffer)]
+    else:
+        return buffer[2:len(buffer)]
+
+# 尽管IsTLV返回的是bool类型，但它不一定返回的是0或者1
+# 有可能返回其他整形，但若返回的是false,那ret肯定为0
+def is_tlv(buffer):
+    buffer_len = len(buffer)
+    bytes_buffer = str.encode(buffer)
+    data_parse_lib.IsTLV.restype = c_bool
+    ret = data_parse_lib.IsTLV(bytes_buffer,buffer_len)
+    # print(ret)
+    # print('   ' + buffer)
+    return False if ret == 0 else True
+
+def is_rsa(dgi):
+    dgi_list = ['8201','8202','8203','8204','8205']
+    if dgi in dgi_list:
+        return True
+    return False
+
+def parse_tlv(buffer):
+    tlvs = []
+    bytes_buffer = str.encode(buffer)
+    tlv_arr = _TLV * 30
+    _tlvs = tlv_arr()
+    tlv_count = c_uint(30)
+    data_parse_lib.ParseTLV.restype = c_bool
+    ret = data_parse_lib.ParseTLV(bytes_buffer,_tlvs,byref(tlv_count))
+    if ret is False:
+        return tlvs
+    for index in range(tlv_count.value):
+        _tlv = TLV()
+        _tlv.is_template = _tlvs[index].is_template
+        _tlv.len = _tlvs[index].len
+        _tlv.level = _tlvs[index].level
+        _tlv.tag = bytes.decode(_tlvs[index].tag)
+        _tlv.value = bytes.decode(_tlvs[index].value)
+        tlvs.append(_tlv)
+    return tlvs
 
 if __name__ == '__main__':
     print(str_to_bcd('000PRN'))

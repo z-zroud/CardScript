@@ -1,11 +1,9 @@
-from perso_lib.file_handle import FileHandle
-from perso_lib.rule_file import RuleFile
+from perso_lib.rule import Rule,RuleXml
 from perso_lib.xml_parse import XmlParser
+from perso_lib.file_handle import FileHandle
 from perso_lib.cps import Cps,Dgi
-from perso_lib import data_parse
 from perso_lib import utils
-from perso_lib.rule import Rule
-from perso_lib import des
+from perso_lib import algorithm
 
 class GoldpacDgi:
     '''
@@ -130,7 +128,7 @@ def get_aid_list_info(xml):
     return _aid_list_info
 
 def process_jetco_special_dgi(xml,goldpac_dgi_list,cps):
-    rule_file_handle = RuleFile(xml.file_name)
+    rule_file_handle = RuleXml(xml.file_name)
     add_tag_nodes = xml.get_nodes(xml.root_element,'AddTag')
     for node in add_tag_nodes:
         attrs = xml.get_attributes(node)
@@ -182,10 +180,10 @@ def parse_pse_and_ppse_data(xml,sddf_tag,goldpac_dgi_list):
     for item in goldpac_dgi_list:
         if item.goldpac_dgi == sddf_tag:
             sddf_data = item.data
-    data = data_parse.remove_dgi(sddf_data,node_dgi)
+    data = utils.remove_dgi(sddf_data,node_dgi)
     need_remove_template = is_need_delete_template(node_dgi)
     if need_remove_template:
-        data = data_parse.remove_template70(data)
+        data = utils.remove_template70(data)
     return node_dgi,data
 
 def parse_sddf_data(xml, sddf_tag, goldpac_dgi_list=[]):
@@ -209,13 +207,13 @@ def parse_sddf_data(xml, sddf_tag, goldpac_dgi_list=[]):
     else:
         dgi.dgi = node_dgi           
     if value_format == 'TLV':
-        data = data_parse.remove_dgi(sddf_data,node_dgi)
+        data = utils.remove_dgi(sddf_data,node_dgi)
         if need_remove_template:
-            data = data_parse.remove_template70(data)
-        if utils.str_to_int(node_dgi) > 0xA000 or not data_parse.is_tlv(data):
+            data = utils.remove_template70(data)
+        if utils.str_to_int(node_dgi) > 0xA000 or not utils.is_tlv(data):
             dgi.add_tag_value(dgi.dgi,data)
         else:
-            tlvs = data_parse.parse_tlv(data)
+            tlvs = utils.parse_tlv(data)
             if len(tlvs) > 0 and tlvs[0].is_template is True:
                 value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
                 dgi.add_tag_value(dgi.dgi,value)
@@ -250,7 +248,7 @@ def get_rsa_dgi_value(data, dgi_len):
         return data[0:dgi_len]
 
 def split_rsa(xml,goldpac_dgi_list,is_second_app):
-    rule_file_handle = RuleFile(xml.file_name)
+    rule_file_handle = RuleXml(xml.file_name)
     _,key = rule_file_handle.get_decrypted_attribute('RSA')
     sddf_tag = ''
     _,sddf_tag,_ = rule_file_handle.get_tag_link_attribute('EMVDataName','Icc_KeyPair')
@@ -261,7 +259,7 @@ def split_rsa(xml,goldpac_dgi_list,is_second_app):
     encrypted_data = get_goldpac_data(goldpac_dgi_list,sddf_tag,is_second_app)
     if encrypted_data is None:
         print('无法获取RSA数据[tag' + sddf_tag + ']缺少数据')
-    decrypted_data = des.des3_ecb_decrypt(key,encrypted_data)
+    decrypted_data = algorithm.des3_ecb_decrypt(key,encrypted_data)
     if len(decrypted_data) <= 2 or decrypted_data[0:2] != '30':
         print('RSA解密失败')
         return None
@@ -309,9 +307,9 @@ def parse_A006(xml,goldpac_dgi_list):
     dgi = Dgi()
     dgi.dgi = 'A006'
     data = get_goldpac_data(goldpac_dgi_list,sddf_A006,False)
-    rule_file_handle = RuleFile(xml.file_name)
+    rule_file_handle = RuleXml(xml.file_name)
     _,key = rule_file_handle.get_decrypted_attribute('A006')    #顺带解密
-    data = des.des3_ecb_decrypt(key,data)
+    data = algorithm.des3_ecb_decrypt(key,data)
     dgi.add_tag_value(dgi.dgi,data)
     return dgi
 
@@ -327,9 +325,9 @@ def parse_8000(xml,goldpac_dgi_list,is_second_app):
     data = get_goldpac_data(goldpac_dgi_list,sddf_8000_ac,is_second_app)
     data += get_goldpac_data(goldpac_dgi_list,sddf_8000_mac,is_second_app)
     data += get_goldpac_data(goldpac_dgi_list,sddf_8000_enc,is_second_app)
-    rule_file_handle = RuleFile(xml.file_name)
+    rule_file_handle = RuleXml(xml.file_name)
     _,key = rule_file_handle.get_decrypted_attribute('8000')    #顺带解密
-    data = des.des3_ecb_decrypt(key,data)
+    data = algorithm.des3_ecb_decrypt(key,data)
     dgi.add_tag_value(dgi.dgi,data)
     return dgi
 

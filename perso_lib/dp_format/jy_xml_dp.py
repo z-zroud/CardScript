@@ -1,21 +1,19 @@
 from perso_lib.xml_parse import XmlParser
 from perso_lib import utils
-from perso_lib import data_parse
 from perso_lib.cps import Dgi,Cps
-from perso_lib.rule_file import RuleFile
-from perso_lib.rule import Rule
+from perso_lib.rule import Rule,RuleXml
 
 def _parse_tlv(dgi_name,data):
     dgi = Dgi()
-    data = data_parse.remove_dgi(data,dgi_name)
+    data = utils.remove_dgi(data,dgi_name)
     int_dgi = utils.str_to_int(dgi_name)
     if int_dgi < 0x0B01:
         if data[0:2] != '70':
             print('数据有误，小于0B01的DGI应包含70模板')
             return None
-        data = data_parse.remove_template70(data)
-    if not data_parse.is_rsa(dgi_name) and data_parse.is_tlv(data):
-        tlvs = data_parse.parse_tlv(data)
+        data = utils.remove_template70(data)
+    if not utils.is_rsa(dgi_name) and utils.is_tlv(data):
+        tlvs = utils.parse_tlv(data)
         if len(tlvs) > 0 and tlvs[0].is_template is True:
             value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
             dgi.add_tag_value(dgi_name,value)
@@ -31,30 +29,30 @@ def _process_pse_and_ppse(dgi_name,data):
     dgi = Dgi()
     if dgi_name == 'Store_PSE_1':
         dgi.dgi = 'PSE'
-        data = data_parse.remove_dgi(data,'0101')
-        data = data_parse.remove_template70(data)
+        data = utils.remove_dgi(data,'0101')
+        data = utils.remove_template70(data)
         dgi.add_tag_value('0101',data)
     elif dgi_name == 'Store_PSE_2':
         dgi.dgi = 'PSE'
-        data = data_parse.remove_dgi(data,'9102')
+        data = utils.remove_dgi(data,'9102')
         value = dgi.assemble_tlv('A5','880101' + data)
         dgi.add_tag_value('9102',value)
     elif dgi_name == 'Store_PPSE':
         dgi.dgi = 'PPSE'
         # value = dgi.assemble_tlv('BF0C',data)
         # value = dgi.assemble_tlv('A5',value)
-        data = data_parse.remove_dgi(data,'9102')
+        data = utils.remove_dgi(data,'9102')
         dgi.add_tag_value('9102',data)
     return dgi
 
 def _pre_process_rule(rule_file_name,cps):
-    rule_handle = RuleFile(rule_file_name)
+    rule_handle = RuleXml(rule_file_name)
     rule = Rule(cps,rule_handle)
     rule.wrap_process_decrypt()   
     return rule.cps
 
 def _process_rule(rule_file_name,cps):    
-    rule_handle = RuleFile(rule_file_name)
+    rule_handle = RuleXml(rule_file_name)
     rule = Rule(cps,rule_handle)
     rule.wrap_process_dgi_map()
     rule.wrap_process_exchange()

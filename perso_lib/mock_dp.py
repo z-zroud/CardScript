@@ -1,8 +1,7 @@
 # 该仅对通用的规则进行转换，对于DP中特殊的处理
 # 请在DP处理模块中进行处理
 from perso_lib.cps import Cps,Dgi
-from perso_lib import des
-from perso_lib import sm
+from perso_lib import algorithm
 from perso_lib import utils
 from perso_lib.kms import Kms
 from perso_lib.xml_parse import XmlParser,XmlMode
@@ -248,7 +247,6 @@ class GenMcDpConfig:
             new_xml_handle.remove_attribute(tag_node,'source')
         new_xml_handle.save(char_set)
         return None
-
 
 class MockCps:
     '''

@@ -1,7 +1,7 @@
 # This module generate various of sub key and session key.
 # eg. kmc sub key and session key
 # eg. udk sub key and session key
-from perso_lib import des
+from perso_lib import algorithm
 from enum import Enum
 
 __all__ = ['DIV_METHOD','SECURE_LEVEL','gen_kmc_sub_key','gen_dek_session_key',
@@ -61,9 +61,9 @@ def gen_session_key(kmc,div_method,host_challenge,initialize_update_data):
 		left_div_data = card_challenge[8:16] + host_challenge[0:8]
 		right_div_data = card_challenge[0:8] + host_challenge[8:16]
 		div_data = left_div_data + right_div_data
-		dek_session_key = des.des3_ecb_encrypt(dek_key, div_data)
-		mac_session_key = des.des3_ecb_encrypt(mac_key, div_data)
-		enc_session_key = des.des3_ecb_encrypt(enc_key, div_data)
+		dek_session_key = algorithm.des3_ecb_encrypt(dek_key, div_data)
+		mac_session_key = algorithm.des3_ecb_encrypt(mac_key, div_data)
+		enc_session_key = algorithm.des3_ecb_encrypt(enc_key, div_data)
 	else:	#scp == 2
 		seq_no = card_challenge[0:4]
 		dek_session_key = _gen_dek_session_key(seq_no, dek_key)
@@ -89,9 +89,9 @@ def _gen_dek_session_key(seq_no,dek_key):
 
 
 def _gen_session_key(key,left_div_data,right_div_data):
-	left_key = des.des3_encrypt(key, left_div_data)
-	tmp = des.xor(left_key, right_div_data)
-	right_key = des.des3_encrypt(key, tmp)
+	left_key = algorithm.des3_encrypt(key, left_div_data)
+	tmp = algorithm.xor(left_key, right_div_data)
+	right_key = algorithm.des3_encrypt(key, tmp)
 	return left_key + right_key
 
 
@@ -111,6 +111,6 @@ def _gen_dek_key(kmc,left_div_data_part,right_div_data_part):
 	return _gen_kmc_sub_key(kmc, left_div_data, right_div_data)
 
 def _gen_kmc_sub_key(kmc,left_div_data,right_div_data):
-	left_key = des.des3_encrypt(kmc, left_div_data)
-	right_key = des.des3_encrypt(kmc, right_div_data)
+	left_key = algorithm.des3_encrypt(kmc, left_div_data)
+	right_key = algorithm.des3_encrypt(kmc, right_div_data)
 	return left_key + right_key

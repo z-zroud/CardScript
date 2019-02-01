@@ -1,21 +1,9 @@
 import os
 from ctypes import *
-
-dll_name = 'Authencation.dll'
-dll_depends = 'sqlite3.dll'
-dll_depends2 = 'ChineseSM.dll'
-dll_path = os.path.dirname(os.path.abspath(__file__))
-dir_list = dll_path.split(os.path.sep)
-dll_path = os.path.sep.join(dir_list) + os.path.sep + "dll" + os.path.sep
-dll_depends = dll_path + dll_depends
-dll_depends2 = dll_path + dll_depends2
-dll_name = dll_path + dll_name
-CDLL(dll_depends)
-CDLL(dll_depends2)
-_authencation_lib = CDLL(dll_name)
+from perso_lib import sm_lib,des_lib,auth_lib
 
 
-def gen_rsa(cert_len,cert_exp):
+def gen_rsa(cert_len,cert_exp='03'):
     '''
     同时生成STD和CRT模式的公私钥对
     cert_len 公钥长度
@@ -30,7 +18,7 @@ def gen_rsa(cert_len,cert_exp):
     dp = create_string_buffer(1024)
     dq = create_string_buffer(1024)
     qinv = create_string_buffer(1024)
-    _authencation_lib.GenRSA(cert_len,byte_cert_exp,d,n,p,q,dp,dq,qinv)
+    auth_lib.GenRSA(cert_len,byte_cert_exp,d,n,p,q,dp,dq,qinv)
     return bytes.decode(d.value),bytes.decode(n.value),bytes.decode(p.value),bytes.decode(q.value),bytes.decode(dp.value),bytes.decode(dq.value),bytes.decode(qinv.value)
 
 
@@ -44,7 +32,7 @@ def _gen_cert(p_d,p_n,n,exp,format_flag,issue_bin,expiry_date):
     byte_expiry_date = str.encode(expiry_date)
     cert = create_string_buffer(2048)
     remainder = create_string_buffer(1024)
-    _authencation_lib.GenIssuerCert(byte_p_d,byte_p_n,byte_format_flag,byte_issue_bin,byte_expiry_date,byte_n,byte_exp,cert,remainder)
+    auth_lib.GenIssuerCert(byte_p_d,byte_p_n,byte_format_flag,byte_issue_bin,byte_expiry_date,byte_n,byte_exp,cert,remainder)
     return bytes.decode(cert.value),bytes.decode(remainder.value)
 
 
@@ -82,7 +70,7 @@ def gen_icc_cert(issuer_d,issuer_n,icc_n,icc_exp,pan,sig_data,expiry_date=1220):
     byte_sig_data = str.encode(sig_data)
     cert = create_string_buffer(2048)
     remainder = create_string_buffer(1024)
-    _authencation_lib.GenIccCert(byte_issuer_d,byte_issuer_n,byte_card_no,byte_expiry_date,byte_icc_n,byte_icc_exp,byte_sig_data,cert,remainder)
+    auth_lib.GenIccCert(byte_issuer_d,byte_issuer_n,byte_card_no,byte_expiry_date,byte_icc_n,byte_icc_exp,byte_sig_data,cert,remainder)
     return bytes.decode(cert.value),bytes.decode(remainder.value)
 
 def gen_tag93(d,n,sig_data,tag82,dac='DAC1'):
@@ -100,16 +88,16 @@ def gen_tag93(d,n,sig_data,tag82,dac='DAC1'):
     byte_tag82 = str.encode(tag82)
     byte_dac = str.encode(dac)
     tag93 = create_string_buffer(1024)
-    _authencation_lib.GenSSDA(byte_d,byte_n,byte_sig_data,byte_tag82,byte_dac,tag93)
+    auth_lib.GenSSDA(byte_d,byte_n,byte_sig_data,byte_tag82,byte_dac,tag93)
     return bytes.decode(tag93.value)
 
 def gen_kcv(app_key,algorithm_type='DES'):
     byte_key = str.encode(app_key)
     kcv_key = create_string_buffer(33)
     if algorithm_type == 'DES':
-        _authencation_lib.GenDesKcv(byte_key,kcv_key,33)
+        auth_lib.GenDesKcv(byte_key,kcv_key,33)
     else:
-        _authencation_lib.GenSmKcv(byte_key,kcv_key,33)
+        auth_lib.GenSmKcv(byte_key,kcv_key,33)
     return bytes.decode(kcv_key.value)[0:6]
 
 def gen_app_key_kcv(app_key,algorithm_type='DES'):
@@ -120,13 +108,13 @@ def gen_app_key_kcv(app_key,algorithm_type='DES'):
     kcv_mac = create_string_buffer(33)
     kcv_enc = create_string_buffer(33)
     if algorithm_type == 'DES':
-        _authencation_lib.GenDesKcv(byte_ac,kcv_ac,33)
-        _authencation_lib.GenDesKcv(byte_mac,kcv_mac,33)
-        _authencation_lib.GenDesKcv(byte_enc,kcv_enc,33)
+        auth_lib.GenDesKcv(byte_ac,kcv_ac,33)
+        auth_lib.GenDesKcv(byte_mac,kcv_mac,33)
+        auth_lib.GenDesKcv(byte_enc,kcv_enc,33)
     else:
-        _authencation_lib.GenSmKcv(byte_ac,kcv_ac,33)
-        _authencation_lib.GenSmKcv(byte_mac,kcv_mac,33)
-        _authencation_lib.GenSmKcv(byte_enc,kcv_enc,33)
+        auth_lib.GenSmKcv(byte_ac,kcv_ac,33)
+        auth_lib.GenSmKcv(byte_mac,kcv_mac,33)
+        auth_lib.GenSmKcv(byte_enc,kcv_enc,33)
     return bytes.decode(kcv_ac.value)[0:6] + bytes.decode(kcv_mac.value)[0:6] + bytes.decode(kcv_enc.value)[0:6]
     
 def gen_app_key(mdk_ac,mdk_mac,mdk_enc,tag5A,tag5F34,algorithm_type='DES'):
@@ -139,12 +127,136 @@ def gen_app_key(mdk_ac,mdk_mac,mdk_enc,tag5A,tag5F34,algorithm_type='DES'):
     udk_mac = create_string_buffer(33)
     udk_enc = create_string_buffer(33)
     if algorithm_type == 'DES':
-        _authencation_lib.GenUdk(byte_mdk_ac,byte_tag5A,byte_tag5F34,udk_ac,0)
-        _authencation_lib.GenUdk(byte_mdk_mac,byte_tag5A,byte_tag5F34,udk_mac,0)
-        _authencation_lib.GenUdk(byte_mdk_enc,byte_tag5A,byte_tag5F34,udk_enc,0)
+        auth_lib.GenUdk(byte_mdk_ac,byte_tag5A,byte_tag5F34,udk_ac,0)
+        auth_lib.GenUdk(byte_mdk_mac,byte_tag5A,byte_tag5F34,udk_mac,0)
+        auth_lib.GenUdk(byte_mdk_enc,byte_tag5A,byte_tag5F34,udk_enc,0)
     else:
-        _authencation_lib.GenUdk(byte_mdk_ac,byte_tag5A,byte_tag5F34,udk_ac,1)
-        _authencation_lib.GenUdk(byte_mdk_mac,byte_tag5A,byte_tag5F34,udk_mac,1)
-        _authencation_lib.GenUdk(byte_mdk_enc,byte_tag5A,byte_tag5F34,udk_enc,1)
+        auth_lib.GenUdk(byte_mdk_ac,byte_tag5A,byte_tag5F34,udk_ac,1)
+        auth_lib.GenUdk(byte_mdk_mac,byte_tag5A,byte_tag5F34,udk_mac,1)
+        auth_lib.GenUdk(byte_mdk_enc,byte_tag5A,byte_tag5F34,udk_enc,1)
     return bytes.decode(udk_ac.value) + bytes.decode(udk_mac.value) + bytes.decode(udk_enc.value)
 
+
+
+    import os
+
+# key should be 8 bytes, so this key param should be 16 bytes bcd code
+# also the same with data
+def des_encrypt(key, data):
+	data_len = len(data)
+	output = create_string_buffer(data_len + 1)
+	bytes_key = str.encode(key)
+	bytes_data = str.encode(data)
+	des_lib.Des(output,bytes_key,bytes_data)
+	return bytes.decode(output.value) 
+
+def des_decrypt(key,data):
+	data_len = len(data)
+	output = create_string_buffer(data_len + 1)
+	bytes_key = str.encode(key)
+	bytes_data = str.encode(data)
+	des_lib._Des(output,bytes_key,bytes_data)
+	return bytes.decode(output.value)
+
+def des3_encrypt(key,data):
+	data_len = len(data)
+	output = create_string_buffer(data_len + 1)
+	bytes_key = str.encode(key)
+	bytes_data = str.encode(data)
+	des_lib.Des3(output,bytes_key,bytes_data)
+	return bytes.decode(output.value)
+
+def des3_decrypt(key,data):
+    data_len = len(data)
+    output = create_string_buffer(data_len + 1)
+    bytes_key = str.encode(key)
+    bytes_data = str.encode(data)
+    des_lib._Des3(output,bytes_key,bytes_data)
+    return bytes.decode(output.value)
+
+def des3_ecb_decrypt(key,data):
+	result = ''
+	block_count = len(data) / 16
+	for i in range(int(block_count)):
+		block_data = data[i * 16 :i* 16 + 16]
+		result += des3_decrypt(key,block_data)
+	return result
+
+
+# algorithm description:
+# step1. 8 bytes block + 3Des encrypt ==> result1
+# step2. next 8 bytes block + 3Des encrypt ==> result2
+# step3. recursive... step2
+# step4. result = result1 + result2 + ... + resultn
+def des3_ecb_encrypt(key,data):	
+	data_len = len(data)
+	output = create_string_buffer(data_len + 1)
+	bytes_key = str.encode(key)
+	bytes_data = str.encode(data)
+	des_lib.Des3_ECB(output,bytes_key,bytes_data,data_len)
+	return bytes.decode(output.value)
+
+
+def des3_cbc_encrypt(key,data):
+	data_len = len(data)
+	output = create_string_buffer(data_len + 1)
+	bytes_key = str.encode(key)
+	bytes_data = str.encode(data)
+	des_lib.Des3_CBC(output,bytes_key,bytes_data,data_len)
+	return bytes.decode(output.value)	
+
+# algorithm description:
+# step1. initData xor block1  + key(L) ==> result1
+# step2. result1 xor next block + key(L) ==> result2
+# step3. recursive step2 until the last block ==> resultn
+# step4. resultn + key(R) decrypt ==> ret1
+# step5. ret1 + key(L) encrypt ==> mac
+def des3_mac(key, in_data, init_data = '0000000000000000'):
+	bytes_key = str.encode(key)
+	bytes_init_data = str.encode(init_data)
+	bytes_in_data = str.encode(in_data)
+	output = create_string_buffer(17)
+	des_lib.DES_3DES_CBC_MAC(bytes_in_data,bytes_key,bytes_init_data,output)
+	return bytes.decode(output.value)
+
+def des3_full_mac(key,in_data,init_data = '0000000000000000'):
+	bytes_key = str.encode(key)
+	bytes_init_data = str.encode(init_data)
+	bytes_in_data = str.encode(in_data)
+	output = create_string_buffer(17)
+	des_lib.Full_3DES_CBC_MAC(bytes_in_data,bytes_key,bytes_init_data,output)
+	return bytes.decode(output.value)
+
+
+# xor two string. note data1 and data2 must have the same length.
+def xor(data1, data2):
+	bytes_data1 = str.encode(data1)
+	bytes_data2 = str.encode(data2)
+	data_len = len(data1)
+	output = create_string_buffer(data_len + 1)
+	output.value = bytes_data1
+	des_lib.str_xor(output,bytes_data2,data_len)
+	return bytes.decode(output.value)
+
+def dcdd(tag56,tag9F6B,key):
+	tagDC = des3_mac(key,tag56)
+	tagDD = des3_mac(key,tag9F6B)
+	return tagDC[-4:] + tagDD[-4:]
+
+
+
+def sm4_ecb_decrypt(key,data):
+	data_len = len(data)
+	output = create_string_buffer(data_len + 1)
+	bytes_key = str.encode(key)
+	bytes_data = str.encode(data)
+	sm_lib.dllSM4_ECB_DEC(bytes_key,bytes_data,output)
+	return bytes.decode(output.value)
+
+def sm4_ecb_encrypt(key,data):
+	data_len = len(data)
+	output = create_string_buffer(data_len + 1)
+	bytes_key = str.encode(key)
+	bytes_data = str.encode(data)
+	sm_lib.dllSM4_ECB_ENC(bytes_key,bytes_data,output)
+	return bytes.decode(output.value)

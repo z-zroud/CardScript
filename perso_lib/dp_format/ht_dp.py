@@ -1,10 +1,9 @@
 from perso_lib.file_handle import FileHandle
-from perso_lib.rule_file import RuleFile
 from perso_lib.cps import Cps,Dgi
-from perso_lib import data_parse
 from perso_lib import utils
-from perso_lib.rule import Rule
-from perso_lib import des
+from perso_lib.rule import Rule,RuleXml
+from perso_lib import algorithm
+import os
 
 def move_to_flag(fh,flag):   
     bcd_flag = utils.str_to_bcd(flag)
@@ -26,8 +25,9 @@ def process_prn_data(fh):
     return True
 
 def process_mag_data(fh,rule_file_name):
-    rule_file = RuleFile(rule_file_name)
+    rule_file = RuleXml(rule_file_name)
     mag_node = rule_file.get_first_node(rule_file.root_element,'Magstrip')
+    
     mag_flag = fh.read_str(fh.current_offset,6)
     if mag_flag != '000MAG':
         return False
@@ -38,6 +38,8 @@ def process_mag_data(fh,rule_file_name):
     track_flag_list.append(fh.read(fh.current_offset + 1,1))
     mag_data = fh.read_binary(fh.current_offset,mag_data_len - 5)
     mag_data_list = [x for x in mag_data.split('7C') if len(x) > 0]
+    print('decrypt mag data: ',end='')
+    print(mag_data_list)
     dgi = Dgi()
     dgi.dgi = 'Magstrip'
     if mag_node is not None:
@@ -45,14 +47,16 @@ def process_mag_data(fh,rule_file_name):
         decrypt_mag_list = []
         for data in mag_data_list:
             data = utils.bcd_to_str(data)
-            data = des.des3_ecb_decrypt(mag_key,data)
+            data = algorithm.des3_ecb_decrypt(mag_key,data)
             data = utils.bcd_to_str(data)
-            decrypt_mag_list.append(data.replace('%','')) #去掉%，防止写入ini失败
+            data_len = int(data[0:4])
+            data = data[4:data_len + 4].rstrip()
+            decrypt_mag_list.append(data)
         pos = 1
         for mag in decrypt_mag_list:
             for index in range(pos,4):
                 pos += 1
-                option = 'mag' + str(index)
+                option = 'mag' + str(pos)
                 if track_flag_list[index - 1] == '0':
                     dgi.add_tag_value(option,'')
                     continue
@@ -60,8 +64,6 @@ def process_mag_data(fh,rule_file_name):
                 break
         print('decrypt mag data: ',end='')
         print(decrypt_mag_list)
-    print('encrypt mag data: ',end='')
-    print(mag_data_list)
     return dgi
 
 def process_pse(dgi,data):
@@ -82,7 +84,7 @@ def process_ppse(dgi,data):
     return ppse_dgi
 
 def process_rule(rule_file_name,cps):
-    rule_handle = RuleFile(rule_file_name)
+    rule_handle = RuleXml(rule_file_name)
     rule = Rule(cps,rule_handle)
     rule.wrap_process_decrypt()
     rule.wrap_process_add_tag() 
@@ -95,26 +97,20 @@ def process_rule(rule_file_name,cps):
     return rule.cps
 
 def process_tag_decrypt(rule_file_name,tag,data):
-    rule_file = RuleFile(rule_file_name)
+    rule_file = RuleXml(rule_file_name)
     tag_decrypt_nodes = rule_file.get_nodes(rule_file.root_element,'TagDecrypt')
     for node in tag_decrypt_nodes:
         attrs = rule_file.get_attributes(node)
         if attrs['tag'] == tag:
-            start_pos = 0
-            data_len = 0
-            delete80 = False
-            is_bcd = False
-            data = des.des3_ecb_decrypt(attrs['key'],data)
-            start_pos = int(attrs['startPos']) if 'startPos' in attrs else 0
-            data_len = int(attrs['len']) if 'len' in attrs else len(data)
-            delete80 = True if 'delete80' in attrs else False
-            is_bcd = True if 'bcd' in attrs else False
-            if delete80:
-                index = data.rfind('80')
-                if index != -1:
-                    data = data[:42]
-            if is_bcd:
-                data = utils.bcd_to_str(data)
+            data = algorithm.des3_ecb_decrypt(attrs['key'],data)
+            if 'startPos' in attrs:
+                start_pos = int(attrs['startPos'])
+            else:
+                start_pos = 0
+            if 'len' in attrs:
+                data_len = int(attrs['len'])
+            else:
+                data_len = len(data)
             data = data[start_pos : start_pos + data_len]
             return data
     return data
@@ -125,24 +121,14 @@ def get_dgi_list(fh):
     dgi_list = []
     for i in range(0,dgi_list_len * 2,4):
         dgi_list.append(dgi_list_str[i : i + 4])
-
-    des_encrypt_dgi_list_len = fh.read_int(fh.current_offset)
-    des_encrypt_dgi_list_str = fh.read_binary(fh.current_offset,des_encrypt_dgi_list_len)
-    des_encrypt_dgi_list = []
-    for i in range(0,des_encrypt_dgi_list_len * 2,4):
-        des_encrypt_dgi_list.append(des_encrypt_dgi_list_str[i : i + 4])
-
-    sm_encrypt_dgi_list_len = fh.read_int(fh.current_offset)
-    sm_encrypt_dgi_list_str = fh.read_binary(fh.current_offset,sm_encrypt_dgi_list_len)
-    sm_encrypt_dgi_list = []
-    for i in range(0,sm_encrypt_dgi_list_len * 2,4):
-        sm_encrypt_dgi_list.append(sm_encrypt_dgi_list_str[i : i + 4])
-    print('sm encrypt dgi list: ',end=' ')
-    print(sm_encrypt_dgi_list)
-    des_encrypt_dgi_list.extend(sm_encrypt_dgi_list)
+    encrypt_dgi_list_len = fh.read_int(fh.current_offset)
+    encrypt_dgi_list_str = fh.read_binary(fh.current_offset,encrypt_dgi_list_len)
+    encrypt_dgi_list = []
+    for i in range(0,encrypt_dgi_list_len * 2,4):
+        encrypt_dgi_list.append(encrypt_dgi_list_str[i : i + 4])
     log_dgi_list_len = fh.read_int(fh.current_offset)
     fh.read_binary(fh.current_offset,log_dgi_list_len) #暂时不需要log DGI记录
-    return dgi_list,des_encrypt_dgi_list
+    return dgi_list,encrypt_dgi_list
     
 def process_card_data(fh,rule_file):
     cps = Cps()
@@ -176,8 +162,8 @@ def process_card_data(fh,rule_file):
                         dgi_data = dgi_data[6:]
                     else:
                         dgi_data = dgi_data[4:]
-                if data_parse.is_rsa(dgi) is False and data_parse.is_tlv(dgi_data):
-                    tlvs = data_parse.parse_tlv(dgi_data)
+                if utils.is_rsa(dgi) is False and utils.is_tlv(dgi_data):
+                    tlvs = utils.parse_tlv(dgi_data)
                     if len(tlvs) > 0 and tlvs[0].is_template is True:
                         value = card_dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
                         card_dgi.add_tag_value(dgi,value)

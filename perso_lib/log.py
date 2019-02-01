@@ -1,20 +1,7 @@
-# -*- coding: utf-8 -*-
-'''
-Modified on 2012-11-27
-@summary: clear old root logger handlers when reconfig logging
-@author: JerryKwan
-
-Created on 2012-06-14 19:50
-@summary:  logging config
-@author: JerryKwan
-'''
-
-import logging
-
-import logging.handlers
-
 import os
 import sys
+import logging
+import logging.handlers
 
 LEVELS = {'NOSET': logging.NOTSET,
           'DEBUG': logging.DEBUG,
@@ -35,7 +22,7 @@ LEVELS = {'NOSET': logging.NOTSET,
 
 # create logs file folder
 def init(file_name = "log.txt", log_level = "NOSET"):
-    logs_dir = os.path.join(os.path.dirname(__file__), "logs")
+    logs_dir = os.path.join(os.getcwd(), "logs")
     if not os.path.exists(logs_dir) or not os.path.isdir(logs_dir):
         os.makedirs(logs_dir)
 
@@ -47,14 +34,16 @@ def init(file_name = "log.txt", log_level = "NOSET"):
     rotatingFileHandler = logging.handlers.RotatingFileHandler(filename =file_name,
                                                       maxBytes = 1024 * 1024 * 50,
                                                       backupCount = 5)
-    formatter = logging.Formatter("%(asctime)s %(name)-12s %(levelname)-8s %(message)s")
+    #formatter = logging.Formatter("%(asctime)s %(name)-12s %(levelname)-8s %(message)s")
+    formatter = logging.Formatter("%(message)s")
     rotatingFileHandler.setFormatter(formatter)
     logging.getLogger().addHandler(rotatingFileHandler)
 
     # define a handler whitch writes messages to sys
     console = logging.StreamHandler()
     # set a format which is simple for console use
-    formatter = logging.Formatter("%(name)-12s: %(levelname)-8s %(message)s")
+    #formatter = logging.Formatter("%(name)-12s: %(levelname)-8s %(message)s")
+    formatter = logging.Formatter("%(message)s")
     # tell the handler to use this format
     console.setFormatter(formatter)
     # add the handler to the root logger

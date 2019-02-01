@@ -1,9 +1,7 @@
 from perso_lib.file_handle import FileHandle
-from perso_lib.rule_file import RuleFile
 from perso_lib.cps import Cps,Dgi
-from perso_lib import data_parse
 from perso_lib import utils
-from perso_lib.rule import Rule
+from perso_lib.rule import Rule,RuleXml
 
 def process_tlv(data):
     item_list = []
@@ -61,7 +59,7 @@ def process_EF02(cps):
     return cps
 
 def process_rule(rule_file_name,cps):    
-    rule_handle = RuleFile(rule_file_name)
+    rule_handle = RuleXml(rule_file_name)
     rule = Rule(cps,rule_handle)
     rule.wrap_process_add_tag()
     rule.wrap_process_merge_tag()

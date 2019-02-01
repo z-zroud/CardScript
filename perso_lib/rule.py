@@ -1,10 +1,46 @@
 # 该仅对通用的规则进行转换，对于DP中特殊的处理
 # 请在DP处理模块中进行处理
 from perso_lib.cps import Cps,Dgi
-from perso_lib import des
-from perso_lib import sm
+from perso_lib import algorithm
 from perso_lib import utils
-from perso_lib import data_parse
+from perso_lib.xml_parse import XmlParser
+
+class RuleXml(XmlParser):
+    def __init__(self,rule_file):
+        XmlParser.__init__(self,rule_file)
+
+    def get_decrypted_attribute(self,dgi):
+        '''<Decrypt DGI="8000" type="DES/SM" key="0123456789ABCDEF1111111111111111" />'''
+        nodes = self.get_nodes(self.root_element,'Decrypt')
+        for node in nodes:
+            dgi_attr = self.get_attribute(node,'DGI')
+            if dgi_attr == dgi:
+                algrithm_type = self.get_attribute(node,'type')
+                key = self.get_attribute(node,'key')
+                return algrithm_type,key
+        return None,None
+
+    def get_tag_link_attribute(self,attr,value):
+        '''
+        根据属性=值匹配相应的TagLink节点
+        <TagLink EMVTag="9206" SDDFTag="1010N103" EMVDataName="DGI9206" ValueFormat="TLV"/>
+        '''
+        nodes = self.get_nodes(self.root_element,'TagLink')
+        for node in nodes:
+            attr_value = self.get_attribute(node,attr)
+            if attr_value == value:
+                emv_tag = self.get_attribute(node,'EMVTag')
+                sddf_tag = self.get_attribute(node,'SDDFTag')
+                value_format = self.get_attribute(node,'ValueFormat')
+                return emv_tag,sddf_tag,value_format
+        return None,None,None
+
+if __name__ == '__main__':
+    rule = RuleXml('./test_data/rule2.xml')
+    decrypt_nodes = rule.get_nodes(rule.root_element,'Decrypt')
+    for node in decrypt_nodes:
+        attr = rule.get_attribute(node,'DGI')
+        rule.get_attributes(node)
 
 class Rule:
     def __init__(self,cps, rule_handle):
@@ -56,9 +92,9 @@ class Rule:
 
     def _process_decrypt(self,key,key_type,data,is_delete80):
         if key_type == 'DES':
-            data = des.des3_ecb_decrypt(key,data)     
+            data = algorithm.des3_ecb_decrypt(key,data)     
         elif key_type == 'SM':
-            data = sm.sm4_ecb_decrypt(key,data)
+            data = algorithm.sm4_ecb_decrypt(key,data)
         elif key_type == 'BASE64':
             data = utils.base64_to_bcd(data)
         elif key_type == 'BCD':
@@ -125,11 +161,11 @@ class Rule:
         if key_type == 'DES':
             for i in range(0,key_len,32):
                 part_key = key[i : i + 32]
-                kcv += des.des3_ecb_encrypt(part_key,'0000000000000000')[0:6]
+                kcv += algorithm.des3_ecb_encrypt(part_key,'0000000000000000')[0:6]
         elif key_type == 'SM':
             for i in range(0,key_len,32):
                 part_key = key[i : i + 32]
-                kcv += sm.sm4_ecb_encrypt(part_key,'00000000000000000000000000000000')[0:6]
+                kcv += algorithm.sm4_ecb_encrypt(part_key,'00000000000000000000000000000000')[0:6]
         dgi = Dgi()
         dgi.dgi = src_dgi
         dgi.add_tag_value(dgi.dgi,kcv)
@@ -215,7 +251,7 @@ class Rule:
                 else:
                     value = ''
                     if dst_dgi in ('9102','9103'):  #对于9103,9102需要特殊处理
-                        tlvs = data_parse.parse_tlv(self.cps.get_tag_value(dst_dgi,dst_dgi))
+                        tlvs = utils.parse_tlv(self.cps.get_tag_value(dst_dgi,dst_dgi))
                         for tlv in tlvs:
                             if tlv.tag == dst_tag:
                                 value = tlv.value
@@ -336,4 +372,5 @@ class Rule:
         for node in map_nodes:  #需放在解密之前执行
             attrs = self.rule_handle.get_attributes(node)
             self.process_dgi_map(attrs['srcDGI'],attrs['dstDGI'])
+    
     

@@ -5,16 +5,17 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="perso_lib",
-    version="2.0.0.1",
+    version="2.0.0.3",
     author="z_road",
     author_email="489469935@qq.com",
     description="A lib for parse dp data",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/z-zroud/CardScript",
-    # packages=setuptools.find_packages(),
-    packages=['perso_lib'],
+    packages=setuptools.find_packages(),
+    # packages=['perso_lib'],
     package_data={
+
         '':['dll/*'],
     },
     install_requires=[

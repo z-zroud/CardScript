@@ -3,7 +3,7 @@ from perso_lib.xml_parse import XmlParser
 from perso_lib.ini_parse import IniParser
 from perso_lib.pcsc import ApduResponse
 from perso_lib import apdu
-from perso_lib import des
+from perso_lib import algorithm
 from perso_lib import utils
 from perso_lib.cps import Cps,Dgi
 
@@ -16,7 +16,7 @@ def _process_encrypted_data(dgi,data,key,encrypt_dgi_list):
                 data += '80'
                 zero_count = len(data) % 16
                 data += '0' * (16 - zero_count)
-            return True,des.des3_ecb_encrypt(key,data)
+            return True,algorithm.des3_ecb_encrypt(key,data)
     return False, data
 
 def _process_template_and_dgi(dgi,data):

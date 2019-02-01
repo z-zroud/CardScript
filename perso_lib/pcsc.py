@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 from perso_lib import utils
 from ctypes import *
 
@@ -56,10 +57,12 @@ def send_raw(cmd,resp_sw_list=(0x9000,)):
     bytes_cmd = str.encode(cmd)
     resp_len = c_int(2048)
     resp_data = create_string_buffer(resp_len.value)
+    logging.info('APDU: %s',cmd)
     apdu_response.sw = _pcsc_lib.SendApdu(bytes_cmd,resp_data,resp_len)
     apdu_response.response = bytes.decode(resp_data.value)
     apdu_response.request = cmd
-    print('%X'%apdu_response.sw)
+    #print('%X'%)
+    logging.info('APDU: %X',apdu_response.sw)
     for sw in resp_sw_list:
         if sw == apdu_response.sw:
             return apdu_response

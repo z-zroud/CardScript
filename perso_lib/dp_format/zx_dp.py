@@ -1,9 +1,7 @@
 from perso_lib.file_handle import FileHandle
-from perso_lib.rule_file import RuleFile
 from perso_lib.cps import Cps,Dgi
-from perso_lib import data_parse
 from perso_lib import utils
-from perso_lib.rule import Rule
+from perso_lib.rule import Rule,RuleXml
 
 def get_len(fh):
     data_len = 0
@@ -28,7 +26,7 @@ def process_pse_and_ppse(dgi_name,dgi_data,dgi_node):
     return dgi
 
 def process_rule(rule_file_name,cps):   
-    rule_handle = RuleFile(rule_file_name)
+    rule_handle = RuleXml(rule_file_name)
     rule = Rule(cps,rule_handle)
     rule.wrap_process_decrypt()
     rule.wrap_process_add_fixed_tag()
@@ -73,8 +71,8 @@ def process_dp(dp_file,rule_file):
             elif item[0:4] == 'PPSE':
                 dgi = process_pse_and_ppse(dgi_name,dgi_data,'PPSE')
             else:
-                if n_dgi_seq <= 0x0B00 or (data_parse.is_rsa(dgi_name) is False and data_parse.is_tlv(dgi_data)):
-                    tlvs = data_parse.parse_tlv(dgi_data)
+                if n_dgi_seq <= 0x0B00 or (utils.is_rsa(dgi_name) is False and utils.is_tlv(dgi_data)):
+                    tlvs = utils.parse_tlv(dgi_data)
                     if len(tlvs) > 0 and tlvs[0].is_template is True:
                         value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
                         dgi.add_tag_value(dgi_name,value)
