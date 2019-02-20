@@ -49,6 +49,183 @@ class DataItem:
         self.data_type = None   #根据1156表分类
         self.used = False   #设置是否已被个人化
 
+class JetcoForm:
+    def __init__(self,ca_file,issuer_file,ic_pk_file,ic_private_file,excel_file):
+        self.ca_file = ca_file
+        self.issuer_file = issuer_file
+        self.ic_pk_file = ic_pk_file
+        self.ic_private_file = ic_private_file
+        self.excel_file = excel_file
+        self.ca_pk_len = 0
+        self.excel = ExcelOp(excel_file)
+        self.data_list = []
+
+    def set_mdk(self,mdk_ac,mdk_mac,mdk_enc):
+        self.mdk_ac = mdk_ac
+        self.mdk_mac = mdk_mac
+        self.mdk_enc = mdk_enc
+
+    def read_data(self,title_list,card_no):
+        self.read_excel_data(title_list,card_no)
+        self.read_cert_data()
+        app_key = self.gen_8000(self.mdk_ac,self.mdk_mac,self.mdk_enc)
+        self.gen_9000(app_key)
+        return self.data_list
+
+    def gen_8000(self,mdk_ac,mdk_mac,mdk_enc):
+        tag5A = ''
+        tag5F34 = ''
+        for item in self.data_list:
+            if item.tag == '5A':
+                tag5A = item.value
+            if item.tag == '5F34':
+                tag5F34 = item.value
+        tag8000 = algorithm.gen_app_key(mdk_ac,mdk_mac,mdk_enc,tag5A,tag5F34)
+        data_item = DataItem()
+        data_item.tag = '8000'
+        data_item.value = tag8000
+        data_item.data_type = DataType.CONTACT
+        self.data_list.append(data_item)
+        return tag8000
+
+    def gen_9000(self,tag8000):
+        tag9000 = algorithm.gen_app_key_kcv(tag8000)
+        data_item = DataItem()
+        data_item.tag = '9000'
+        data_item.value = tag9000
+        data_item.data_type = DataType.CONTACT
+        self.data_list.append(data_item)
+        return tag9000
+
+    def read_excel_data(self,title_list,card_no,sheet_name='Sheet1',start_row=4,start_col=1):
+        if self.excel.open_worksheet(sheet_name):
+            has_find = False
+            for row in range(start_row,200):
+                data = self.excel.read_cell_value(row,title_list[0][1])
+                if data == card_no:
+                        has_find = True
+                        start_row = row
+                        break
+            if has_find:
+                title_list = title_list[1:]
+                for title in title_list:
+                    data = self.excel.read_cell_value(start_row,title[1])
+                    if data:
+                        data = data.strip()
+                        if data == 'Empty':
+                            data = ''
+                        if title[0] == '5A' and len(data) % 2 != 0:
+                            data = data + 'F'
+                        item = DataItem()
+                        item.data_type = DataType.CONTACT
+                        item.tag = title[0]
+                        item.value = data
+                        self.data_list.append(item)
+        return self.data_list
+        
+    def read_cert_data(self):
+        tag_value_list = []
+        tag_value_list += self._handle_ca_file()
+        tag_value_list += self._handle_issuer_file()
+        tag_value_list += self._handle_ic_private_file()
+        tag_value_list += self._handle_ic_pk_file()
+        for item in tag_value_list:
+            data_item = DataItem()
+            data_item.data_type = DataType.CONTACT
+            data_item.tag = item[0]
+            data_item.value = item[1]
+            self.data_list.append(data_item)
+
+    
+    def _handle_ic_private_file(self):
+        fh = FileHandle(self.ic_private_file,'rb+')
+        head = fh.read_binary(fh.current_offset, 33)
+        data_list = []
+        while not fh.EOF:
+            flag = fh.read_binary(fh.current_offset,1)
+            if flag != '02':
+                print('read ic private file failed.')
+                return
+            data_len = fh.read_binary(fh.current_offset,1)
+            if data_len == '81':
+                data_len = fh.read_binary(fh.current_offset,1)
+            data_len = utils.hex_str_to_int(data_len)
+            data = fh.read_binary(fh.current_offset,data_len)
+            if data[0:2] == '00': #凭经验，此处若为00，表示多余的一个字节
+                data = data[2:]
+            data_list.append(data)
+        tag_values = []
+        tag_values.append(('8201',data_list[7]))
+        tag_values.append(('8202',data_list[6]))
+        tag_values.append(('8203',data_list[5]))
+        tag_values.append(('8204',data_list[4]))
+        tag_values.append(('8205',data_list[3]))
+        return tag_values
+
+    def _handle_ic_pk_file(self):
+        fh = FileHandle(self.ic_pk_file,'rb+')
+        head = fh.read_binary(fh.current_offset, 1)
+        pan = fh.read_binary(fh.current_offset, 10)  
+        sn = fh.read_binary(fh.current_offset, 3)
+        expirate_date = fh.read_binary(fh.current_offset, 2)
+        icc_remainder_len = fh.read_short(fh.current_offset)
+        icc_remainder = fh.read_binary(fh.current_offset,icc_remainder_len)
+        exp_len = fh.read_short(fh.current_offset)
+        exp = fh.read_binary(fh.current_offset,exp_len)
+        icc_pk_len = fh.file_size - fh.current_offset
+        icc_pk = fh.read_binary(fh.current_offset,icc_pk_len)
+        tag_values = []
+        tag_values.append(('9F46',icc_pk))
+        tag_values.append(('9F47',exp))
+        tag_values.append(('9F48',icc_remainder))
+        logging.info("9F46:" + icc_pk)
+        logging.info("9F47:" + exp)
+        logging.info("9F48:" + icc_remainder)
+        return tag_values
+
+    def _handle_issuer_file(self):
+        fh = FileHandle(self.issuer_file,'rb+')
+        head = fh.read_binary(fh.current_offset, 1)
+        service_ident = fh.read_binary(fh.current_offset,4)
+        issuer_ident = fh.read_binary(fh.current_offset,4)
+        sn = fh.read_binary(fh.current_offset,3)
+        expirate_date = fh.read_binary(fh.current_offset, 2)
+        issuer_remainder_len = fh.read_short(fh.current_offset)
+        issuer_remainder = fh.read_binary(fh.current_offset,issuer_remainder_len)
+        exp_len = fh.read_short(fh.current_offset)
+        exp = fh.read_binary(fh.current_offset,exp_len)
+        ca_pk_index = fh.read_binary(fh.current_offset,1)
+        issuer_pk = fh.read_binary(fh.current_offset,self.ca_pk_len)
+        other_len = fh.file_size - fh.current_offset
+        other = fh.read_binary(fh.current_offset,other_len)
+        tag_values = []
+        tag_values.append(('90',issuer_pk))
+        tag_values.append(('92',issuer_remainder))
+        tag_values.append(('9F32',exp))
+        logging.info("90:" + issuer_pk)
+        logging.info("92:" + issuer_remainder)
+        logging.info("9F32:" + exp)
+        return tag_values       
+
+
+    def _handle_ca_file(self):
+        fh = FileHandle(self.ca_file,'rb+')
+        head = fh.read_binary(fh.current_offset, 1)
+        service_ident = fh.read_binary(fh.current_offset,4)
+        self.ca_pk_len = fh.read_int(fh.current_offset)
+        algo = fh.read_binary(fh.current_offset,1)
+        exp_len = int(fh.read_binary(fh.current_offset,1))
+        rid = fh.read_binary(fh.current_offset,5)
+        ca_index = fh.read_binary(fh.current_offset,1)
+        ca_pk_mod = fh.read_binary(fh.current_offset,self.ca_pk_len)
+        exp = fh.read_binary(fh.current_offset,exp_len)
+        tag_values = []
+        # tag_values.append(('8F',ca_index))
+        logging.info('ca_mod: ' + ca_pk_mod)
+        logging.info('ca_exp: ' + exp)
+        return tag_values
+
+
 class VisaForm:
     def __init__(self,table_name):
         self.excel = ExcelOp(table_name)
@@ -250,7 +427,7 @@ class McForm:
             self.shared_data = self._get_data(DataType.SHARED,start_row,start_col + 2)
         return self.shared_data
     
-    def read_all_table_data(self):
+    def read_data(self):
         print('====================1156 form tag list====================')
         self.get_fci_data()
         self.get_mca_data()
@@ -379,8 +556,6 @@ class GenDpXml:
                         break
 
 
-
-
     def gen_xml(self,new_xml,char_set='UTF-8'):
         tags_from_kms = ('8F','9F32','8000','8001','9000','9001','8400','8401','A006','A016','90','92','93','9F46','9F48','8201','8202','8203','8204','8205','DC','DD')
         fpath,_ = os.path.split(new_xml)    #分离文件名和路径
@@ -395,20 +570,23 @@ class GenDpXml:
         # 设置bin号
         global card_bin
         bin_node = new_xml_handle.get_first_node(new_xml_handle.root_element,'Bin')
-        new_xml_handle.set_attribute(bin_node,'value',card_bin)
+        if bin_node:
+            new_xml_handle.set_attribute(bin_node,'value',card_bin)
 
         #设置证书配置信息
         global cert_config
         cert_nodes = new_xml_handle.get_nodes(app_node,'Cert')
-        for cert_node in cert_nodes:
-            new_xml_handle.set_attribute(cert_node,'expireDate',cert_config.expireDate)
-            new_xml_handle.set_attribute(cert_node,'expireDateType',cert_config.expireDateType)
-            new_xml_handle.set_attribute(cert_node,'rsa',cert_config.rsa)
+        if cert_nodes:
+            for cert_node in cert_nodes:
+                new_xml_handle.set_attribute(cert_node,'expireDate',cert_config.expireDate)
+                new_xml_handle.set_attribute(cert_node,'expireDateType',cert_config.expireDateType)
+                new_xml_handle.set_attribute(cert_node,'rsa',cert_config.rsa)
 
         # 生成数据
         tag_nodes = new_xml_handle.get_nodes(new_xml_handle.root_element,'Tag')
         for tag_node in tag_nodes:
             attr_tag = new_xml_handle.get_attribute(tag_node,'name')
+            attr_type = new_xml_handle.get_attribute(tag_node,'type')
             attr_source = new_xml_handle.get_attribute(tag_node,'source')
             attr_format = new_xml_handle.get_attribute(tag_node,'format')
             attr_comment = new_xml_handle.get_attribute(tag_node,'comment')
@@ -423,6 +601,12 @@ class GenDpXml:
             new_xml_handle.remove_attribute(tag_node,'sig_id')
             new_xml_handle.remove_attribute(tag_node,'value')
             
+            
+            # 重新排序
+            new_xml_handle.set_attribute(tag_node,'name',attr_tag)
+
+            # 通过comment属性或者tag从数据集中获取值，如果模板中有存在value属性，优先
+            # 从模板中取值
             value = ''
             if not attr_value:
                 if attr_tag.strip() == '--':
@@ -431,33 +615,56 @@ class GenDpXml:
                     value = self._get_tag(tag=attr_tag, source=attr_source)
             else:
                 value = attr_value
-            # 重新排序
-            new_xml_handle.set_attribute(tag_node,'name',attr_tag)
 
-            if attr_tag in tags_from_kms:
-                # 来自加密机, 优先处理从加密机里面的数据，不取来自客户表中数据
-                new_xml_handle.set_attribute(tag_node,'type','kms')
-            elif value and not self._get_emboss_item(attr_tag):
-                #说明是固定值,并且不需要从文件中取
-                new_xml_handle.set_attribute(tag_node,'type','fixed')
-                new_xml_handle.set_attribute(tag_node,'value',value)
+            # 如果模板包含有类型说明，则优先按类型说明处理
+            if attr_type:
+                if attr_type == 'kms':
+                    # 来自加密机, 优先处理从加密机里面的数据，不取来自客户表中数据
+                    new_xml_handle.set_attribute(tag_node,'type','kms')
+                elif attr_type == 'fixed':
+                    #说明是固定值,并且不需要从文件中取
+                    new_xml_handle.set_attribute(tag_node,'type','fixed')
+                    new_xml_handle.set_attribute(tag_node,'value',value)
+                elif attr_type == 'file':
+                    # 来自文件
+                    new_xml_handle.set_attribute(tag_node,'type','file')
+                    item = self._get_emboss_item(attr_tag)
+                    if item:
+                        new_xml_handle.set_attribute(tag_node,'value',item.value)
+                        if item.convert_to_ascii:
+                            new_xml_handle.set_attribute(tag_node,'convert_ascii','true')
+                        if item.replace_equal_by_D:
+                            new_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
+                    else:
+                        self.not_found_data.append((attr_tag,attr_source,attr_comment))
             else:
-                # 来自文件
-                new_xml_handle.set_attribute(tag_node,'type','file')
-                item = self._get_emboss_item(attr_tag)
-                if item:
-                    new_xml_handle.set_attribute(tag_node,'value',item.value)
-                    if item.convert_to_ascii:
-                        new_xml_handle.set_attribute(tag_node,'convert_ascii','true')
-                    if item.replace_equal_by_D:
-                        new_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
+                if attr_tag in tags_from_kms:
+                    # 来自加密机, 优先处理从加密机里面的数据，不取来自客户表中数据
+                    new_xml_handle.set_attribute(tag_node,'type','kms')
+                elif value and not self._get_emboss_item(attr_tag):
+                    #说明是固定值,并且不需要从文件中取
+                    new_xml_handle.set_attribute(tag_node,'type','fixed')
+                    new_xml_handle.set_attribute(tag_node,'value',value)
                 else:
-                    self.not_found_data.append((attr_tag,attr_source,attr_comment))
+                    # 来自文件
+                    new_xml_handle.set_attribute(tag_node,'type','file')
+                    item = self._get_emboss_item(attr_tag)
+                    if item:
+                        new_xml_handle.set_attribute(tag_node,'value',item.value)
+                        if item.convert_to_ascii:
+                            new_xml_handle.set_attribute(tag_node,'convert_ascii','true')
+                        if item.replace_equal_by_D:
+                            new_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
+                    else:
+                        self.not_found_data.append((attr_tag,attr_source,attr_comment))
+            # 设置签名
             if attr_sig_id:
                 new_xml_handle.set_attribute(tag_node,'sig_id',attr_sig_id)
+            #设置编码格式和描述
             new_xml_handle.set_attribute(tag_node,'format',attr_format)
             new_xml_handle.set_attribute(tag_node,'comment',attr_comment)
-        self._add_alias(new_xml_handle,tag_nodes) #设置alias
+        #最后设置alias
+        self._add_alias(new_xml_handle,tag_nodes) 
         new_xml_handle.save(char_set)
 
 
@@ -565,16 +772,16 @@ class MockCps:
                     print('emboss file module can not process tag' + tag)
         return tag,value
         
-    def _parse_template(self,template_node):
+    def _parse_template(self,template_node,kms=None):
         template_value = ''
         template = self.xml_handle.get_attribute(template_node,'name')
         child_nodes = self.xml_handle.get_child_nodes(template_node)
         for child_node in child_nodes:
             if child_node.nodeName == 'Tag':
-                _,value = self._parse_tag_value(child_node)
+                _,value = self._parse_tag_value(child_node,kms)
                 template_value += value
             elif child_node.nodeName == 'Template':
-                template_value += self._parse_template(child_node)
+                template_value += self._parse_template(child_node,kms)
         return utils.assemble_tlv(template,template_value)
 
     def _process_signature(self,app_node,kms):
@@ -622,6 +829,10 @@ class MockCps:
         dgi = Dgi()
         dgi.dgi = self.xml_handle.get_attribute(dgi_node,'name')
         child_nodes = self.xml_handle.get_child_nodes(dgi_node)
+        if child_nodes and len(child_nodes) == 1:   #判断是否为70模板开头，若是，则忽略掉70模板
+            attr_name = self.xml_handle.get_attribute(child_nodes[0],'name')
+            if attr_name == '70':
+                child_nodes = self.xml_handle.get_child_nodes(child_nodes[0])
         for child_node in child_nodes:
             if child_node.nodeName == 'Tag':
                 tag,value = self._parse_tag_value(child_node,kms)
@@ -631,7 +842,7 @@ class MockCps:
                 else:
                     dgi.add_tag_value(tag,value)
             elif child_node.nodeName == 'Template':
-                template_value = self._parse_template(child_node)
+                template_value = self._parse_template(child_node,kms)
                 dgi.append_tag_value(dgi.dgi,template_value)
             else:
                 print('unrecognize node' + child_node.nodeName)
@@ -671,10 +882,12 @@ class MockCps:
             kms.close()
         # 处理PSE 和 PPSE
         pse_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'PSE')
-        pse_dgi = self._process_pse(pse_node)
-        self.cps.add_dgi(pse_dgi)
+        if pse_node:
+            pse_dgi = self._process_pse(pse_node)
+            self.cps.add_dgi(pse_dgi)
         ppse_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'PPSE')
-        ppse_dgi = self._process_pse(ppse_node)
-        self.cps.add_dgi(ppse_dgi)
+        if ppse_node:
+            ppse_dgi = self._process_pse(ppse_node)
+            self.cps.add_dgi(ppse_dgi)
         return self.cps
 

@@ -136,10 +136,6 @@ def gen_app_key(mdk_ac,mdk_mac,mdk_enc,tag5A,tag5F34,algorithm_type='DES'):
         auth_lib.GenUdk(byte_mdk_enc,byte_tag5A,byte_tag5F34,udk_enc,1)
     return bytes.decode(udk_ac.value) + bytes.decode(udk_mac.value) + bytes.decode(udk_enc.value)
 
-
-
-    import os
-
 # key should be 8 bytes, so this key param should be 16 bytes bcd code
 # also the same with data
 def des_encrypt(key, data):

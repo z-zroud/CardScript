@@ -16,6 +16,11 @@ class GoldpacDgi:
 
 _aid_list_info = dict()
 _is_mc_app = False
+_has_second_app = False
+
+def set_second_app(has_second_app):
+    global _has_second_app
+    _has_second_app = has_second_app
 
 def get_pse_and_ppse_dgi_list(sddf_dgi_list):
     global _aid_list_info
@@ -39,15 +44,16 @@ def has_second_app():
     """
     判断是否为双应用数据
     """
-    global _aid_list_info
-    count = 0
-    if '325041592E5359532E4444463031' in _aid_list_info.keys():
-        count += 1
-    if '315041592E5359532E4444463031' in _aid_list_info.keys():
-        count += 1
-    if len(_aid_list_info) > count + 1:
-        return True
-    return False
+    # global _aid_list_info
+    # count = 0
+    # if '325041592E5359532E4444463031' in _aid_list_info.keys():
+    #     count += 1
+    # if '315041592E5359532E4444463031' in _aid_list_info.keys():
+    #     count += 1
+    # if len(_aid_list_info) > count + 1:
+    #     return True
+    # return False
+    return _has_second_app
 
 def get_second_app_index():
     global _aid_list_info

@@ -21,11 +21,11 @@ class Dgi:
         if tag not in self.tag_value_dict.keys():
             self.tag_value_dict[tag] = value
 
-    def append_tag_value(self,tag,value):
-        if tag not in self.tag_value_dict.keys():
-            self.tag_value_dict[tag] = value
+    def append_tag_value(self,existed_tag,value):
+        if existed_tag not in self.tag_value_dict.keys():
+            self.tag_value_dict[existed_tag] = value
         else:
-            self.tag_value_dict[tag] += value
+            self.tag_value_dict[existed_tag] += value
 
     def insert_after(self,after_tag,tag,value):
         if after_tag not in self.tag_value_dict.keys():
@@ -65,13 +65,6 @@ class Dgi:
     def get_all_tags(self):
         return self.tag_value_dict
     
-    def assemble_tlv(self,tag,data):
-        '''拼接TLV格式，不考虑数据长度超过0xFF的情况'''
-        data_len = len(data)
-        if data_len >= 0x80 * 2:
-            return tag + '81' + utils.get_strlen(data) + data
-        else:
-            return tag + utils.get_strlen(data) + data
 
 #dgi only contains '_' and 'PSE','PPSE'
 def _custom_sorted(dgi):
@@ -114,19 +107,19 @@ class Cps:
         else:
             self.dgi_list.append(dgi)
 
-    def remove_dgi(self,dgi):
+    def remove_dgi(self,dgi_name):
         for item in self.dgi_list:
-            if item.dgi == dgi:
+            if item.dgi == dgi_name:
                 self.dgi_list.remove(item)
                 return
     
-    def get_dgi(self,dgi):
+    def get_dgi(self,dgi_name):
         for item in self.dgi_list:
-            if dgi == item.dgi:
+            if dgi_name == item.dgi:
                 return item
 
-    def get_tag_value(self,dgi,tag):
-        dgi_item = self.get_dgi(dgi)
+    def get_tag_value(self,dgi_name,tag):
+        dgi_item = self.get_dgi(dgi_name)
         return dgi_item.get_value(tag)
     
     def _save(self,file_name,sort=_custom_sorted):

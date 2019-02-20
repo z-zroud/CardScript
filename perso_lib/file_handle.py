@@ -10,8 +10,13 @@ class FileHandle:
     def current_offset(self):
         return self._file.tell()
 
-    def get_file_size(self):
+    @property
+    def file_size(self):
         return os.path.getsize(self.file_name)
+
+    @property
+    def EOF(self):
+        return self.current_offset == self.file_size
 
     def read_line(self):
         value = self._file.readline()
@@ -50,6 +55,11 @@ class FileHandle:
     def read_int(self,offset):
         '''按二进制顺序读取2字节，转换为整形'''
         data = self.read_binary(offset,2)
+        return utils.hex_str_to_int(data)
+
+    def read_short(self,offset):
+        '''按二进制顺序读取1字节，转换为整形'''
+        data = self.read_binary(offset,1)
         return utils.hex_str_to_int(data)
 
     def read_int_reverse(self,offset):

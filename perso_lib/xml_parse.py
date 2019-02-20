@@ -79,33 +79,6 @@ class XmlParser:
         node.appendChild(text_node)
 
 
-    # def writexml(self, writer, indent="", addindent="", newl=""):
-    #     # indent = current indentation
-    #     # addindent = indentation to add to higher levels
-    #     # newl = newline string
-    #     writer.write(indent+"<" + self.tagName)
-
-    #     attrs = self._get_attributes()
-    #     a_names = sorted(attrs.keys())
-
-    #     for a_name in a_names:
-    #         writer.write(" %s=\"" % a_name)
-    #         _write_data(writer, attrs[a_name].value)
-    #         writer.write("\"")
-    #     if self.childNodes:
-    #         writer.write(">")
-    #         if (len(self.childNodes) == 1 and
-    #             self.childNodes[0].nodeType == Node.TEXT_NODE):
-    #             self.childNodes[0].writexml(writer, '', '', '')
-    #         else:
-    #             writer.write(newl)
-    #             for node in self.childNodes:
-    #                 node.writexml(writer, indent+addindent, addindent, newl)
-    #             writer.write(indent)
-    #         writer.write("</%s>%s" % (self.tagName, newl))
-    #     else:
-    #         writer.write("/>%s"%(newl))
-
     def save(self,char_type='GB2312'):
         try:
             with open(self.file_name,'w',encoding=char_type) as fh:
@@ -118,6 +91,19 @@ class XmlParser:
         获取父节点下所有node_name指定名称的节点，包含迭代子节点
         '''
         return parent_node.getElementsByTagName(node_name)
+
+    def get_node_by_attribute(self,parent_node,node_name,**attr):
+        child_nodes = self.get_nodes(parent_node,node_name)
+        for node in child_nodes:
+            found = True
+            for key,value in attr.items():
+                attr_value = self.get_attribute(node,key,'')
+                if attr_value != value:
+                    found = False
+                    break
+            if found:
+                return node
+        return None
 
     def get_child_nodes(self,parent_node,node_name=None):
         '''
