@@ -3,7 +3,7 @@ from perso_lib import utils
 
 no_contain_list = ['9F46','93','90','92','9F48','9F36','9F6C','8F','5F24','5F25']
 warn_list = ['57','9F1F','5F20','5A']
-no_must_contain_list = ['57','5F20','9F6C','5F34']
+no_must_contain_list = ['57','5F20','9F6C','5F34','9F36']
 
 tag_desc = {
     '4F':'Application Identifier (AID)',
@@ -147,10 +147,10 @@ class SmartQC_EMV:
         ppse_node = self.dp_xml_handle.get_first_node(self.dp_xml_handle.root_element,'PPSE')
         return self._get_tags(ppse_node)
 
-    def _get_dgi_9102(self):
-        mc_app_node = self.dp_xml_handle.get_node_by_attribute(self.dp_xml_handle.root_element,'App',aid='A0000000041010')
-        node_9102 = self.dp_xml_handle.get_node_by_attribute(mc_app_node,'DGI',name='9102')
-        return self._get_tags(node_9102)
+    def _get_dgi_tags(self,aid,name):
+        app_node = self.dp_xml_handle.get_node_by_attribute(self.dp_xml_handle.root_element,'App',aid=aid)
+        node = self.dp_xml_handle.get_node_by_attribute(app_node,'DGI',name=name)
+        return self._get_tags(node)
 
 
     def _get_dgis(self,tag94):
@@ -183,6 +183,13 @@ class SmartQC_EMV:
             # <SpecialInputData>
             special_input_data_node = self.smart_qc.create_node(case_node,'SpecialInputData')
             self.smart_qc.create_tag_node(special_input_data_node,'DF01','A0000000041010','AID',None)
+        elif case_type == 'visa':
+            # <Specification>
+            specification_path = '..\\Config\\VISASpec.xml'
+            self.smart_qc.create_text_node(case_node,'Specification',specification_path)
+            # <SpecialInputData>
+            special_input_data_node = self.smart_qc.create_node(case_node,'SpecialInputData')
+            self.smart_qc.create_tag_node(special_input_data_node,'DF01','A0000000031010','AID',None)
         return case_node
 
     def create_magstrip_case(self):
@@ -216,6 +223,59 @@ class SmartQC_EMV:
         self.smart_qc.create_node(validation_node,'Param',**ic_attrs)
         self.smart_qc.create_node(validation_node,'Param',**ms_attrs)
 
+    def create_visa_case(self):
+        # 创建配置头部信息
+        case_node = self._create_header('VISA_TEST','visa','PBOCCheck.dll')
+        # <CompareData>
+        visa_app_node = self.dp_xml_handle.get_node_by_attribute(self.dp_xml_handle.root_element,'App',aid='A0000000031010')
+        node_9104 = self.dp_xml_handle.get_node_by_attribute(visa_app_node,'DGI',name='9104')
+        node_tag94 = self.dp_xml_handle.get_node_by_attribute(node_9104,'Tag',name='94')
+        tag94 = self.dp_xml_handle.get_attribute(node_tag94,'value')
+        dgi_names = self._get_dgis(tag94)
+
+        compared_data = []
+        compared_data.extend(self._get_pse_tags())
+        compared_data.extend(self._get_dgi_tags('A0000000031010','9102'))
+        compared_data.extend(self._get_tags(node_9104))
+        for dgi_name in dgi_names:
+            node = self.dp_xml_handle.get_node_by_attribute(visa_app_node,'DGI',name=dgi_name)
+            compared_data.extend(self._get_tags(node))
+
+        # 获取风险管理数据等..
+        dgis = ['3000','3001']
+        risk_mgm_tags = []
+        for dgi_name in dgis:
+            node = self.dp_xml_handle.get_node_by_attribute(visa_app_node,'DGI',name=dgi_name)
+            if node:
+                risk_mgm_tags.extend(self._get_tags(node))
+        compared_data.extend(risk_mgm_tags)
+        compare_data_node = self.smart_qc.create_node(case_node,'CompareData')
+        for data in compared_data:
+            self.smart_qc.create_tag_node(compare_data_node,data[0],data[1],self._get_description(data[0]),'BCD','error')
+        risk_tag_list = ''
+        for item in risk_mgm_tags:
+            tag = item[0]
+            if tag not in no_must_contain_list:
+                if len(tag) == 2:
+                    tag = '00' + tag
+                risk_tag_list += tag + ','
+        risk_tag_list = risk_tag_list[0:-1] #去掉最后一个逗号
+        self.smart_qc.create_text_node(case_node,'MustContain',risk_tag_list)
+        # <ShowCardFace>
+        self.smart_qc.create_node(case_node,'ShowCardFace')
+
+        # 判断是否有非接数据，并生成非接case
+        node_9103 = self.dp_xml_handle.get_node_by_attribute(visa_app_node,'DGI',name='9103')
+        if node_9103:
+            case_node = self._create_header('VISA非接芯片检测','visa','PBOCCheck_CL.dll')
+            compare_data_node = self.smart_qc.create_node(case_node,'CompareData')
+            compared_data = []
+            compared_data.extend(self._get_ppse_tags())
+            compared_data.extend(self._get_dgi_tags('A0000000031010','9103'))
+            for data in compared_data:
+                self.smart_qc.create_tag_node(compare_data_node,data[0],data[1],self._get_description(data[0]),'BCD','error')
+
+
     def create_mc_case(self):
         # 创建配置头部信息
         case_node = self._create_header('MasterCard检测(接触)','mc','MCCheck.dll')
@@ -229,7 +289,7 @@ class SmartQC_EMV:
 
         compared_data = []
         compared_data.extend(self._get_pse_tags())
-        compared_data.extend(self._get_dgi_9102())
+        compared_data.extend(self._get_dgi_tags('A0000000041010','9102'))
         compared_data.extend(self._get_tags(node_A005))
         compared_data.extend(self._get_tags(node_B005))
         for dgi_name in dgi_names:
@@ -279,7 +339,7 @@ class SmartQC_EMV:
         compare_data_node = self.smart_qc.create_node(case_node,'CompareData')
         compared_data = []
         compared_data.extend(self._get_ppse_tags())
-        compared_data.extend(self._get_dgi_9102())
+        compared_data.extend(self._get_dgi_tags('A0000000041010','9102'))
         for data in compared_data:
             self.smart_qc.create_tag_node(compare_data_node,data[0],data[1],self._get_description(data[0]),'BCD','error')
 

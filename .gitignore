@@ -17,4 +17,5 @@ ipch/
 .vs/
 .vscode/
 bin/
+logs/
 /UpgradeLog.htm

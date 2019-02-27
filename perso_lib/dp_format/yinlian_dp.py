@@ -42,12 +42,12 @@ def process_pse_and_ppse(fh,dgi_name,has_template):
         dgi.add_tag_value('0101',data)
     elif dgi_name == 'Store_PSE_2':
         dgi.dgi = 'PSE'
-        value = dgi.assemble_tlv('A5','880101' + data)
+        value = utils.assemble_tlv('A5','880101' + data)
         dgi.add_tag_value('9102',value)
     elif dgi_name == 'Store_PPSE':
         dgi.dgi = 'PPSE'
-        value = dgi.assemble_tlv('BF0C',data)
-        value = dgi.assemble_tlv('A5',value)
+        value = utils.assemble_tlv('BF0C',data)
+        value = utils.assemble_tlv('A5',value)
         dgi.add_tag_value('9102',value)
     else:
         dgi.dgi = 'F001'
@@ -130,7 +130,7 @@ def process_dp(dp_file,rule_file):
     fh = FileHandle(dp_file,'rb+')
     fh.read(fh.current_offset,8596) #reserved
     dgi_list = get_dgi_list(fh)
-    file_size = fh.get_file_size()
+    file_size = fh.file_size
     cps_list = []
     while fh.current_offset < file_size:
         card_seq = fh.read_int64_reverse(fh.current_offset)
@@ -165,11 +165,11 @@ def process_dp(dp_file,rule_file):
             if n_dgi_seq <= 0x0B00 or (dgi_seq not in do_not_parse_tlv_list and utils.is_tlv(dgi_data)):
                 tlvs = utils.parse_tlv(dgi_data)
                 if len(tlvs) > 0 and tlvs[0].is_template is True:
-                    value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
+                    value = utils.assemble_tlv(tlvs[0].tag,tlvs[0].value)
                     dgi.add_tag_value(dgi_seq,value)
                 else:
                     for tlv in tlvs:
-                        value = dgi.assemble_tlv(tlv.tag,tlv.value)
+                        value = utils.assemble_tlv(tlv.tag,tlv.value)
                         dgi.add_tag_value(tlv.tag,value)
             else:
                 dgi.add_tag_value(dgi_seq,dgi_data)

@@ -92,6 +92,16 @@ class XmlParser:
         '''
         return parent_node.getElementsByTagName(node_name)
 
+    def remove_node(self,parent_node,node_name):
+        node = self.get_first_node(parent_node,node_name)
+        if node:
+            parent_node.removeChild(node)
+
+    def remove(self,node):
+        parent_node = node.parentNode
+        if parent_node:
+            parent_node.removeChild(node)
+
     def get_node_by_attribute(self,parent_node,node_name,**attr):
         child_nodes = self.get_nodes(parent_node,node_name)
         for node in child_nodes:

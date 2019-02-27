@@ -32,23 +32,42 @@ def get_alias():
     return 'alias' + str(alias_count)
 
 
+# 定义数据类型枚举
 class DataType(Enum):
-    FCI = 0
-    SHARED = 1
-    CONTACT = 2
+    FCI         = 0     #MC 专用
+    SHARED      = 1     #MC 专用
+    CONTACT     = 2
     CONTACTLESS = 3
-    MCA = 4
-    MAGSTRIPE = 5
+    MCA         = 4     #MC 专用
+    MAGSTRIPE   = 5     #MC 专用
 
-class DataItem:
+# 该类描述了来源数据的结构呈现形式
+class SourceItem:
     def __init__(self):
-        self.name = ''      #按1156表定义，为tag的描述信息
-        self.tag = ''
-        self.len = ''
-        self.value = ''
-        self.data_type = None   #根据1156表分类
-        self.used = False   #设置是否已被个人化
+        self.name = ''      #tag的英文名称
+        self.tag = ''       #tag标签
+        self.len = ''       #tag长度
+        self.value = ''     #tag值
+        self.source_type = None   #标识数据值的来源,fixed,file,kms
+        self.data_type = None #tag数据类型,由DataType定义
+        self.used = False   #个人化时，是否被使用到
 
+# 描述了从emboss file文件中获取的tag标签信息
+class EmbossItem:
+    '''
+    该类用于表示需要从emboss file文件中取值的tag结构
+    tag 需要从文件中获取值的tag
+    convert_to_ascii 是否需要转换为ASCII码
+    value 一种描述取值方式的字符串,例如 "[10,20]001[12,33]"
+    表示从emboss file中取位置10到20的字符串 + 固定字符串001 + 从emboss file取位置12到33的字符串
+    '''
+    def __init__(self,tag,convert_to_ascii,replace_equal_by_D,value):
+        self.tag = tag
+        self.convert_to_ascii = convert_to_ascii
+        self.replace_equal_by_D = replace_equal_by_D
+        self.value = value
+
+# 港澳地区专用的纯Jetco应用Excel表格
 class JetcoForm:
     def __init__(self,ca_file,issuer_file,ic_pk_file,ic_private_file,excel_file):
         self.ca_file = ca_file
@@ -81,7 +100,7 @@ class JetcoForm:
             if item.tag == '5F34':
                 tag5F34 = item.value
         tag8000 = algorithm.gen_app_key(mdk_ac,mdk_mac,mdk_enc,tag5A,tag5F34)
-        data_item = DataItem()
+        data_item = SourceItem()
         data_item.tag = '8000'
         data_item.value = tag8000
         data_item.data_type = DataType.CONTACT
@@ -90,7 +109,7 @@ class JetcoForm:
 
     def gen_9000(self,tag8000):
         tag9000 = algorithm.gen_app_key_kcv(tag8000)
-        data_item = DataItem()
+        data_item = SourceItem()
         data_item.tag = '9000'
         data_item.value = tag9000
         data_item.data_type = DataType.CONTACT
@@ -116,7 +135,7 @@ class JetcoForm:
                             data = ''
                         if title[0] == '5A' and len(data) % 2 != 0:
                             data = data + 'F'
-                        item = DataItem()
+                        item = SourceItem()
                         item.data_type = DataType.CONTACT
                         item.tag = title[0]
                         item.value = data
@@ -130,7 +149,7 @@ class JetcoForm:
         tag_value_list += self._handle_ic_private_file()
         tag_value_list += self._handle_ic_pk_file()
         for item in tag_value_list:
-            data_item = DataItem()
+            data_item = SourceItem()
             data_item.data_type = DataType.CONTACT
             data_item.tag = item[0]
             data_item.value = item[1]
@@ -225,59 +244,72 @@ class JetcoForm:
         logging.info('ca_exp: ' + exp)
         return tag_values
 
-
-class VisaForm:
-    def __init__(self,table_name):
-        self.excel = ExcelOp(table_name)
-        self.data_list = []
+# 金邦达专用定义的Excel表格
+class GoldpacForm:
+    def __init__(self,form_name):
+        self.excel = ExcelOp(form_name)
+        self.source_items = []
         
     def get_data(self,tag,data_type,desc=None):
-        for item in self.data_list:
+        for item in self.source_items:
             if item.data_type == data_type and item.tag == tag:
                 item.used = True
                 return item.value
         return None
+    
+    def print_unused_data(self):
+        print('====================1156 form unused tag list====================')
+        for item in self.source_items:
+            if not item.used:
+                #print(str(item.data_type) + '||' + item.tag + '||' + item.value + '||' + item.name)
+                print("%-20s||%-10s||%-60s||%-100s" % (str(item.data_type),item.tag,item.value,item.name))
 
-    def _get_data(self,data_type,start_row,start_col,ignore_list=None,end_flag=None):
-        for row in range(start_row,200):
-            text = self.excel.read_cell_value(row,start_col)
-            if text and end_flag and text in end_flag:
-                break
-            item = DataItem()
-            item.data_type = data_type
-            item.name = self.excel.read_cell_value(row,start_col + 1)
-            if not item.name:
-                break
-            item.tag = self.excel.read_cell_value(row,start_col + 2)
-            if ignore_list and item.tag in ignore_list:
-                continue    #模板直接忽略
-            item.len = self.excel.read_cell_value(row,start_col + 3)
-            item.value = self.excel.read_cell_value(row,start_col + 5)
-            if item.value:
-                item.tag = str(item.tag)
-                print(str(item.data_type) + '||' + item.tag + '||' + item.name)
-                self.data_list.append(item)
-                if item.tag == '84':
-                    item4F = item
-                    item4F.tag = '4F'
-                    self.data_list.append(item4F)
-        return self.data_list
+    def _get_data(self,row,col,ignore_list=None):
+        # 列名分别是:Data Type,Name,Tag,Length,recommended value,Issuer settings,data source,remarks
+        source_item = SourceItem()
+        source_item.name = self.excel.read_cell_value(row,col + 1)    #Name
+        source_item.tag = self.excel.read_cell_value(row,col + 2)    #Tag
+        # if ignore_list and source_item.tag in ignore_list:
+        #     continue    #模板直接忽略
+        source_item.len = self.excel.read_cell_value(row,col + 3)     # 长度(字符串)
+        source_item.value = self.excel.read_cell_value(row,col + 5)   # Issuer settings
+        source_item.source_type = self.excel.read_cell_value(row,col + 6) # file,kms,fixed
+        if source_item.tag:
+            source_item.tag = str(source_item.tag) #有些可能读表格时，默认是int类型，需要转str
+            if 'Contactless' in source_item.tag:# Tag列可能是'Tag-Contactless'形式的字符串
+                source_item.tag = source_item.tag.split('-')[0].strip()
+                source_item.data_type = DataType.CONTACTLESS
+            else:
+                source_item.data_type = DataType.CONTACT #自主Excel表格，仅包含CONTACT和CONTACTLESS类型
+        if source_item.value:
+            # 过滤掉空格和换行符
+            source_item.value = str(source_item.value)
+            source_item.value = source_item.value.replace(' ','').replace('\n','')
+            if source_item.source_type == 'Fixed':
+                source_item.source_type = 'fixed'   #保持和模板xml中的type一致
+                if not utils.is_hex_str(source_item.value): #此时认为是不合规的值
+                    source_item.value = None
+            elif source_item.source_type in ('Emboss File','Kms') :
+                source_item.source_type = 'kms' if source_item.source_type == 'Kms' else 'file'
+                source_item.value = ''
+        if source_item.value is not None and source_item.tag:   #确保tag和value都存在
+            return source_item
+        return None
 
-    def read_data(self,sheet_name='Visa(Paywave)',start_row=3,start_col=2):
+    def read_data(self,sheet_name,start_row=3,start_col=2):
         if self.excel.open_worksheet(sheet_name):
-            header = self.excel.read_cell_value(start_row,start_col)
-            if str(header).strip() != 'Data Type':
+            first_header = self.excel.read_cell_value(start_row,start_col)
+            if str(first_header).strip() != 'Data Type':
                 print('can not found form start position')
                 return None
-            start_row += 1
-            self._get_data(DataType.CONTACT,start_row,start_col,None,'Visa payWave')
-            for start_row in range(start_row,200):
-                text = self.excel.read_cell_value(start_row,start_col)
-                if text and 'Visa payWave' in text:
-                    self._get_data(DataType.CONTACTLESS,start_row + 1,start_col)
-                    break
-        return self.data_list
-            
+            start_row += 1 #默认标题行之后就是数据行
+            for row in range(start_row,200):
+                item = self._get_data(row,start_col)    #获取每行数据，组成一个SourceItem对象
+                if item:
+                    self.source_items.append(item)
+        return self.source_items
+
+# 万事达1156表格专用类            
 class McForm:
     def __init__(self,tablename):
         self.excel = ExcelOp(tablename)
@@ -329,7 +361,7 @@ class McForm:
 
     def _get_data(self,data_type,start_row,start_col,ignore_list=None,end_flag=None):
         for row in range(start_row,200):
-            item = DataItem()
+            item = SourceItem()
             item.data_type = data_type
             item.name = self.excel.read_cell_value(row,start_col)
             item.name = self._filter_data(item.name)
@@ -437,7 +469,7 @@ class McForm:
         self.get_shared_data()
         return self.data_list
 
-
+# 根据dp xml文件生成Word文档DP需求
 class GenDpDoc:
     def __init__(self,config_file,doc_file):
         self.config_file = config_file
@@ -478,49 +510,52 @@ class GenDpDoc:
                 self._create_table(dgi_node)
             self.doc.save_as('demo.docx')
 
-class EmbossItem:
-    '''
-    该类用于表示需要从emboss file文件中取值的tag结构
-    tag 需要从文件中获取值的tag
-    convert_to_ascii 是否需要转换为ASCII码
-    value 一种描述取值方式的字符串,例如 "[10,20]001[12,33]"
-    表示从emboss file中取位置10到20的字符串 + 固定字符串001 + 从emboss file取位置12到33的字符串
-    '''
-    def __init__(self,tag,convert_to_ascii,replace_equal_by_D,value):
-        self.tag = tag
-        self.convert_to_ascii = convert_to_ascii
-        self.replace_equal_by_D = replace_equal_by_D
-        self.value = value
 
+# 根据xml模板、Excel表格中的数据、emboss file中的数据生成DP XML配置文件
 class GenDpXml:
-    def __init__(self,template_xml,data_items,emboss_items):
+    def __init__(self,template_xml,source_items,emboss_items):
         self.template_xml = template_xml
         self.template_handle = XmlParser(template_xml)
         self.emboss_items = emboss_items
-        self.data_items = data_items
+        self.source_items = source_items
         self.not_found_data = []
 
     def _get_emboss_item(self,tag):
+        '''
+        从数据集emboss item中查找对应的数据
+        '''
         if self.emboss_items:
-            for emboss_item in self.emboss_items:
-                if emboss_item.tag == tag:
-                    return emboss_item
+            for item in self.emboss_items:
+                if item.tag == tag:
+                    return item
         return None
 
-    def _get_tag(self,tag='',source='',comment=''):
+    def _get_source_item(self,tag='',source='',comment=''):
         '''
-        从数据集data_items中查找对应的数据
+        从数据集source_items中查找对应的数据
         '''
-        if tag and source:
-            for item in self.data_items:
+        if tag and source:  # 根据模板xml中的tag和type来查找数据
+            for item in self.source_items:
                 if tag == item.tag and source == item.data_type.name.lower():
-                    return item.value
-        elif comment:
-            for item in self.data_items:
+                    return item
+        elif comment:   #有时候需要根据模板xml中的comment来查找tag数据
+            for item in self.source_items:
                 if item.name == comment:
-                    return item.value
-        else:
-            return ""
+                    return item
+        return None
+
+    def _get_source_type(self,tag='',source='',comment=''):
+        item = self._get_source_item(tag,source,comment)
+        if item:
+            return item.source_type
+        return None
+
+    def _get_value(self,tag='',source='',comment=''):
+        item = self._get_source_item(tag,source,comment)
+        if item:
+            return item.value
+        return None
+
 
     def print_template_not_found_data(self):
         print('====================template not found tag list====================')
@@ -592,6 +627,7 @@ class GenDpXml:
             attr_comment = new_xml_handle.get_attribute(tag_node,'comment')
             attr_sig_id = new_xml_handle.get_attribute(tag_node,'sig_id')
             attr_value = new_xml_handle.get_attribute(tag_node,'value')
+
             # 删除之，重新给属性排序
             new_xml_handle.remove_attribute(tag_node,'name')
             new_xml_handle.remove_attribute(tag_node,'type')
@@ -610,11 +646,22 @@ class GenDpXml:
             value = ''
             if not attr_value:
                 if attr_tag.strip() == '--':
-                    value = self._get_tag(comment=attr_comment)
+                    value = self._get_value(comment=attr_comment)
                 else:
-                    value = self._get_tag(tag=attr_tag, source=attr_source)
+                    value = self._get_value(tag=attr_tag, source=attr_source)
             else:
                 value = attr_value
+
+            # 从数据中获取tag类型
+            source_type = ''
+            if attr_tag.strip() == '--':
+                source_type = self._get_source_type(comment=attr_comment)
+            else:
+                source_type = self._get_source_type(tag=attr_tag, source=attr_source)
+            
+            # 如果数据中包含有类型说明，则优先取数据中的类型
+            if source_type:
+                attr_type = source_type.lower()
 
             # 如果模板包含有类型说明，则优先按类型说明处理
             if attr_type:
@@ -636,6 +683,7 @@ class GenDpXml:
                         if item.replace_equal_by_D:
                             new_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
                     else:
+                        new_xml_handle.remove(tag_node)
                         self.not_found_data.append((attr_tag,attr_source,attr_comment))
             else:
                 if attr_tag in tags_from_kms:
@@ -646,16 +694,17 @@ class GenDpXml:
                     new_xml_handle.set_attribute(tag_node,'type','fixed')
                     new_xml_handle.set_attribute(tag_node,'value',value)
                 else:
-                    # 来自文件
-                    new_xml_handle.set_attribute(tag_node,'type','file')
                     item = self._get_emboss_item(attr_tag)
                     if item:
+                        # 来自文件
+                        new_xml_handle.set_attribute(tag_node,'type','file')
                         new_xml_handle.set_attribute(tag_node,'value',item.value)
                         if item.convert_to_ascii:
                             new_xml_handle.set_attribute(tag_node,'convert_ascii','true')
                         if item.replace_equal_by_D:
                             new_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
-                    else:
+                    else:   #说明无法从数据来源中获取该Tag的相关信息
+                        new_xml_handle.remove(tag_node)
                         self.not_found_data.append((attr_tag,attr_source,attr_comment))
             # 设置签名
             if attr_sig_id:
@@ -667,7 +716,7 @@ class GenDpXml:
         self._add_alias(new_xml_handle,tag_nodes) 
         new_xml_handle.save(char_set)
 
-
+#根据DP xml文件和emboss file模拟一条制卡数据，用于制作测试卡
 class MockCps:
     '''
     根据xml配置文件及emboss file模拟生成CPS格式的测试卡数据
@@ -681,6 +730,9 @@ class MockCps:
             self.emboss_file_handle = FileHandle(emboss_file,'r+')
 
     def _get_value(self,tag,data,vlaue_format):
+        '''
+        根据xml文件中的format获取指定的tag值
+        '''
         if vlaue_format == 'TLV':
             return utils.assemble_tlv(tag,data)
         else:
@@ -710,7 +762,7 @@ class MockCps:
                 return yy + mm + '28'
         return None
 
-    def _parse_pos_value(self,tag,value):
+    def _get_value_from_file(self,tag,value):
         data = ''
         index = 0
         while index < len(value):
@@ -736,20 +788,20 @@ class MockCps:
         value = ''
         value_type = attrs['type']
         value_format = attrs['format']
-        if value_type == 'fixed':
+        if value_type == 'fixed': #处理固定值
             value = self._get_value(tag,attrs['value'],value_format)
-        elif value_type == 'kms':
+        elif value_type == 'kms':   #处理KMS生成的数据
             if not kms:
-                print('kms is None')
+                logging.info('kms is not inited. can not process tag %s with kms type',tag)
             else:
-                tmp = tag
+                kms_tag = tag
                 if 'sig_id' in attrs:
-                    tmp = tmp + '_' + attrs['sig_id']
-                value = self._get_value(tag,kms.get_value(tmp),value_format)
-        elif value_type == 'file':
+                    kms_tag = kms_tag + '_' + attrs['sig_id']
+                value = self._get_value(tag,kms.get_value(kms_tag),value_format)
+        elif value_type == 'file': # 处理文件数据
             value = self.xml_handle.get_attribute(tag_node,'value')
             if value:
-                value = self._parse_pos_value(tag,value)
+                value = self._get_value_from_file(tag,value)
                 replaceD = self.xml_handle.get_attribute(tag_node,'replace_equal_by_D')
                 if replaceD:
                     value = value.replace('=','D')
@@ -759,7 +811,7 @@ class MockCps:
                 if len(value) % 2 != 0:
                     value += 'F'
                 value = self._get_value(tag,value,value_format)
-            else:
+            else: #如果类型为file的Tag,没有value属性，则通过emboss file模块处理值
                 if self.process_emboss_file_module:
                     mod_obj = importlib.import_module(self.process_emboss_file_module)
                     if mod_obj:
@@ -784,7 +836,7 @@ class MockCps:
                 template_value += self._parse_template(child_node,kms)
         return utils.assemble_tlv(template,template_value)
 
-    def _process_signature(self,app_node,kms):
+    def _gen_sig_data(self,app_node,kms):
         sig_nodes = self.xml_handle.get_nodes(app_node,'Sig')
         for sig_node in sig_nodes:
             sig_data = ''
@@ -802,19 +854,25 @@ class MockCps:
             kms.gen_new_icc_cert(tag5A,sig_id,sig_data)
             kms.gen_new_ssda(kms.issuer_bin,sig_id,sig_data)
 
-    def _get_bin(self):
+    def _get_first_bin(self):
+        '''
+        从DP xml文件中的Bin节点，取第一个Bin号生成测试数据
+        '''
         issuer_bin = ''
         bin_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'Bin')
         if bin_node:
             issuer_bin = self.xml_handle.get_attribute(bin_node,'value')
             if not issuer_bin or issuer_bin == '':
-                print('Please provide card Bin number, if not, card will use default Bin number:654321')
+                logging.info('Please provide card Bin number, if not, card will use default Bin number:654321')
                 issuer_bin = '654321'
             else:
                 issuer_bin = issuer_bin.split(',')[0]    #取第一个bin号生成证书
         return issuer_bin
 
     def _get_rsa_len(self,app_node):
+        '''
+        从DP xml文件中的指定App节点中的Cert节点获取RSA长度
+        '''
         rsa_len = 1024
         cert_node = self.xml_handle.get_first_node(app_node,'Cert')
         if cert_node:
@@ -836,12 +894,14 @@ class MockCps:
         for child_node in child_nodes:
             if child_node.nodeName == 'Tag':
                 tag,value = self._parse_tag_value(child_node,kms)
+                value = value.replace(' ','') #过滤掉value中的空格
                 data_format = self.xml_handle.get_attribute(child_node,'format')
                 if data_format == 'V':  #对于value数据，取dgi作为tag
                     dgi.append_tag_value(dgi.dgi,value)
                 else:
                     dgi.add_tag_value(tag,value)
             elif child_node.nodeName == 'Template':
+                # 对于非70模板，直接拼接该值，不做TLV解析处理
                 template_value = self._parse_template(child_node,kms)
                 dgi.append_tag_value(dgi.dgi,template_value)
             else:
@@ -868,15 +928,15 @@ class MockCps:
         count = 0
         for app_node in app_nodes:
             count += 1
-            issuer_bin = self._get_bin()
+            issuer_bin = self._get_first_bin()
             rsa_len = self._get_rsa_len(app_node)
             kms = Kms()
             kms.init(issuer_bin,rsa_len)
-            self._process_signature(app_node,kms)
-            dgi_nodes = self.xml_handle.get_child_nodes(app_node,"DGI")
+            self._gen_sig_data(app_node,kms)    #根据sig节点生成与证书相关的数据
+            dgi_nodes = self.xml_handle.get_child_nodes(app_node,"DGI") #获取app节点下所有的DGI节点
             for dgi_node in dgi_nodes:
                 dgi = self._process_dgi(dgi_node,kms)
-                if count > 1:
+                if count > 1:   # 说明是双应用，DGI形式为[0101_2]
                     dgi.dgi = dgi.dgi + '_' + str(count)
                 self.cps.add_dgi(dgi)
             kms.close()
@@ -891,3 +951,9 @@ class MockCps:
             self.cps.add_dgi(ppse_dgi)
         return self.cps
 
+if __name__ == '__main__':
+    form_name = 'D:\\EMV Card Profile v2.1.xlsx'
+    self_form = GoldpacForm(form_name)
+    source_items = self_form.read_data('VISA-4D')
+    for item in source_items:
+        print("tag:" + item.tag + ",type:" + item.source_type + ",value:" + item.value)
