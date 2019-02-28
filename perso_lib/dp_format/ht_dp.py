@@ -41,7 +41,7 @@ def process_mag_data(fh,rule_file_name):
     print('decrypt mag data: ',end='')
     print(mag_data_list)
     dgi = Dgi()
-    dgi.dgi = 'Magstrip'
+    dgi.name = 'Magstrip'
     if mag_node is not None:
         mag_key = rule_file.get_attribute(mag_node,'key')
         decrypt_mag_list = []
@@ -69,18 +69,18 @@ def process_mag_data(fh,rule_file_name):
 def process_pse(dgi,data):
     pse_dgi = Dgi()
     if dgi == '0098':
-        pse_dgi.dgi = '0101'
-        pse_dgi.add_tag_value(pse_dgi.dgi,data[4:])
+        pse_dgi.name = '0101'
+        pse_dgi.add_tag_value(pse_dgi.name,data[4:])
     elif dgi == '0099':
-        pse_dgi.dgi = '9102'
-        pse_dgi.add_tag_value(pse_dgi.dgi,data)
+        pse_dgi.name = '9102'
+        pse_dgi.add_tag_value(pse_dgi.name,data)
     return pse_dgi
 
 def process_ppse(dgi,data):
     ppse_dgi = Dgi()
     if dgi == '0100':
-        ppse_dgi.dgi = '9102'
-        ppse_dgi.add_tag_value(ppse_dgi.dgi,data)
+        ppse_dgi.name = '9102'
+        ppse_dgi.add_tag_value(ppse_dgi.name,data)
     return ppse_dgi
 
 def process_rule(rule_file_name,cps):
@@ -149,7 +149,7 @@ def process_card_data(fh,rule_file):
             dgi_len = utils.hex_str_to_int(fh.read_binary(fh.current_offset,1))
             dgi_data = fh.read_binary(fh.current_offset,dgi_len)
             n_dgi = utils.hex_str_to_int(dgi)
-            card_dgi.dgi = dgi
+            card_dgi.name = dgi
             if dgi == '0098' or dgi == '0099':
                 dgi = process_pse(dgi,dgi_data)
             elif dgi == '0100':
@@ -165,12 +165,12 @@ def process_card_data(fh,rule_file):
                 if utils.is_rsa(dgi) is False and utils.is_tlv(dgi_data):
                     tlvs = utils.parse_tlv(dgi_data)
                     if len(tlvs) > 0 and tlvs[0].is_template is True:
-                        value = card_dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
+                        value = utils.assemble_tlv(tlvs[0].tag,tlvs[0].value)
                         card_dgi.add_tag_value(dgi,value)
                     else:
                         for tlv in tlvs:
                             value = process_tag_decrypt(rule_file,tlv.tag,tlv.value)
-                            value = card_dgi.assemble_tlv(tlv.tag,value)
+                            value = utils.assemble_tlv(tlv.tag,value)
                             card_dgi.add_tag_value(tlv.tag,value)
                 else:
                     card_dgi.add_tag_value(dgi,dgi_data)

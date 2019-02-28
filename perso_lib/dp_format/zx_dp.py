@@ -16,7 +16,7 @@ def get_len(fh):
 
 def process_pse_and_ppse(dgi_name,dgi_data,dgi_node):
     dgi = Dgi()
-    dgi.dgi = dgi_node
+    dgi.name = dgi_node
     if dgi_name == '9102':
         index = dgi_data.find('A5')
         dgi_data = dgi_data[index : len(dgi_data)]
@@ -57,7 +57,7 @@ def process_dp(dp_file,rule_file):
                 return cps_list
             dgi_len = get_len(fh)
             dgi_name = fh.read_binary(fh.current_offset,2)
-            dgi.dgi = dgi_name
+            dgi.name = dgi_name
             dgi_data_len = utils.hex_str_to_int(fh.read_binary(fh.current_offset,1))
             n_dgi_seq = utils.hex_str_to_int(dgi_name)
             if n_dgi_seq <= 0x0B00: #认为是记录
@@ -74,11 +74,11 @@ def process_dp(dp_file,rule_file):
                 if n_dgi_seq <= 0x0B00 or (utils.is_rsa(dgi_name) is False and utils.is_tlv(dgi_data)):
                     tlvs = utils.parse_tlv(dgi_data)
                     if len(tlvs) > 0 and tlvs[0].is_template is True:
-                        value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
+                        value = utils.assemble_tlv(tlvs[0].tag,tlvs[0].value)
                         dgi.add_tag_value(dgi_name,value)
                     else:
                         for tlv in tlvs:
-                            value = dgi.assemble_tlv(tlv.tag,tlv.value)
+                            value = utils.assemble_tlv(tlv.tag,tlv.value)
                             dgi.add_tag_value(tlv.tag,value)
                 else:
                     dgi.add_tag_value(dgi_name,dgi_data)

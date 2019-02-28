@@ -47,10 +47,10 @@ class Rule:
         self.cps = cps
         self.rule_handle = rule_handle
 
-    def _get_tag_value(self,dgi,tag):
+    def _get_tag_value(self,name,tag):
         value = ''
         for item in self.cps.dgi_list:
-            if item.dgi == dgi:
+            if item.name == name:
                 value = item.get_value(tag)
         return value
 
@@ -59,8 +59,8 @@ class Rule:
         src_dgi_index = 0
         for item in self.cps.dgi_list:
             src_dgi_index += 1
-            if item.dgi == src_dgi:
-                item.dgi = exchanged_dgi
+            if item.name == src_dgi:
+                item.name = exchanged_dgi
                 value = item.get_value(src_dgi)
                 if value is not None:
                     item.remove_tag(src_dgi)
@@ -69,8 +69,8 @@ class Rule:
         exchanged_dgi_index = 0        
         for item in self.cps.dgi_list:
             exchanged_dgi_index += 1
-            if item.dgi == exchanged_dgi and src_dgi_index != exchanged_dgi_index:
-                item.dgi = src_dgi
+            if item.name == exchanged_dgi and src_dgi_index != exchanged_dgi_index:
+                item.name = src_dgi
                 value = item.get_value(exchanged_dgi)
                 if value is not None:
                     item.remove_tag(exchanged_dgi)
@@ -81,8 +81,8 @@ class Rule:
     #处理DGI的映射
     def process_dgi_map(self,src_dgi,dst_dgi):
         for item in self.cps.dgi_list:
-            if item.dgi == src_dgi:
-                item.dgi = dst_dgi
+            if item.name == src_dgi:
+                item.name = dst_dgi
                 value = item.get_value(src_dgi)
                 if value is not None:
                     item.remove_tag(src_dgi)
@@ -114,7 +114,7 @@ class Rule:
                     item.modify_value(tag,data)
         else:
             for item in self.cps.dgi_list:
-                if item.dgi == dgi:
+                if item.name == dgi:
                     data = item.get_value(tag)
                     if data is None:    #说明DGI中不包含该数据，直接返回
                         return self.cps
@@ -127,7 +127,7 @@ class Rule:
     def process_add_tag(self,src_dgi,src_tag,dst_dgi,dst_tag):
         dst_tag_value = self._get_tag_value(dst_dgi,dst_tag)
         dgi = Dgi()
-        dgi.dgi = src_dgi
+        dgi.name = src_dgi
         dgi.add_tag_value(src_tag,dst_tag_value)
         self.cps.add_dgi(dgi)
         return self.cps
@@ -139,13 +139,13 @@ class Rule:
         src_item = self.cps.get_dgi(src_dgi)
         if src_item is None:
             dgi = Dgi()
-            dgi.dgi = src_dgi
+            dgi.name = src_dgi
             dgi.add_tag_value(src_tag,dst_tag_value)
             self.cps.add_dgi(dgi)
             return self.cps
         else:
             for item in self.cps.dgi_list:
-                if item.dgi == src_dgi:
+                if item.name == src_dgi:
                     value = item.get_value(src_tag)
                     value += dst_tag_value
                     item.modify_value(src_tag,value)
@@ -155,7 +155,7 @@ class Rule:
     #添加kcv
     def process_add_kcv(self,src_dgi,dst_dgi,key_type):
         item = self.cps.get_dgi(dst_dgi)
-        key = item.get_value(item.dgi)
+        key = item.get_value(item.name)
         key_len = len(key)
         kcv = ''
         if key_type == 'DES':
@@ -167,22 +167,22 @@ class Rule:
                 part_key = key[i : i + 32]
                 kcv += algorithm.sm4_ecb_encrypt(part_key,'00000000000000000000000000000000')[0:6]
         dgi = Dgi()
-        dgi.dgi = src_dgi
-        dgi.add_tag_value(dgi.dgi,kcv)
+        dgi.name = src_dgi
+        dgi.add_tag_value(dgi.name,kcv)
         self.cps.add_dgi(dgi)
         return self.cps
 
     #向dgi中指定的tag添加固定值
-    def process_add_fixed_tag(self,dgi,tag,value,before_tag,after_tag):
+    def process_add_fixed_tag(self,dgi_name,tag,value,before_tag,after_tag):
         dgis = self.cps.get_all_dgis()
-        if dgi not in dgis:
+        if dgi_name not in dgis:
             new_dgi = Dgi()
-            new_dgi.dgi = dgi
+            new_dgi.name = dgi_name
             new_dgi.add_tag_value(tag,value)
             self.cps.add_dgi(new_dgi)
         else:
             for item in self.cps.dgi_list:
-                if item.dgi == dgi:
+                if item.name == dgi_name:
                     if tag in item.tag_value_dict:
                         old_value = item.get_value(tag)
                         new_value = old_value[len(tag) + 2 :] + value
@@ -203,7 +203,7 @@ class Rule:
 
     def process_assemble_tlv(self,dgi):
         for item in self.cps.dgi_list:
-            if dgi == item.dgi:
+            if dgi == item.name:
                 for key,value in item.tag_value_dict.items():
                     if not key:
                         print('dgi' + dgi + '存在非法的None Tag')
@@ -226,7 +226,7 @@ class Rule:
     #删除dgi指定的tag
     def process_remove_tag(self,dgi,tag):
         for item in self.cps.dgi_list:
-            if item.dgi == dgi:
+            if item.name == dgi:
                 item.remove_tag(tag)
                 return self.cps
         return self.cps
@@ -263,7 +263,7 @@ class Rule:
                     tag_len = utils.get_strlen(value)
                     data = dst_tag + tag_len + value + data
         dgi = Dgi()
-        dgi.dgi = src_dgi
+        dgi.name = src_dgi
         dgi.add_tag_value(src_tag,data)
         self.cps.add_dgi(dgi)
         return self.cps

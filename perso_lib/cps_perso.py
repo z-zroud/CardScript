@@ -53,7 +53,7 @@ def perso_no_cps_format(cps_file,encrypt_dgi_list,session_key):
         return False
     ini = IniParser(cps_file)
     sections = ini.get_sections()
-    filter_sections = [x for x in sections if x.dgi not in ('PSE','PPSE','Magstrip','Aid')]
+    filter_sections = [x for x in sections if x.name not in ('PSE','PPSE','Magstrip','Aid')]
     section_count = len(filter_sections)
     count = 0
     for section in filter_sections:
@@ -92,7 +92,7 @@ def get_cps(cps_file):
     sections = ini.get_sections()
     for section in sections:
         dgi = Dgi()
-        dgi.dgi = section
+        dgi.name = section
         options = ini.get_options(section)
         for option in options:
             value = ini.get_value(section,option)
@@ -125,7 +125,7 @@ def perso_ppse_mem(ppse_dgi):
 def perso_cps_mem(dgi_list,encrypt_dgi_list,session_key):
     '''个人化缓存中的数据'''
     count = 0
-    filter_dgi_list = [x for x in dgi_list if x.dgi not in ('PSE','PPSE','Magstrip','Aid')]
+    filter_dgi_list = [x for x in dgi_list if x.name not in ('PSE','PPSE','Magstrip','Aid')]
     dgi_count = len(filter_dgi_list)
     for dgi in filter_dgi_list:
         count += 1
@@ -133,8 +133,8 @@ def perso_cps_mem(dgi_list,encrypt_dgi_list,session_key):
         data = ''
         for _,value in dgi.tag_value_dict.items():
             data += value
-        is_encrypted_data, data = _process_encrypted_data(dgi.dgi,data,session_key,encrypt_dgi_list)
-        data = _process_template_and_dgi(dgi.dgi,data)
+        is_encrypted_data, data = _process_encrypted_data(dgi.name,data,session_key,encrypt_dgi_list)
+        data = _process_template_and_dgi(dgi.name,data)
         resp = ApduResponse()
         data_type = '00'
         if is_encrypted_data:
@@ -170,7 +170,7 @@ def perso_cps(cps_file,encrypt_dgi_list,session_key):
         return False
     ini = IniParser(cps_file)
     sections = ini.get_sections()
-    filter_sections = [x for x in sections if x.dgi not in ('PSE','PPSE','Magstrip','Aid')]
+    filter_sections = [x for x in sections if x.name not in ('PSE','PPSE','Magstrip','Aid')]
     section_count = len(filter_sections)
     count = 0
     for section in filter_sections:

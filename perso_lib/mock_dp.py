@@ -885,7 +885,7 @@ class MockCps:
 
     def _process_dgi(self,dgi_node,kms=None):
         dgi = Dgi()
-        dgi.dgi = self.xml_handle.get_attribute(dgi_node,'name')
+        dgi.name = self.xml_handle.get_attribute(dgi_node,'name')
         child_nodes = self.xml_handle.get_child_nodes(dgi_node)
         if child_nodes and len(child_nodes) == 1:   #判断是否为70模板开头，若是，则忽略掉70模板
             attr_name = self.xml_handle.get_attribute(child_nodes[0],'name')
@@ -897,16 +897,16 @@ class MockCps:
                 value = value.replace(' ','') #过滤掉value中的空格
                 data_format = self.xml_handle.get_attribute(child_node,'format')
                 if data_format == 'V':  #对于value数据，取dgi作为tag
-                    dgi.append_tag_value(dgi.dgi,value)
+                    dgi.append_tag_value(dgi.name,value)
                 else:
                     dgi.add_tag_value(tag,value)
             elif child_node.nodeName == 'Template':
                 # 对于非70模板，直接拼接该值，不做TLV解析处理
                 template_value = self._parse_template(child_node,kms)
-                dgi.append_tag_value(dgi.dgi,template_value)
+                dgi.append_tag_value(dgi.name,template_value)
             else:
                 print('unrecognize node' + child_node.nodeName)
-        if dgi.dgi == '0101' and dgi.is_existed('56') and dgi.is_existed('9F6B'):
+        if dgi.name == '0101' and dgi.is_existed('56') and dgi.is_existed('9F6B'):
             # 说明是MC应用，且支持MSD,这时需要生成对应的DC,DD
             tag56 = dgi.get_value('56')[4:] # 偷懒，不需要解析TLV
             tag9F6B = dgi.get_value('9F6B')[6:]
@@ -915,7 +915,7 @@ class MockCps:
 
     def _process_pse(self,pse_node):
         pse = Dgi()
-        pse.dgi = pse_node.nodeName
+        pse.name = pse_node.nodeName
         dgi_nodes = self.xml_handle.get_child_nodes(pse_node)
         for dgi_node in dgi_nodes:
             dgi = self._process_dgi(dgi_node)
@@ -937,7 +937,7 @@ class MockCps:
             for dgi_node in dgi_nodes:
                 dgi = self._process_dgi(dgi_node,kms)
                 if count > 1:   # 说明是双应用，DGI形式为[0101_2]
-                    dgi.dgi = dgi.dgi + '_' + str(count)
+                    dgi.name = dgi.name + '_' + str(count)
                 self.cps.add_dgi(dgi)
             kms.close()
         # 处理PSE 和 PPSE

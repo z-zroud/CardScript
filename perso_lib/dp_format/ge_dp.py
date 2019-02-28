@@ -5,7 +5,7 @@ from perso_lib.rule import Rule,RuleXml
 
 def process_data(app_flag,card_data):
     dgi = Dgi()
-    dgi.dgi = app_flag
+    dgi.name = app_flag
     data = card_data.split('|')
     dgi.add_tag_value(data[0],data[2])
     return dgi

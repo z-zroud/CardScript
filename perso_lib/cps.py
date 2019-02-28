@@ -4,7 +4,7 @@ import os
 
 class Dgi:
     def __init__(self):
-        self.dgi = ''
+        self.name = ''
         self.tag_value_dict = dict()
 
     def is_existed(self,tag):
@@ -69,25 +69,25 @@ class Dgi:
 #dgi only contains '_' and 'PSE','PPSE'
 def _custom_sorted(dgi):
     number = 0
-    if dgi.dgi == 'PSE':
+    if dgi.name == 'PSE':
         return 0x9FFFFF
-    elif dgi.dgi == 'PPSE':
+    elif dgi.name == 'PPSE':
         return 0xAFFFFF
-    elif dgi.dgi == 'A001': #扩展应用应放在8020应用秘钥之前
+    elif dgi.name == 'A001': #扩展应用应放在8020应用秘钥之前
         return 0x8019
-    elif dgi.dgi == '9010': #9010需放在8010前面个人化 自主产品 同方
+    elif dgi.name == '9010': #9010需放在8010前面个人化 自主产品 同方
         return 0x8009
-    elif dgi.dgi == 'Magstrip':
+    elif dgi.name == 'Magstrip':
         return 0x0003
-    elif dgi.dgi == 'Aid':
+    elif dgi.name == 'Aid':
         return 0x0001
-    elif dgi.dgi == 'Aid_2':
+    elif dgi.name == 'Aid_2':
         return 0x0002
-    elif '_' in dgi.dgi:
-        value = dgi.dgi.replace('_','0')
+    elif '_' in dgi.name:
+        value = dgi.name.replace('_','0')
         number = utils.hex_str_to_int(value)
     else:
-        number = utils.hex_str_to_int(dgi.dgi)
+        number = utils.hex_str_to_int(dgi.name)
     return number
 
 class Cps:
@@ -99,7 +99,7 @@ class Cps:
     def add_dgi(self,dgi):
         '''添加DGI分组，若该DGI分组存在,则直接合并其中的tag'''
         for dgi_item in self.dgi_list:
-            if dgi_item.dgi == dgi.dgi:
+            if dgi_item.name == dgi.name:
                 tag_value_dict = dgi.get_all_tags()
                 for tag,value in tag_value_dict.items():
                     dgi_item.add_tag_value(tag,value)
@@ -109,13 +109,13 @@ class Cps:
 
     def remove_dgi(self,dgi_name):
         for item in self.dgi_list:
-            if item.dgi == dgi_name:
+            if item.name == dgi_name:
                 self.dgi_list.remove(item)
                 return
     
     def get_dgi(self,dgi_name):
         for item in self.dgi_list:
-            if dgi_name == item.dgi:
+            if dgi_name == item.name:
                 return item
 
     def get_tag_value(self,dgi_name,tag):
@@ -127,9 +127,9 @@ class Cps:
         ini = IniParser(file_name)
         self.dgi_list.sort(key=_custom_sorted)
         for item in self.dgi_list:
-            ini.add_section(item.dgi)
+            ini.add_section(item.name)
             for key,value in item.tag_value_dict.items():
-                ini.add_option(item.dgi,key,value)
+                ini.add_option(item.name,key,value)
 
     def save(self):
         # index = self.dp_file_path.rfind('.')
@@ -157,7 +157,7 @@ class Cps:
     def get_all_dgis(self):
         dgis = []
         for item in self.dgi_list:
-            dgis.append(item.dgi)
+            dgis.append(item.name)
         return dgis
 
     def get_first_app_dgi_list(self):
@@ -166,7 +166,7 @@ class Cps:
         """
         dgis = []
         for item in self.dgi_list:
-            if '_2' not in item.dgi and 'PSE' not in item.dgi and 'PPSE' not in item.dgi:
+            if '_2' not in item.name and 'PSE' not in item.name and 'PPSE' not in item.name:
                 dgis.append(item)
         return dgis
 
@@ -176,8 +176,8 @@ class Cps:
         """
         dgis = []
         for item in self.dgi_list:
-            if '_2' in item.dgi:
-                item.dgi = item.dgi[0:item.dgi.find('_2')]
+            if '_2' in item.name:
+                item.name = item.name[0:item.name.find('_2')]
                 dgis.append(item)
         return dgis
 
@@ -185,14 +185,14 @@ class Cps:
 if __name__ == '__main__':
     cps = Cps()
     dgi = Dgi()
-    dgi.dgi = '0101'
+    dgi.name = '0101'
     dgi.add_tag_value('9F1F','ABCD')
     dgi.add_tag_value('5F24','2018009')
     dgi.modify_value('9F1F','xxxx')
     dgi.remove_tag('5F24')
     cps.add_dgi(dgi)
     dgi = Dgi()
-    dgi.dgi = '0201'
+    dgi.name = '0201'
     dgi.add_tag_value('9F1F','YYYY')
     cps.add_dgi(dgi)
     cps.save()

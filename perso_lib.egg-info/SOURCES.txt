@@ -6,7 +6,6 @@ perso_lib/apdu.py
 perso_lib/chip_config.py
 perso_lib/cps.py
 perso_lib/cps_perso.py
-perso_lib/dp_form.py
 perso_lib/excel.py
 perso_lib/file_handle.py
 perso_lib/gen_kmc_session.py

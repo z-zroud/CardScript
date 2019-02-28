@@ -18,7 +18,7 @@ def process_tlv(data):
 
 def process_data(data,data_type):
     dgi = Dgi()
-    dgi.dgi = data_type
+    dgi.name = data_type
     item_list = process_tlv(data)
     for item in item_list:
         dgi.add_tag_value(item[0],item[2])
@@ -27,7 +27,7 @@ def process_data(data,data_type):
 def process_EF02(cps):
     data_ef02 = ''
     for item in cps.dgi_list:
-        if item.dgi == '01':
+        if item.name == '01':
             data_ef02 = item.get_value('EF02')
     data_ef02 = data_ef02[8:]   #EF02总长度
     for i in range(8):
@@ -37,24 +37,24 @@ def process_EF02(cps):
         data_ef02 = data_ef02[8 + n_item_len :]
         dgi = Dgi()
         if i == 3:
-            dgi.dgi = '8205'
-            dgi.add_tag_value(dgi.dgi,value)
+            dgi.name = '8205'
+            dgi.add_tag_value(dgi.name,value)
             cps.add_dgi(dgi)
         elif i == 4:
-            dgi.dgi = '8204'
-            dgi.add_tag_value(dgi.dgi,value)
+            dgi.name = '8204'
+            dgi.add_tag_value(dgi.name,value)
             cps.add_dgi(dgi)
         elif i == 5:
-            dgi.dgi = '8203'
-            dgi.add_tag_value(dgi.dgi,value)
+            dgi.name = '8203'
+            dgi.add_tag_value(dgi.name,value)
             cps.add_dgi(dgi)
         elif i == 6:
-            dgi.dgi = '8202'
-            dgi.add_tag_value(dgi.dgi,value)
+            dgi.name = '8202'
+            dgi.add_tag_value(dgi.name,value)
             cps.add_dgi(dgi)
         elif i == 7:
-            dgi.dgi = '8201'
-            dgi.add_tag_value(dgi.dgi,value)
+            dgi.name = '8201'
+            dgi.add_tag_value(dgi.name,value)
             cps.add_dgi(dgi)
     return cps
 

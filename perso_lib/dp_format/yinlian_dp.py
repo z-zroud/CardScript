@@ -37,20 +37,20 @@ def process_pse_and_ppse(fh,dgi_name,has_template):
     else:
         data = fh.read_binary(fh.current_offset,next_len)
     if dgi_name == 'Store_PSE_1':
-        dgi.dgi = 'PSE'
+        dgi.name = 'PSE'
         #value = dgi.assemble_tlv('0101',data)
         dgi.add_tag_value('0101',data)
     elif dgi_name == 'Store_PSE_2':
-        dgi.dgi = 'PSE'
+        dgi.name = 'PSE'
         value = utils.assemble_tlv('A5','880101' + data)
         dgi.add_tag_value('9102',value)
     elif dgi_name == 'Store_PPSE':
-        dgi.dgi = 'PPSE'
+        dgi.name = 'PPSE'
         value = utils.assemble_tlv('BF0C',data)
         value = utils.assemble_tlv('A5',value)
         dgi.add_tag_value('9102',value)
     else:
-        dgi.dgi = 'F001'
+        dgi.name = 'F001'
         dgi.add_tag_value('F001',data)
     return dgi
 
@@ -72,7 +72,7 @@ def process_rule_eps(rule_file_name,cps):
         return cps
     key = rule_handle.get_attribute(handle8020_node,'key')
     for dgi_item in cps.dgi_list:
-        if dgi_item.dgi == '8020':
+        if dgi_item.name == '8020':
             tag8020 = ''
             tagA001 = ''
             value = dgi_item.get_value('8020')
@@ -83,10 +83,10 @@ def process_rule_eps(rule_file_name,cps):
                 tag8020 += data
             dgi_item.modify_value('8020',tag8020)
             dgiA001 = Dgi()
-            dgiA001.dgi = 'A001'
+            dgiA001.name = 'A001'
             dgiA001.add_tag_value('A001',tagA001)
             cps.add_dgi(dgiA001)
-        if dgi_item.dgi == '9020':
+        if dgi_item.name == '9020':
             tag9020 = ''
             value = dgi_item.get_value('9020')
             for i in range(0,len(value),8):
@@ -102,7 +102,7 @@ def process_rule_A001(rule_file_name,cps):
         return cps
     key = rule_handle.get_attribute(handleA001_node,'key')
     for dgi_item in cps.dgi_list:
-        if dgi_item.dgi == 'A001':
+        if dgi_item.name == 'A001':
             tag8020 = ''
             tag9020 = ''
             tagA001 = ''
@@ -115,10 +115,10 @@ def process_rule_A001(rule_file_name,cps):
                 tag9020 += algorithm.gen_kcv(data)
             dgi_item.modify_value('A001',tagA001)
             dgi8020 = Dgi()
-            dgi8020.dgi = '8020'
+            dgi8020.name = '8020'
             dgi8020.add_tag_value('8020',tag8020)
             dgi9020 = Dgi()
-            dgi9020.dgi = '9020'
+            dgi9020.name = '9020'
             dgi9020.add_tag_value('8020',tag9020)
             cps.add_dgi(dgi8020)
             cps.add_dgi(dgi9020)
@@ -152,7 +152,7 @@ def process_dp(dp_file,rule_file):
                 return
             next_len = get_next_len(fh)
             dgi_seq = fh.read_binary(fh.current_offset,2) #读取DGI序号
-            dgi.dgi = dgi_seq
+            dgi.name = dgi_seq
             next_len = get_next_len(fh)
             n_dgi_seq = utils.hex_str_to_int(dgi_seq)
             #print('dgi=' + dgi_seq)

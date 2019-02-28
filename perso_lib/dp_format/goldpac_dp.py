@@ -139,12 +139,12 @@ def process_jetco_special_dgi(xml,goldpac_dgi_list,cps):
     for node in add_tag_nodes:
         attrs = xml.get_attributes(node)
         dgi = Dgi()
-        dgi.dgi = attrs['srcDGI']
+        dgi.name = attrs['srcDGI']
         if 'srcTag' not in attrs:
             attrs['srcTag'] = attrs['dstTag']
         data = ''
         is_second_app = False
-        if '_2' in dgi.dgi:
+        if '_2' in dgi.name:
             is_second_app = True
         # 对DF20,DF27做特殊处理
         if attrs['dstDGI'] == 'DF20':
@@ -209,20 +209,20 @@ def parse_sddf_data(xml, sddf_tag, goldpac_dgi_list=[]):
             is_second_app = aid_info[1]
             break
     if is_second_app:  #说明包含双应用
-        dgi.dgi = node_dgi + '_2'
+        dgi.name = node_dgi + '_2'
     else:
-        dgi.dgi = node_dgi           
+        dgi.name = node_dgi           
     if value_format == 'TLV':
         data = utils.remove_dgi(sddf_data,node_dgi)
         if need_remove_template:
             data = utils.remove_template70(data)
         if utils.str_to_int(node_dgi) > 0xA000 or not utils.is_tlv(data):
-            dgi.add_tag_value(dgi.dgi,data)
+            dgi.add_tag_value(dgi.name,data)
         else:
             tlvs = utils.parse_tlv(data)
             if len(tlvs) > 0 and tlvs[0].is_template is True:
-                value = dgi.assemble_tlv(tlvs[0].tag,tlvs[0].value)
-                dgi.add_tag_value(dgi.dgi,value)
+                value = utils.assemble_tlv(tlvs[0].tag,tlvs[0].value)
+                dgi.add_tag_value(dgi.name,value)
             else:
                 for tlv in tlvs:
                     if tlv.len > 0x7F:
@@ -231,7 +231,7 @@ def parse_sddf_data(xml, sddf_tag, goldpac_dgi_list=[]):
                         value = tlv.tag + utils.int_to_hex_str(tlv.len) + tlv.value
                     dgi.add_tag_value(tlv.tag,value)
     elif value_format == 'V':
-        dgi.add_tag_value(dgi.dgi,sddf_data)
+        dgi.add_tag_value(dgi.name,sddf_data)
     return dgi
 
 def get_rsa_dgi_len(data):
@@ -279,22 +279,22 @@ def split_rsa(xml,goldpac_dgi_list,is_second_app):
         decrypted_data = decrypted_data[dgi_len:]
         dgi = Dgi()
         if is_second_app:
-            dgi.dgi = '_2'
+            dgi.name = '_2'
         if i == 4:           
-            dgi.dgi = '8205' + dgi.dgi
+            dgi.name = '8205' + dgi.name
         elif i == 5:
-            dgi.dgi = '8204' + dgi.dgi
+            dgi.name = '8204' + dgi.name
         elif i == 6:
-            dgi.dgi = '8203' + dgi.dgi
+            dgi.name = '8203' + dgi.name
         elif i == 7:
-            dgi.dgi = '8202' + dgi.dgi
+            dgi.name = '8202' + dgi.name
         elif i == 8:
-            dgi.dgi = '8201' + dgi.dgi          
+            dgi.name = '8201' + dgi.name          
         else:
             continue
-        dgi.add_tag_value(dgi.dgi[0:4],dgi_data)
+        dgi.add_tag_value(dgi.name[0:4],dgi_data)
         dgi_list.append(dgi)
-        print(dgi.dgi[0:4] + '=' + dgi_data)
+        print(dgi.name[0:4] + '=' + dgi_data)
     return dgi_list
         
 #sddf_tag不需要区分是否为第二应用
@@ -311,12 +311,12 @@ def get_goldpac_data(goldpac_dgi_list,sddf_tag,is_second_app):
 def parse_A006(xml,goldpac_dgi_list):
     sddf_A006 = get_sddf_tag(xml,'EMVDataName','Kidn')
     dgi = Dgi()
-    dgi.dgi = 'A006'
+    dgi.name = 'A006'
     data = get_goldpac_data(goldpac_dgi_list,sddf_A006,False)
     rule_file_handle = RuleXml(xml.file_name)
     _,key = rule_file_handle.get_decrypted_attribute('A006')    #顺带解密
     data = algorithm.des3_ecb_decrypt(key,data)
-    dgi.add_tag_value(dgi.dgi,data)
+    dgi.add_tag_value(dgi.name,data)
     return dgi
 
 def parse_8000(xml,goldpac_dgi_list,is_second_app):
@@ -325,16 +325,16 @@ def parse_8000(xml,goldpac_dgi_list,is_second_app):
     sddf_8000_enc = get_sddf_tag(xml,'EMVDataName','Ksmc')
     dgi = Dgi()
     if is_second_app:
-        dgi.dgi = '8000_2'
+        dgi.name = '8000_2'
     else:
-        dgi.dgi = '8000'
+        dgi.name = '8000'
     data = get_goldpac_data(goldpac_dgi_list,sddf_8000_ac,is_second_app)
     data += get_goldpac_data(goldpac_dgi_list,sddf_8000_mac,is_second_app)
     data += get_goldpac_data(goldpac_dgi_list,sddf_8000_enc,is_second_app)
     rule_file_handle = RuleXml(xml.file_name)
     _,key = rule_file_handle.get_decrypted_attribute('8000')    #顺带解密
     data = algorithm.des3_ecb_decrypt(key,data)
-    dgi.add_tag_value(dgi.dgi,data)
+    dgi.add_tag_value(dgi.name,data)
     return dgi
 
 def parse_9000(xml,goldpac_dgi_list,is_second_app):
@@ -343,20 +343,20 @@ def parse_9000(xml,goldpac_dgi_list,is_second_app):
     sddf_9000_enc = get_sddf_tag(xml,'EMVDataName','Checksum Ksmc')
     dgi = Dgi()
     if is_second_app:
-        dgi.dgi = '9000_2'
+        dgi.name = '9000_2'
     else:
-        dgi.dgi = '9000'
+        dgi.name = '9000'
     data = get_goldpac_data(goldpac_dgi_list,sddf_9000_ac,is_second_app)[0:6]
     data += get_goldpac_data(goldpac_dgi_list,sddf_9000_mac,is_second_app)[0:6]
     data += get_goldpac_data(goldpac_dgi_list,sddf_9000_enc,is_second_app)[0:6]
-    dgi.add_tag_value(dgi.dgi,data)
+    dgi.add_tag_value(dgi.name,data)
     return dgi
 
 def parse_pse_and_ppse(xml,pse_dgi_list,ppse_dgi_list,goldpac_dgi_list):
     pse_dgi = Dgi()
-    pse_dgi.dgi = 'PSE'
+    pse_dgi.name = 'PSE'
     ppse_dgi = Dgi()
-    ppse_dgi.dgi = 'PPSE'
+    ppse_dgi.name = 'PPSE'
     for sddf_tag in pse_dgi_list:
         tag,value = parse_pse_and_ppse_data(xml,sddf_tag,goldpac_dgi_list)
         pse_dgi.add_tag_value(tag,value)
@@ -408,13 +408,13 @@ def process_dp(dp_file,rule_file,is_mc_app=False):
         dgi_A006 = parse_A006(xml,goldpac_dgi_list)
         cps.add_dgi(dgi_A006)
         dgi_A016 = Dgi()
-        dgi_A016.dgi = 'A016'
+        dgi_A016.name = 'A016'
         dgi_A016.add_tag_value('A016',dgi_A006.get_value('A006'))
         dgi_8001 = Dgi()
-        dgi_8001.dgi = '8001'
+        dgi_8001.name = '8001'
         dgi_8001.add_tag_value('8001',dgi_8000.get_value('8000'))
         dgi_9001 = Dgi()
-        dgi_9001.dgi = '9001'
+        dgi_9001.name = '9001'
         dgi_9001.add_tag_value('9001',dgi_9000.get_value('9000'))
         cps.add_dgi(dgi_8001)
         cps.add_dgi(dgi_9001)
