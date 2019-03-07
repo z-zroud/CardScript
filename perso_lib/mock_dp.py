@@ -296,7 +296,7 @@ class GoldpacForm:
             return source_item
         return None
 
-    def read_data(self,sheet_name,start_row=3,start_col=2):
+    def read_data(self,sheet_name,start_row=5,start_col=2):
         if self.excel.open_worksheet(sheet_name):
             first_header = self.excel.read_cell_value(start_row,start_col)
             if str(first_header).strip() != 'Data Type':
@@ -471,22 +471,29 @@ class McForm:
 
 # 根据dp xml文件生成Word文档DP需求
 class GenDpDoc:
-    def __init__(self,config_file,doc_file):
-        self.config_file = config_file
-        self.doc_file = doc_file
-        self.xml_handle = XmlParser(config_file,XmlMode.READ)
-        
+    def __init__(self,dp_xml,dp_docx):
+        self.dp_xml = dp_xml    #DP xml配置文件
+        self.dp_docx = dp_docx
+        cwd = os.path.dirname(__file__)
+        dp_docx_template = os.path.join(cwd,'template','DpRequirement.docx')
+        self.docx = Docx(dp_docx_template)
+        self.xml_handle = XmlParser(dp_xml,XmlMode.READ)
 
     def _create_table(self,dgi_node):
-        dgi_name = self.xml_handle.get_attribute(dgi_node,'name')
-        dgi_comment = self.xml_handle.get_attribute(dgi_node,'comment')
-        self.doc.add_heading(3,dgi_name + dgi_comment)
-        new_table = self.doc.add_table(1,4)
+        new_table = self.docx.add_table(1,4)
+        # 设置表格标题栏
+        title = ['标签','数据源','长度','值']
         for col in range(4):
-            cell = self.doc.get_cell(new_table,0,col)
-            self.doc.set_cell_property(cell,'FFCA00')
-        tag_nodes = self.xml_handle.get_child_nodes(dgi_node)
-        for tag_node in tag_nodes:
+            cell = self.docx.get_cell(new_table,0,col)
+            self.docx.set_cell_background(cell,'FFCA00')
+            self.docx.set_cell_text(cell,title[col])
+        dgi_child_nodes = self.xml_handle.get_child_nodes(dgi_node)
+        if dgi_child_nodes and len(dgi_child_nodes) == 1:
+            name = self.xml_handle.get_attribute(dgi_child_nodes[0],'name')
+            if name and name == '70': # 若DGI包含70模板，则不将70模板包含到表格中
+                dgi_child_nodes = self.xml_handle.get_child_nodes(dgi_child_nodes[0])
+        # 设置每个tag标签
+        for tag_node in dgi_child_nodes:
             tag_name = self.xml_handle.get_attribute(tag_node,'name')
             tag_value = self.xml_handle.get_attribute(tag_node,'value')
             if not tag_value:
@@ -495,27 +502,65 @@ class GenDpDoc:
             if not tag_comment:
                 tag_comment = ''
             new_row = new_table.add_row()
-            self.doc.set_cell_text(new_row.cells[0],tag_name)
-            self.doc.set_cell_text(new_row.cells[1],tag_value)
-            self.doc.set_cell_text(new_row.cells[2],tag_comment)
+            self.docx.set_cell_text(new_row.cells[0],tag_name)
+            self.docx.set_cell_text(new_row.cells[1],tag_comment)
+            if utils.is_hex_str(tag_value):
+                self.docx.set_cell_text(new_row.cells[2],utils.get_strlen(tag_value))
+            else:
+                self.docx.set_cell_text(new_row.cells[2],'var')
+            self.docx.set_cell_text(new_row.cells[3],tag_value)
 
-
-
-    def gen_dp_doc(self):
-        self.doc = Docx(self.doc_file)
+    def gen_dp_docx(self):
+        app_maps = {
+            'A0000000041010':'MC Advance 应用分组',
+            '315041592E5359532E4444463031':'PSE应用分组',
+            '325041592E5359532E4444463031':'PPSE应用分组',
+            'A000000333010101':'UICS/PBOC 借记应用分组',
+            'A000000333010102':'UICS/PBOC 贷记应用分组',
+            'A0000000031010':'Visa 应用分组',
+            'A00000047400000001':'Jetco 应用分组',
+        }
+        
         app_nodes = self.xml_handle.get_child_nodes(self.xml_handle.root_element,'App')
+        pse_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'PSE')
+        ppse_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'PPSE')
+        app_nodes.append(pse_node)
+        app_nodes.append(ppse_node)
         for app_node in app_nodes:
+            # 添加应用分组标题
+            aid = self.xml_handle.get_attribute(app_node,'aid')
+            self.docx.add_heading(2,app_maps.get(aid,'应用分组'))
+            # 设置每个应用的DGI分组
             dgi_nodes = self.xml_handle.get_child_nodes(app_node,'DGI')
             for dgi_node in dgi_nodes:
+                dgi_name = self.xml_handle.get_attribute(dgi_node,'name')
+                dgi_comment = self.xml_handle.get_attribute(dgi_node,'comment')
+                dgi_title = 'DGI-{0}:{1}'.format(dgi_name,dgi_comment)
+                template70_node = self.xml_handle.get_first_node(dgi_node,'Template')
+                if template70_node:
+                    name = self.xml_handle.get_attribute(template70_node,'name')
+                    if name == '70':
+                        dgi_title = '[需添加70模板]' + dgi_title
+                self.docx.add_heading(3,dgi_title)
                 self._create_table(dgi_node)
-            self.doc.save_as('demo.docx')
+            self.docx.save_as(self.dp_docx)
 
+
+class DpTemplateXml():
+    def __init__(self,app_type='',name=''):
+        self.app_type = app_type
+        self.name = name
 
 # 根据xml模板、Excel表格中的数据、emboss file中的数据生成DP XML配置文件
 class GenDpXml:
     def __init__(self,template_xml,source_items,emboss_items):
-        self.template_xml = template_xml
-        self.template_handle = XmlParser(template_xml)
+        if isinstance(template_xml,DpTemplateXml):
+            cwd = os.path.dirname(__file__)
+            template_xml_path = os.path.join(cwd,'template',template_xml.app_type.lower(),template_xml.name)
+            self.template_xml = template_xml_path
+        else:
+            self.template_xml = template_xml
+        self.template_handle = XmlParser(self.template_xml)
         self.emboss_items = emboss_items
         self.source_items = source_items
         self.not_found_data = []
@@ -590,6 +635,22 @@ class GenDpXml:
                         xml_handle.set_attribute(tag_node,'comment',attr_comment)
                         break
 
+    def _delete_empty_template(self,new_xml_handle,parent_node):
+        child_template_nodes = new_xml_handle.get_child_nodes(parent_node,'Template')
+        for child_template_node in child_template_nodes: #同级的template
+            tag_nodes = new_xml_handle.get_child_nodes(child_template_node,'Tag')
+            if not tag_nodes:
+                new_xml_handle.remove(child_template_node)
+            else:
+                self._delete_empty_template(new_xml_handle,child_template_node)
+
+
+    def remove_empty_template(self,new_xml_handle):
+        app_nodes = new_xml_handle.get_child_nodes(new_xml_handle.root_element,'App')
+        for app_node in app_nodes:
+            dgi_nodes = new_xml_handle.get_child_nodes(app_node,'DGI')
+            for dgi_node in dgi_nodes:
+                self._delete_empty_template(new_xml_handle,dgi_node)
 
     def gen_xml(self,new_xml,char_set='UTF-8'):
         tags_from_kms = ('8F','9F32','8000','8001','9000','9001','8400','8401','A006','A016','90','92','93','9F46','9F48','8201','8202','8203','8204','8205','DC','DD')
@@ -714,6 +775,8 @@ class GenDpXml:
             new_xml_handle.set_attribute(tag_node,'comment',attr_comment)
         #最后设置alias
         self._add_alias(new_xml_handle,tag_nodes) 
+        # 删除 空模板节点
+        self.remove_empty_template(new_xml_handle)
         new_xml_handle.save(char_set)
 
 #根据DP xml文件和emboss file模拟一条制卡数据，用于制作测试卡
@@ -952,8 +1015,5 @@ class MockCps:
         return self.cps
 
 if __name__ == '__main__':
-    form_name = 'D:\\EMV Card Profile v2.1.xlsx'
-    self_form = GoldpacForm(form_name)
-    source_items = self_form.read_data('VISA-4D')
-    for item in source_items:
-        print("tag:" + item.tag + ",type:" + item.source_type + ",value:" + item.value)
+    docx = GenDpDoc('D://DP.xml','D://DP需求.docx')
+    docx.gen_dp_docx()

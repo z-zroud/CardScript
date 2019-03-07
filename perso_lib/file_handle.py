@@ -18,6 +18,7 @@ class FileHandle:
     def EOF(self):
         return self.current_offset == self.file_size
 
+
     def read_line(self):
         value = self._file.readline()
         ret = str(value).endswith('\n')
@@ -31,6 +32,9 @@ class FileHandle:
     def read(self,offset,read_len):
         self._file.seek(offset,0)
         return self._file.read(read_len)
+
+    def writeline(self,data):
+        self._file.writelines(data)
 
     def read_pos(self,start,end):
         if start > 0:
@@ -82,6 +86,9 @@ class FileHandle:
         for i in range(0,8,2):
             hex_str += data[6 - i : 6 - i + 2]
         return utils.hex_str_to_int(hex_str)
+
+    def close(self):
+        self._file.close()
 
 
 

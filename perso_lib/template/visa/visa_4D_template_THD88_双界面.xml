@@ -1,0 +1,186 @@
+<Root>
+	<Bin />
+	<App aid="A0000000031010" sda="false" dda="true">
+        <Sig id="1">
+            <Tag name="5A"  source="contact" format="TLV" />
+            <Tag name="5F24" source="contact" format="TLV" />
+            <Cert />
+		</Sig>
+        <DGI name="0101" comment="VSDC二磁等效数据及持卡人信息"> 
+            <Template name="70">        
+                <Tag name="57"  source="contact" format="TLV" />
+                <Tag name="9F1F"  source="contact" format="TLV" />
+                <Tag name="5F20" source="contact" format="TLV" />
+            </Template>
+		</DGI>
+        <DGI name="0201" comment="VSDC 签名数据">
+            <Template name="70">
+                <Tag name="5A"   source="contact" format="TLV" />
+                <Tag name="5F24"  source="contact" format="TLV" />
+                <Tag name="5F25"  source="contact" format="TLV" />
+                <Tag name="5F34"  source="contact" format="TLV" />
+                <Tag name="9F07"  source="contact" format="TLV" />
+                <Tag name="8E"  source="contact" format="TLV" />
+                <Tag name="9F0D"  source="contact" format="TLV" />
+                <Tag name="9F0E"  source="contact" format="TLV" />
+                <Tag name="9F0F"  source="contact" format="TLV" />
+                <Tag name="5F28"   source="contact" format="TLV" />    
+                <Tag name="8C"  source="contact" format="TLV" />
+                <Tag name="8D"  source="contact" format="TLV" />
+                <Tag name="5F30"  source="contact" format="TLV" />
+                <Tag name="9F08"  source="contact" format="TLV" />
+                <Tag name="9F42"  source="contact" format="TLV" />
+                <Tag name="9F4A"  source="contact" format="TLV" />
+            </Template>
+		</DGI>
+		<DGI name="0202" comment="qVSDC 签名数据">
+            <Template name="70">
+                <Tag name="5A"  source="contact" format="TLV" />
+                <Tag name="5F24" source="contact" format="TLV" />
+            </Template>
+		</DGI>
+        <DGI name="0203" comment="qVSDC IC卡公钥证书">
+            <Template name="70">
+                <Tag name="9F46" sig_id="1" source="contactless" format="TLV"/>
+            </Template>
+		</DGI>
+        <DGI name="0204" comment="qVSDC 动态数据认证相关数据">
+            <Template name="70">
+                <Tag name="9F47" type="fixed" value="03" source="contact"  format="TLV" />
+                <Tag name="9F48" sig_id="1" source="contact" format="TLV" />
+                <Tag name="9F4A" source="contact" format="TLV" />
+                <Tag name="9F69" source="contact" format="TLV" />
+            </Template>
+		</DGI>
+        <DGI name="0301" comment="通用 发卡行公钥证书">
+            <Template name="70">
+                <Tag name="90" source="kms" format="TLV" />
+            </Template>
+		</DGI>
+        <DGI name="0302" comment="发卡行公钥相关数据">
+            <Template name="70">
+                <Tag name="9F32"  source="kms" format="TLV" />
+                <Tag name="92" source="kms"  format="TLV" />
+                <Tag name="8F" source="kms" format="TLV" />
+            </Template>
+		</DGI>
+        <DGI name="3000" comment="卡片内部风险管理数据1">
+            <Template name="70">
+                <Tag name="9F36"  source="contact" format="TLV" />
+                <!--Tag name="9F4F" source="contact"  format="TLV" /-->
+            </Template>
+		</DGI>
+        <DGI name="3001" comment="发卡行公钥相关数据">
+            <Template name="70">
+                <Tag name="57"  source="contact" format="TLV" />
+                <Tag name="5F34" source="contact"  format="TLV" />
+                <Tag name="9F51" source="contact" format="TLV" />
+                <Tag name="9F52"  source="contact" format="TLV" />
+                <Tag name="9F53" source="contact"  format="TLV" />
+                <!--Tag name="9F54" source="contact" format="TLV" /-->
+                <Tag name="9F56"  source="contact" format="TLV" />
+                <Tag name="9F57" source="contact"  format="TLV" />
+                <Tag name="9F58" source="contact" format="TLV" />
+                <Tag name="9F59"  source="contact" format="TLV" />
+                <Tag name="9F5C" source="contact"  format="TLV" />
+                <Tag name="9F5E" source="contact" format="TLV" />
+                <Tag name="9F72"  source="contact" format="TLV" />
+                <Tag name="9F6B" source="contact"  format="TLV" />
+                <Tag name="9F6C" source="contact" format="TLV" />
+                <Tag name="9F68"  source="contact" format="TLV" />
+                <Tag name="9F6E" source="contact"  format="TLV" />
+                <Tag name="9F77" source="contact" format="TLV" />
+                <Tag name="9F78"  source="contact" format="TLV" />
+                <Tag name="9F79" source="contact"  format="TLV" />
+            </Template>
+		</DGI>
+		<DGI name="8000" comment="MC 对称秘钥">
+			<Tag name="8000" format="V" />
+		</DGI>
+		<DGI name="9000">
+			<Tag name="9000" format="V" />
+		</DGI>
+		<DGI name="8201">
+			<Tag name="8201" format="V" />
+		</DGI>
+		<DGI name="8202">
+			<Tag name="8202" format="V" />
+		</DGI>
+		<DGI name="8203">
+			<Tag name="8203" format="V" />
+		</DGI>
+		<DGI name="8204">
+			<Tag name="8204" format="V" />
+		</DGI>
+		<DGI name="8205">
+			<Tag name="8205" format="V" />
+		</DGI>
+        <DGI name="9104" comment="VISA GPO响应数据">
+            <Tag name="82" source="contact" format="TLV" />
+            <Tag name="94" value="0801010010010100" format="TLV" />
+		</DGI>
+        <DGI name="9207" comment="qVSDC GPO响应数据">
+            <Tag name="82" source="contactless" format="TLV" />
+            <Tag name="94" value="18010200 10050500 10020401" format="TLV" />
+            <Tag name="9F10" source="contactless" format="TLV" />
+		</DGI>
+        <DGI name="9200" comment="VSDC GAC响应数据">
+            <Tag name="9F10" source="contact" format="TLV" />
+		</DGI>
+        <DGI name="9102" comment="接触选择AID返回数据">
+			<Template name="A5">
+				<Tag name="50" source="contact" format="TLV" />
+				<Tag name="87" source="contact" format="TLV" />
+				<Tag name="5F2D" source="contact" format="TLV" />
+                <Tag name="9F11" source="contact" format="TLV" />
+                <Tag name="9F12" source="contact" format="TLV" />
+                <Template name="BF0C">
+				</Template>
+			</Template>
+		</DGI>
+        <DGI name="9103" comment="非接触选择AID返回数据">
+			<Template name="A5">
+				<Tag name="50" source="contact" format="TLV" />
+				<Tag name="87" source="contact" format="TLV" />
+                <Tag name="9F38" source="contactless" format="TLV" />
+				<Tag name="5F2D" source="contact" format="TLV" />
+                <Tag name="9F11" source="contact" format="TLV" />
+                <Tag name="9F12" source="contact" format="TLV" />
+                <Template name="BF0C">
+                    <Tag name="9F5A" source="contactless" format="TLV" />
+				</Template>
+			</Template>
+		</DGI>
+	</App>
+        <PSE>
+        <DGI name="0101">
+            <Template name="70">
+                <Template name="61">
+                    <Tag name="4F" source="contact" format="TLV" />
+                    <Tag name="50" source="contact" format="TLV" />
+                    <Tag name="87" source="contact" format="TLV" />
+                </Template>
+            </Template>
+        </DGI>
+        <DGI name="9102">
+            <Template name="A5">
+                <Tag name="88" type="fixed" value="01" format="TLV" />
+                <Tag name="5F2D" source="contact" format="TLV" />
+                <Tag name="9F11" source="contact" format="TLV" />
+            </Template>
+        </DGI>
+    </PSE>
+    <PPSE>
+        <DGI name="9102">
+            <Template name="A5">
+                <Template name="BF0C">
+                    <Template name="61">
+                        <Tag name="4F" source="contact" format="TLV" />
+                        <Tag name="50" source="contact" format="TLV" />
+                        <Tag name="87" source="contact" format="TLV" />
+                    </Template>
+                </Template>
+            </Template>
+        </DGI>
+    </PPSE>
+</Root>
