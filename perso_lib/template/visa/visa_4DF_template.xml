@@ -161,28 +161,28 @@
             <Tag name="9F10" source="contact" format="TLV" comment="发卡行应用数据"/>
 		</DGI>
         <DGI name="9102" comment="接触选择AID返回数据">
-			<Template name="A5">
+			<Template name="A5" comment="A5模板">
 				<Tag name="50" source="contact" format="TLV" comment="应用标签"/>
 				<Tag name="87" source="contact" format="TLV" comment="应用优先级"/>
 				<Tag name="5F2D" source="contact" format="TLV" comment="首选语言"/>
                 <Tag name="9F11" source="contact" format="TLV" comment="发卡行代码表索引（可选）"/>
                 <Tag name="9F12" source="contact" format="TLV" comment="应用首选名称(可选)"/>
-                <Template name="BF0C">
+                <Template name="BF0C" comment="BF0C模板">
                     <Tag name="9F4D" source="contact" format="TLV" comment="交易日志入口"/>
                     <Tag name="5F55" source="contact" format="TLV" comment="Issuer Country Code"/>
 				</Template>
 			</Template>
 		</DGI>
         <DGI name="9103" comment="非接触选择AID返回数据">
-			<Template name="A5">
-				<Tag name="50" source="contact" format="TLV" comment=""/>
-				<Tag name="87" source="contact" format="TLV" comment=""/>
-                <Tag name="9F38" source="contactless" format="TLV" comment=""/>
-				<Tag name="5F2D" source="contact" format="TLV" comment=""/>
-                <Tag name="9F11" source="contact" format="TLV" comment=""/>
-                <Tag name="9F12" source="contact" format="TLV" comment=""/>
-                <Template name="BF0C">
-                    <Tag name="9F5A" source="contactless" format="TLV" comment=""/>
+			<Template name="A5" comment="A5模板">
+				<Tag name="50" source="contact" format="TLV" comment="应用标签"/>
+				<Tag name="87" source="contact" format="TLV" comment="应用优先级"/>
+                <Tag name="9F38" source="contactless" format="TLV" comment="PDOL"/>
+				<Tag name="5F2D" source="contact" format="TLV" comment="首选语言"/>
+                <Tag name="9F11" source="contact" format="TLV" comment="发卡行代码表索引（可选）"/>
+                <Tag name="9F12" source="contact" format="TLV" comment="应用首选名称(可选)"/>
+                <Template name="BF0C" comment="BF0C模板">
+                    <Tag name="9F5A" source="contactless" format="TLV" comment="Application Program Identifier"/>
 				</Template>
 			</Template>
 		</DGI>
@@ -190,29 +190,29 @@
     <PSE aid="315041592E5359532E4444463031">
         <DGI name="0101">
             <Template name="70">
-                <Template name="61">
-                    <Tag name="4F" source="contact" format="TLV" comment=""/>
-                    <Tag name="50" source="contact" format="TLV" comment=""/>
-                    <Tag name="87" source="contact" format="TLV" comment=""/>
+                <Template name="61" comment="61模板">
+                    <Tag name="4F" source="contact" format="TLV" comment="应用AID"/>
+                    <Tag name="50" source="contact" format="TLV" comment="应用标签"/>
+                    <Tag name="87" source="contact" format="TLV" comment="应用优先级"/>
                 </Template>
             </Template>
         </DGI>
         <DGI name="9102">
-            <Template name="A5">
-                <Tag name="88" type="fixed" value="01" format="TLV" comment=""/>
-                <Tag name="5F2D" source="contact" format="TLV" comment=""/>
-                <Tag name="9F11" source="contact" format="TLV" comment=""/>
+            <Template name="A5" comment="A5模板">
+                <Tag name="88" type="fixed" value="01" format="TLV" comment="应用SFI"/>
+                <Tag name="5F2D" source="contact" format="TLV" comment="首选语言"/>
+                <Tag name="9F11" source="contact" format="TLV" comment="发卡行代码表索引（可选）"/>
             </Template>
         </DGI>
     </PSE>
     <PPSE aid="325041592E5359532E4444463031">
         <DGI name="9102">
-            <Template name="A5">
-                <Template name="BF0C">
+            <Template name="A5" comment="A5模板">
+                <Template name="BF0C" comment="BF0C模板">
                     <Template name="61">
-                        <Tag name="4F" source="contact" format="TLV" comment=""/>
-                        <Tag name="50" source="contact" format="TLV" comment=""/>
-                        <Tag name="87" source="contact" format="TLV" comment=""/>
+                        <Tag name="4F" source="contact" format="TLV" comment="应用AID"/>
+                        <Tag name="50" source="contact" format="TLV" comment="应用标签"/>
+                        <Tag name="87" source="contact" format="TLV" comment="应用优先级"/>
                     </Template>
                 </Template>
             </Template>

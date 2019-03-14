@@ -48,6 +48,8 @@ fd_encrypts = [
     ('8203',True),
     ('8204',True),
     ('8205',True),
+    ('8100',False),
+    ('8030',False),
 ]
 
 dt_encrypts = [
@@ -106,12 +108,22 @@ tf_G8C140046_pboc_debit = dict(packet='A000000333010130',applet='A0000003330101'
 tf_G8C140046_pboc_credit = dict(packet='A000000333010130',applet='A0000003330101',inst='A000000333010102',priviliage='10',param='C9022804')
 tf_G8C140046_jetco = dict(packet='A000000333010130',applet='A0000003330101',inst='A00000047400000001',priviliage='10',param='C906200000000001')
 
+#复旦芯片安装参数集合
+fd_G90140092_pse = dict(packet='50424F435F444343',applet='50424F435F4443435F3031',inst='315041592E5359532E4444463031',priviliage='00',param='C900')
+fd_G90140092_ppse = dict(packet='50424F435F444343',applet='50424F435F4443435F3031',inst='325041592E5359532E4444463031',priviliage='00',param='C900')
+fd_G90140092_uics_debit = dict(packet='',applet='',inst='A000000333010101',priviliage='',param='')
+fd_G90140092_uics_credit = dict(packet='',applet='',inst='A000000333010102',priviliage='',param='')
+fd_G90140092_pboc_debit = dict(packet='50424F435F444343',applet='50424F435F4443435F3031',inst='A000000333010101',priviliage='12',param='C900')
+fd_G90140092_pboc_credit = dict(packet='',applet='',inst='A000000333010102',priviliage='',param='')
+
+
 class Chip:
     tf_G8C140026 = 'tf_G8C140026'
     tf_G8C140031 = 'tf_G8C140031'
     tf_G8C140046 = 'tf_G8C140046'
     ifx_05059081 = 'ifx_05059081'
     hd_G81140042 = 'hd_G81140042'
+    fd_G90140092 = 'fd_G90140092'
 
 class App:
     pse = 'pse'

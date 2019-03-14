@@ -11,19 +11,10 @@ from perso_lib.xml_parse import XmlParser,XmlMode
 from perso_lib.word import Docx
 from perso_lib.file_handle import FileHandle
 from perso_lib.excel import ExcelMode,ExcelOp
+from perso_lib import settings
 from enum import Enum
 from xml.dom import Node
 import logging
-
-
-card_bin = '' #由于生成的模板无法获取具体的bin号，在此处需要手动设置
-
-class CertConfig:
-    rsa = ''
-    expireDate = ''
-    expireDateType = 'file'
-
-cert_config = CertConfig()
 
 alias_count = 0
 def get_alias():
@@ -40,6 +31,15 @@ class DataType(Enum):
     CONTACTLESS = 3
     MCA         = 4     #MC 专用
     MAGSTRIPE   = 5     #MC 专用
+
+class AppType(Enum):
+    VISA_DEBIT  = 'VISA_DEBIT'  #VISA 借记
+    VISA_CREDIT = 'VISA_CREDIT' #VISA 贷记
+    MC_DEBIT    = 'MC_DEBIT'    #MC 借记
+    MC_CREDIT   = 'MC_CREDIT'   #MC 贷记
+    UICS_DEBIT  = 'UICS_DEBIT'  #UICS 借记
+    UICS_CREDIT = 'UICS_CREDIT' #UICS 贷记
+    JETCO       = 'JETCO'       #JETCO
 
 # 该类描述了来源数据的结构呈现形式
 class SourceItem:
@@ -61,8 +61,7 @@ class EmbossItem:
     value 一种描述取值方式的字符串,例如 "[10,20]001[12,33]"
     表示从emboss file中取位置10到20的字符串 + 固定字符串001 + 从emboss file取位置12到33的字符串
     '''
-    def __init__(self,tag,convert_to_ascii,replace_equal_by_D,value):
-        self.tag = tag
+    def __init__(self,convert_to_ascii,replace_equal_by_D,value):
         self.convert_to_ascii = convert_to_ascii
         self.replace_equal_by_D = replace_equal_by_D
         self.value = value
@@ -309,8 +308,39 @@ class GoldpacForm:
                     self.source_items.append(item)
         return self.source_items
 
-# 万事达1156表格专用类            
+
 class McForm:
+    def __init__(self,xml_name):
+        self.source_items = []
+        self.xml_handle = XmlParser(xml_name,XmlMode.READ)
+
+    def read_data(self):
+        worksheet_nodes = self.xml_handle.get_child_nodes(self.xml_handle.root_element,'WORKSHEET')
+        for worksheet_node in worksheet_nodes:
+            worksheet_name = self.xml_handle.get_attribute(worksheet_node,'NAME')
+            ws_child_nodes = self.xml_handle.get_child_nodes(worksheet_node)
+            for child_node in ws_child_nodes:
+                item = SourceItem()
+                item.name = self.xml_handle.get_attribute(child_node,'NAME')
+                item.tag = self.xml_handle.get_attribute(child_node,'TAG')
+                if item.tag == '':
+                    item.tag = '--'
+                item.value = self.xml_handle.get_attribute(child_node,'VALUE')
+                if worksheet_name == 'fci':
+                    item.data_type = DataType.FCI
+                elif worksheet_name == 'internal':
+                    item.data_type = DataType.MCA
+                elif worksheet_name == 'recordcontact':
+                    item.data_type = DataType.CONTACT
+                elif worksheet_name == 'recordcontactless':
+                    item.data_type = DataType.CONTACTLESS
+                else:
+                    logging.info('Unkonwn worksheet name.')
+                self.source_items.append(item)
+        return self.source_items
+
+# 万事达1156表格专用类            
+class Form1156:
     def __init__(self,tablename):
         self.excel = ExcelOp(tablename)
         self.data_list = []
@@ -479,36 +509,88 @@ class GenDpDoc:
         self.docx = Docx(dp_docx_template)
         self.xml_handle = XmlParser(dp_xml,XmlMode.READ)
 
+    def _get_deep_template_count(self,dgi_node):
+        '''
+        获取DGI节点中最深模板的个数，用于确定表格需要创建多少列
+        '''
+        if not dgi_node:
+            return 0
+        children_nodes = self.xml_handle.get_child_nodes(dgi_node,'Template')
+        if not children_nodes:
+            return 0
+        return 1 + max(self._get_deep_template_count(child) for child in children_nodes)
+
+    def _get_template_child_tags_count(self,template_node):
+        '''
+        获取模板中Tag子节点的个数
+        '''
+        tag_nodes = self.xml_handle.get_child_nodes(template_node,'Tag')
+        if tag_nodes:
+            return len(tag_nodes)
+        return 0
+
+    def _get_node_level(self,root_node,child_node):
+        level = 0
+        parent = self.xml_handle.get_parent(child_node)
+        while parent and parent != root_node:
+            parent = self.xml_handle.get_parent(parent)
+            level += 1
+        return level
+
+    def _get_children_nodes(self,parent_node):
+        '''
+        获取父节点下的所有子节点
+        '''
+        children_nodes = self.xml_handle.get_child_nodes(parent_node)
+        for child_node in children_nodes[:]:
+            # print(self.xml_handle.get_attribute(child_node,'name'))
+            children_nodes.extend(self._get_children_nodes(child_node))
+        return children_nodes
+
     def _create_table(self,dgi_node):
-        new_table = self.docx.add_table(1,4)
-        # 设置表格标题栏
-        title = ['标签','数据源','长度','值']
-        for col in range(4):
-            cell = self.docx.get_cell(new_table,0,col)
-            self.docx.set_cell_background(cell,'FFCA00')
-            self.docx.set_cell_text(cell,title[col])
+        # 若DGI包含70模板，则不将70模板包含到表格中(过滤70模板)
         dgi_child_nodes = self.xml_handle.get_child_nodes(dgi_node)
         if dgi_child_nodes and len(dgi_child_nodes) == 1:
             name = self.xml_handle.get_attribute(dgi_child_nodes[0],'name')
-            if name and name == '70': # 若DGI包含70模板，则不将70模板包含到表格中
-                dgi_child_nodes = self.xml_handle.get_child_nodes(dgi_child_nodes[0])
+            if name and name == '70': 
+                dgi_node = dgi_child_nodes[0]
+        col_count = self._get_deep_template_count(dgi_node) + 4
+        new_table = self.docx.add_table(1,col_count)
+        # 设置表格标题栏
+        title = ['' for empty in range(col_count - 4)] + ['标签','数据元','长度','值']
+        for col in range(col_count): #设置表格头部栏
+            cell = self.docx.get_cell(new_table,0,col)
+            self.docx.set_cell_background(cell,'FFCA00')
+            self.docx.set_cell_text(cell,title[col])
+        # 如果包含非70模板，需要合并标题栏中的Tag列
+        if col_count > 4:
+            cells = []
+            for col in range(col_count - 3):
+                cells.append(self.docx.get_cell(new_table,0,col))
+            self.docx.merge_cell(cells)
+        # 设置表格中每个单元格的内容
         # 设置每个tag标签
+        dgi_child_nodes = self._get_children_nodes(dgi_node)
         for tag_node in dgi_child_nodes:
             tag_name = self.xml_handle.get_attribute(tag_node,'name')
             tag_value = self.xml_handle.get_attribute(tag_node,'value')
+            tag_type = self.xml_handle.get_attribute(tag_node,'type')
             if not tag_value:
                 tag_value = ''
+            if tag_type == 'kms':
+                tag_value = 'From KMS'
             tag_comment = self.xml_handle.get_attribute(tag_node,'comment')
             if not tag_comment:
                 tag_comment = ''
             new_row = new_table.add_row()
-            self.docx.set_cell_text(new_row.cells[0],tag_name)
-            self.docx.set_cell_text(new_row.cells[1],tag_comment)
-            if utils.is_hex_str(tag_value):
-                self.docx.set_cell_text(new_row.cells[2],utils.get_strlen(tag_value))
+            level = self._get_node_level(dgi_node,tag_node)
+            self.docx.set_cell_text(new_row.cells[level],tag_name)
+            self.docx.set_cell_text(new_row.cells[-3],tag_comment) #数据元在倒数第3列描述
+            if tag_value and utils.is_hex_str(tag_value):
+                self.docx.set_cell_text(new_row.cells[-2],utils.get_strlen(tag_value))
             else:
-                self.docx.set_cell_text(new_row.cells[2],'var')
-            self.docx.set_cell_text(new_row.cells[3],tag_value)
+                self.docx.set_cell_text(new_row.cells[-2],'var') #长度在倒数第2列描述
+            self.docx.set_cell_text(new_row.cells[-1],tag_value) #值为最后一列
 
     def gen_dp_docx(self):
         app_maps = {
@@ -520,12 +602,13 @@ class GenDpDoc:
             'A0000000031010':'Visa 应用分组',
             'A00000047400000001':'Jetco 应用分组',
         }
-        
         app_nodes = self.xml_handle.get_child_nodes(self.xml_handle.root_element,'App')
         pse_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'PSE')
         ppse_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'PPSE')
-        app_nodes.append(pse_node)
-        app_nodes.append(ppse_node)
+        if pse_node:
+            app_nodes.append(pse_node)
+        if ppse_node:
+            app_nodes.append(ppse_node)
         for app_node in app_nodes:
             # 添加应用分组标题
             aid = self.xml_handle.get_attribute(app_node,'aid')
@@ -553,6 +636,7 @@ class DpTemplateXml():
 
 # 根据xml模板、Excel表格中的数据、emboss file中的数据生成DP XML配置文件
 class GenDpXml:
+    config = dict() #一个类属性字典，用于自定义配置
     def __init__(self,template_xml,source_items,emboss_items):
         if isinstance(template_xml,DpTemplateXml):
             cwd = os.path.dirname(__file__)
@@ -564,16 +648,6 @@ class GenDpXml:
         self.emboss_items = emboss_items
         self.source_items = source_items
         self.not_found_data = []
-
-    def _get_emboss_item(self,tag):
-        '''
-        从数据集emboss item中查找对应的数据
-        '''
-        if self.emboss_items:
-            for item in self.emboss_items:
-                if item.tag == tag:
-                    return item
-        return None
 
     def _get_source_item(self,tag='',source='',comment=''):
         '''
@@ -634,6 +708,9 @@ class GenDpXml:
                         xml_handle.set_attribute(tag_node,'alias',alias)
                         xml_handle.set_attribute(tag_node,'comment',attr_comment)
                         break
+                    xml_handle.set_attribute(tag_node,'comment',attr_comment)
+                else:
+                    xml_handle.set_attribute(tag_node,'comment',attr_comment)
 
     def _delete_empty_template(self,new_xml_handle,parent_node):
         child_template_nodes = new_xml_handle.get_child_nodes(parent_node,'Template')
@@ -662,21 +739,51 @@ class GenDpXml:
 
         # 暂时只考虑一个应用
         app_node = new_xml_handle.get_first_node(new_xml_handle.root_element,'App')
+        if app_node:
+            new_xml_handle.set_attribute(app_node,'type',self.config.get('first_app_type').name.lower())
 
         # 设置bin号
-        global card_bin
+        # global card_bin
         bin_node = new_xml_handle.get_first_node(new_xml_handle.root_element,'Bin')
         if bin_node:
-            new_xml_handle.set_attribute(bin_node,'value',card_bin)
+            new_xml_handle.set_attribute(bin_node,'value',self.config.get('card_bin'))
 
         #设置证书配置信息
-        global cert_config
+        # global cert_config
         cert_nodes = new_xml_handle.get_nodes(app_node,'Cert')
         if cert_nodes:
             for cert_node in cert_nodes:
-                new_xml_handle.set_attribute(cert_node,'expireDate',cert_config.expireDate)
-                new_xml_handle.set_attribute(cert_node,'expireDateType',cert_config.expireDateType)
-                new_xml_handle.set_attribute(cert_node,'rsa',cert_config.rsa)
+                new_xml_handle.set_attribute(cert_node,'expireDate',self.config.get('expireDate'))
+                new_xml_handle.set_attribute(cert_node,'expireDateType',self.config.get('expireDateType'))
+                new_xml_handle.set_attribute(cert_node,'rsa',self.config.get('rsa'))
+        
+        #对于VISA应用，如果RSA长度大于1024,需要新增DGI存储tag9F4B
+        if self.config.get('first_app_type') in (AppType.VISA_CREDIT,AppType.VISA_DEBIT):
+            dgi_for_tag9F4B = int(self.config.get('dgi_9F4B'),16)
+            dgi_nodes = new_xml_handle.get_nodes(app_node,'DGI')
+            before_node = None
+            for dgi_node in dgi_nodes:
+                dgi_name = new_xml_handle.get_attribute(dgi_node,'name')
+                if dgi_name and utils.is_hex_str(dgi_name):
+                    int_dgi = int(dgi_name,16)
+                    if int_dgi < dgi_for_tag9F4B:
+                        before_node = dgi_node
+                    else:
+                        new_node = new_xml_handle.create_node('DGI')
+                        new_xml_handle.set_attribute(new_node,'name',self.config.get('dgi_9F4B'))
+                        attr = dict()
+                        attr['name'] = 'FFFF'
+                        attr['format'] = 'V'
+                        attr['type'] = 'fixed'
+                        rsa = int(self.config.get('rsa'))
+                        str_rsa = utils.int_to_hex_str(rsa // 8)
+                        str_rsa = '9F4B81' + str_rsa
+                        str_tlv_len = utils.int_to_hex_str(rsa // 8 + 4)
+                        value = '7081' + str_tlv_len + str_rsa
+                        attr['value'] = value
+                        new_xml_handle.add_node(new_node,'Tag',**attr)
+                        new_xml_handle.insert_before(app_node,new_node,before_node)
+                        break
 
         # 生成数据
         tag_nodes = new_xml_handle.get_nodes(new_xml_handle.root_element,'Tag')
@@ -713,6 +820,12 @@ class GenDpXml:
             else:
                 value = attr_value
 
+            # 对于visa项目,如果RSA长度小于等于1024,需要在9115,9116,9117中添加9F4B81XX
+            rsa = int(self.config.get('rsa'))
+            if  rsa <= 1024 and attr_tag == 'FFFF':
+                rsa = utils.int_to_hex_str(rsa // 8)
+                value += '9F4B81' + rsa
+
             # 从数据中获取tag类型
             source_type = ''
             if attr_tag.strip() == '--':
@@ -736,7 +849,8 @@ class GenDpXml:
                 elif attr_type == 'file':
                     # 来自文件
                     new_xml_handle.set_attribute(tag_node,'type','file')
-                    item = self._get_emboss_item(attr_tag)
+                    # item = self._get_emboss_item(attr_tag)
+                    item = self.emboss_items.get(attr_tag)
                     if item:
                         new_xml_handle.set_attribute(tag_node,'value',item.value)
                         if item.convert_to_ascii:
@@ -750,12 +864,13 @@ class GenDpXml:
                 if attr_tag in tags_from_kms:
                     # 来自加密机, 优先处理从加密机里面的数据，不取来自客户表中数据
                     new_xml_handle.set_attribute(tag_node,'type','kms')
-                elif value and not self._get_emboss_item(attr_tag):
+                elif value and not self.emboss_items.get(attr_tag): #self._get_emboss_item(attr_tag):
                     #说明是固定值,并且不需要从文件中取
                     new_xml_handle.set_attribute(tag_node,'type','fixed')
                     new_xml_handle.set_attribute(tag_node,'value',value)
                 else:
-                    item = self._get_emboss_item(attr_tag)
+                    # item = self._get_emboss_item(attr_tag)
+                    item = self.emboss_items.get(attr_tag)
                     if item:
                         # 来自文件
                         new_xml_handle.set_attribute(tag_node,'type','file')
@@ -772,11 +887,23 @@ class GenDpXml:
                 new_xml_handle.set_attribute(tag_node,'sig_id',attr_sig_id)
             #设置编码格式和描述
             new_xml_handle.set_attribute(tag_node,'format',attr_format)
+            if not attr_comment:
+                aid = new_xml_handle.get_attribute(app_node,'aid')
+                if aid == 'A0000000041010':
+                    attr_comment = settings.mc_tag_desc_mappings.get(attr_tag)
+                elif aid == 'A0000000031010':
+                    attr_comment = settings.visa_tag_desc_mappings.get(attr_tag)
+                elif aid == 'A00000047400000001':
+                    attr_comment = settings.jetco_tag_desc_mappings.get(attr_tag)
+                elif aid in ('A000000333010101','A000000333010102'):
+                    attr_comment = settings.uics_tag_desc_mappings.get(attr_tag)
             new_xml_handle.set_attribute(tag_node,'comment',attr_comment)
+
         #最后设置alias
         self._add_alias(new_xml_handle,tag_nodes) 
         # 删除 空模板节点
         self.remove_empty_template(new_xml_handle)
+
         new_xml_handle.save(char_set)
 
 #根据DP xml文件和emboss file模拟一条制卡数据，用于制作测试卡

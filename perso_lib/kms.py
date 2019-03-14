@@ -14,7 +14,7 @@ class Kms():
     def __init__(self):
         self.tags = dict()
         self.exp = '03'
-        self.expiry_date = '1250'    #失效日期2050年12月
+        self.expiry_date = '1249'    #失效日期2049年12月
 
     def init(self,issuer_bin,rsa_len=1152):
         if not self.is_init:

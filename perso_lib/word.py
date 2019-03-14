@@ -50,6 +50,21 @@ class Docx:
         colo为cell所在的列，索引从0,1,2...表示第1,2,3...列
         '''
         return table.rows[row].cells[col]
+        # return table.cell(row,col)
+
+    def merge_cell(self,cells):
+        merged_cell = cells[0]
+        if len(cells) < 2:
+            return merged_cell
+        else:
+            text = ''
+            for i in range(1,len(cells)):
+                merged_cell = merged_cell.merge(cells[i])
+                if merged_cell.paragraphs and len(merged_cell.paragraphs) > 0:
+                    text = merged_cell.text.replace('\n','')
+            merged_cell.text = text
+        return merged_cell
+
     
     def set_cell_background(self,cell,bk_color=None):
         '''
@@ -68,12 +83,21 @@ class Docx:
         cell    _Cell对象,可通过get_cell函数获取
         text    需要添加的文本内容，若cell中已经有文本，则被替换掉
         '''
-        # p = cell.add_paragraph(text)
+        paragraph = None
+        if cell.paragraphs and len(cell.paragraphs) > 0:
+            paragraph = cell.paragraphs[-1] #取最后一个索引的段落
+            paragraph.text = text
+        else:
+            paragraph = cell.add_paragraph(text)
+        paragraph.first_line_indent = Inches(-10)
+        paragraph.paragraph_format.first_line_indent = Inches(0)
+        
+
         # p.aligment = WD_ALIGN_PARAGRAPH.LEFT
         # p.left_indent = Inches(0)
         # paragraph_format = p.paragraph_format
         # paragraph_format.left_indent = Inches(0)
-        cell.text = text
+        # cell.text = text
 
     def set_cell(self,cell,text,
                         style=None,
@@ -160,8 +184,8 @@ if __name__ == '__main__':
     new_table = document.add_table(3,4)
     for col in range(4):
         cell = document.get_cell(new_table,0,col)
-        # document.set_cell_background(cell,'FFCA00')
-        document.set_cell(cell,'abc',color='FFCA00')
+        document.set_cell_background(cell,'FFCA00')
+        # document.set_cell(cell,'abc',color='FFCA00')
     for row in range(1,3):
         for col in range(4):
             cell = document.get_cell(new_table,row,col)
@@ -169,53 +193,8 @@ if __name__ == '__main__':
     new_row = new_table.add_row()
     for cell in new_row.cells:
         document.set_cell_text(cell,'BB')
+
+    cell1 = document.get_cell(new_table,1,1)
+    cell2 = document.get_cell(new_table,1,2)
+    merged_cell = document.merge_cell([cell1,cell2])
     document.save_as('D:\\demo.docx')
-
-    # document.add_heading('Document Title', 0)
-
-    # p = document.add_paragraph('A plain paragraph having some ')
-    # p.add_run('bold').bold = True
-    # p.add_run(' and some ')
-    # p.add_run('italic.').italic = True
-
-    # # document.add_heading('Heading, level 1', level=1)
-    # # document.add_paragraph('Intense quote', style='Intense Quote')
-
-    # # document.add_paragraph(
-    # #     'first item in unordered list', style='List Bullet'
-    # # )
-    # # document.add_paragraph(
-    # #     'first item in ordered list', style='List Number'
-    # # )
-
-    # records = (
-    #     (3, '101', 'Spam'),
-    #     (7, '422', 'Eggs'),
-    #     (4, '631', 'Spam, spam, eggs, and spam')
-    # )
-
-    # table = document.add_table(rows=1, cols=3)
-    # table.style = 'Table Grid'
-    # hdr_cells = table.rows[0].cells
-    # hdr_cells[0].text = 'Qty'
-    # hdr_cells[0].style = 'yellow'
-    # hdr_cells[1].text = 'Id'
-    # hdr_cells[2].text = 'Desc'
-    # for qty, id, desc in records:
-    #     row_cells = table.add_row().cells
-    #     row_cells[0].text = str(qty)
-    #     row_cells[0].style = 'yellow'
-    #     row_cells[1].text = id
-    #     row_cells[2].text = desc
-
-    # document.add_page_break()
-
-
-
-
-
-    # new_table = document.add_table(rows=1,cols=3, style='Table Grid')
-    # shading_elm_1 = parse_xml(r'<w:shd {} w:fill="1F5C8B"/>'.format(nsdecls('w')))
-    # new_table.rows[0].cells[0]._tc.get_or_add_tcPr().append(shading_elm_1)
-
-    # document.save('demo.docx')

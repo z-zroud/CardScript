@@ -131,11 +131,11 @@ class Cps:
             for key,value in item.tag_value_dict.items():
                 ini.add_option(item.name,key,value)
 
-    def save(self):
-        # index = self.dp_file_path.rfind('.')
-        # if index == -1:
-        #     index = len(self.dp_file_path)
-        dp_dir = self.dp_file_path[:self.dp_file_path.rfind('.')]
+    def save(self,folder=None):
+        if folder:
+            dp_dir = folder
+        else:
+            dp_dir = self.dp_file_path[:self.dp_file_path.rfind('.')]
         print('dp_dir',dp_dir)
         if os.path.exists(dp_dir) is False:
             os.mkdir(dp_dir) 
@@ -155,10 +155,11 @@ class Cps:
         return ret
 
     def get_all_dgis(self):
-        dgis = []
-        for item in self.dgi_list:
-            dgis.append(item.name)
-        return dgis
+        return self.dgi_list[:]
+        # dgis = []
+        # for item in self.dgi_list:
+        #     dgis.append(item.name)
+        # return dgis
 
     def get_first_app_dgi_list(self):
         """

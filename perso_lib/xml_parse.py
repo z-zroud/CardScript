@@ -69,9 +69,15 @@ class XmlParser:
 
     def add_node(self,parent_node,node_name,**attr):
         new_node = self.__dom.createElement(node_name)
-        for _,value in attr.items():
-            new_node.setAttribute(value[0],value[1])
+        for key,value in attr.items():
+            new_node.setAttribute(key,value)
         parent_node.appendChild(new_node)
+        return new_node
+
+    def create_node(self,node_name,**attr):
+        new_node = self.__dom.createElement(node_name)
+        for key,value in attr.items():
+            new_node.setAttribute(key,value)
         return new_node
 
     def add_text(self,node,text):
@@ -92,6 +98,9 @@ class XmlParser:
         '''
         return parent_node.getElementsByTagName(node_name)
 
+    def insert_before(self,parent_node,new_node,before_node):
+        parent_node.insertBefore(new_node,before_node)
+
     def remove_node(self,parent_node,node_name):
         node = self.get_first_node(parent_node,node_name)
         if node:
@@ -101,6 +110,9 @@ class XmlParser:
         parent_node = node.parentNode
         if parent_node:
             parent_node.removeChild(node)
+
+    def get_parent(self,node):
+        return node.parentNode
 
     def get_node_by_attribute(self,parent_node,node_name,**attr):
         child_nodes = self.get_nodes(parent_node,node_name)
@@ -134,6 +146,7 @@ class XmlParser:
         nodes = self.get_nodes(parent_node,node_name)
         for node in nodes:
             return node
+        return []
     
     def get_attribute(self,node,attr_name,default=None):
         if node.hasAttribute(attr_name):

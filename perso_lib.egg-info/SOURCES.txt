@@ -42,3 +42,4 @@ perso_lib/dp_format/jy_xml_dp.py
 perso_lib/dp_format/szsm_dp.py
 perso_lib/dp_format/yinlian_dp.py
 perso_lib/dp_format/zx_dp.py
+perso_lib/template/DpRequirement.docx

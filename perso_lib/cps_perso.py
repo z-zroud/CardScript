@@ -8,6 +8,7 @@ from perso_lib import utils
 from perso_lib.cps import Cps,Dgi
 
 is_need_ff00_prefix = False
+no_need_template_70 = []
 
 def _process_encrypted_data(dgi,data,key,encrypt_dgi_list):
     for encrypt_dgi in encrypt_dgi_list:
@@ -22,7 +23,7 @@ def _process_encrypted_data(dgi,data,key,encrypt_dgi_list):
 def _process_template_and_dgi(dgi,data):
     int_dgi = utils.hex_str_to_int(dgi)
     data_len = len(data)
-    if int_dgi <= 0x0B01:
+    if int_dgi <= 0x0B01 and dgi not in no_need_template_70:
         if data_len >= 0xFF * 2:
             data = '7082' + utils.get_strlen(data) + data
         elif data_len > 0x80 * 2:

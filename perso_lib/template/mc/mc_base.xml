@@ -1,7 +1,7 @@
 <Root>
 	<Bin />
 	<App aid="A0000000041010" sda="false" dda="true">
-        <Sig id="1">
+        <Sig id="sig_MC">
             <Tag name="5A"  source="contact"  format="TLV" />
             <Tag name="5F24"  source="contact"  format="TLV" />
             <Tag name="5F25"  source="contact"   format="TLV" />
@@ -19,7 +19,7 @@
             <Tag name="82"  source="mca" format="V" />
             <Cert />
 		</Sig>
-        <Sig id="2">
+        <Sig id="sig_paypass">
             <Tag name="57"  source="contactless" format="TLV" />
             <Tag name="5A"  source="contactless"  format="TLV" />
             <Tag name="5F24"  source="contactless"  format="TLV" />
@@ -41,89 +41,91 @@
 		</Sig>
 		<DGI name="A005" comment="MC GPO响应数据">
             <Template name="70">
-                <Tag name="82" source="mca" format="V" />
-                <Tag name="94" value="1801020120020400" format="V" />
+                <Tag name="82" source="mca" format="V" comment="AIP" />
+                <Tag name="94" value="1801020120020400" format="V" comment="AFL"/>
             </Template>
 		</DGI>
         <DGI name="B005" comment="Paypass GPO响应数据">
             <Template name="70">
-                <Tag name="D8" source="mca" format="V" />
-                <Tag name="D9" value="1001010120010300" format="V" />
+                <Tag name="D8" source="mca" format="V" comment="AIP"/>
+                <Tag name="D9" value="1001010120010300" format="V" comment="AFL"/>
             </Template>
 		</DGI>
         <DGI name="0201" comment="Paypass 参与静态签名数据认证的数据"> 
             <Template name="70">        
-                <Tag name="57"  source="contactless" format="TLV" />
-                <Tag name="5A"  source="contactless" format="TLV" />
-                <Tag name="5F24" source="contactless" format="TLV" />
-                <Tag name="5F25" source="contactless" format="TLV" />
-                <Tag name="5F28"   source="contactless" format="TLV" />
-                <Tag name="5F34"  source="contactless" format="TLV" />
-                <Tag name="8C" source="contactless" format="TLV" />
-                <Tag name="8D" source="contactless" format="TLV" />
-                <Tag name="8E" source="contactless" format="TLV" />
-                <Tag name="9F07" source="contactless" format="TLV" />
-                <Tag name="9F08" source="contactless" format="TLV" />
-                <Tag name="9F0D" source="contactless" format="TLV" />
-                <Tag name="9F0E" source="contactless" format="TLV" />
-                <Tag name="9F0F" source="contactless" format="TLV" />
-                <Tag name="9F42" source="contactless" format="TLV" />
-                <Tag name="9F4A" source="contactless" format="TLV" />
+                <Tag name="57"  source="contactless" format="TLV" comment="Track 2 Equivalent Data"/>
+                <Tag name="5A"  source="contactless" format="TLV" comment="Application Primary Account Number" />
+                <Tag name="5F24" source="contactless" format="TLV" comment="Application Expiration Date" />
+                <Tag name="5F25" source="contactless" format="TLV" comment="Application Effective Date" />
+                <Tag name="5F28"   source="contactless" format="TLV" comment="Issuer Country Code" />
+                <Tag name="5F34"  source="contactless" format="TLV" comment="PAN Sequence Number" />
+                <Tag name="8C" source="contactless" format="TLV" comment="Card Risk Management Data Object List 1 (CDOL1)" />
+                <Tag name="8D" source="contactless" format="TLV" comment="Card Risk Management Data Object List 2 (CDOL2)" />
+                <Tag name="8E" source="contactless" format="TLV" comment="Cardholder Verification Method List" />
+                <Tag name="9F07" source="contactless" format="TLV" comment="Application Usage Control" />
+                <Tag name="9F08" source="contactless" format="TLV" comment="Application Version Number" />
+                <Tag name="9F0D" source="contactless" format="TLV" comment="Issuer Action Code - Default" />
+                <Tag name="9F0E" source="contactless" format="TLV" comment="Issuer Action Code - Denial" />
+                <Tag name="9F0F" source="contactless" format="TLV" comment="Issuer Action Code - Online" />
+                <Tag name="9F42" source="contactless" format="TLV" comment="Application Currency Code" />
+                <Tag name="9F4A" source="contactless" format="TLV" comment="Static Data Authentication Tag List" />
             </Template>
 		</DGI>
         <DGI name="0301" comment="MC 参与静态签名数据认证的数据">
             <Template name="70">
-                <Tag name="5A"   source="contact" format="TLV" />
-                <Tag name="5F24"  source="contact" format="TLV" />
-                <Tag name="5F25"  source="contact" format="TLV" />
-                <Tag name="5F28"   source="contact" format="TLV" />    
-                <Tag name="5F34"  source="contact" format="TLV" />
-                <Tag name="8C"  source="contact" format="TLV" />
-                <Tag name="8D"  source="contact" format="TLV" />
-                <Tag name="8E"  source="contact" format="TLV" />
-                <Tag name="9F07"  source="contact" format="TLV" />
-                <Tag name="9F0D"  source="contact" format="TLV" />
-                <Tag name="9F0E"  source="contact" format="TLV" />
-                <Tag name="9F0F"  source="contact" format="TLV" />
-                <Tag name="9F42"  source="contact" format="TLV" />
-                <Tag name="9F4A"  source="contact" format="TLV" />
+                <Tag name="5A"  source="contact" format="TLV" comment="Application Primary Account Number" />
+                <Tag name="5F24" source="contact" format="TLV" comment="Application Expiration Date" />
+                <Tag name="5F25" source="contact" format="TLV" comment="Application Effective Date" />
+                <Tag name="5F28"   source="contact" format="TLV" comment="Issuer Country Code" />
+                <Tag name="5F34"  source="contact" format="TLV" comment="PAN Sequence Number" />
+                <Tag name="8C" source="contact" format="TLV" comment="Card Risk Management Data Object List 1 (CDOL1)" />
+                <Tag name="8D" source="contact" format="TLV" comment="Card Risk Management Data Object List 2 (CDOL2)" />
+                <Tag name="8E" source="contact" format="TLV" comment="Cardholder Verification Method List" />
+                <Tag name="9F07" source="contact" format="TLV" comment="Application Usage Control" />
+                <Tag name="9F08" source="contact" format="TLV" comment="Application Version Number" />
+                <Tag name="9F0D" source="contact" format="TLV" comment="Issuer Action Code - Default" />
+                <Tag name="9F0E" source="contact" format="TLV" comment="Issuer Action Code - Denial" />
+                <Tag name="9F0F" source="contact" format="TLV" comment="Issuer Action Code - Online" />
+                <Tag name="9F42" source="contact" format="TLV" comment="Application Currency Code" />
+                <Tag name="9F4A" source="contact" format="TLV" comment="Static Data Authentication Tag List" />
             </Template>
 		</DGI>
-
 		<DGI name="0302" comment="MC 应用版本及服务码">
             <Template name="70">
-                <Tag name="57"  source="contact" format="TLV" />
-                <Tag name="9F1F" source="contact" format="TLV" />
-                <Tag name="5F20" source="contact" format="TLV" />
-                <Tag name="5F30" source="contact" format="TLV" />
-                <Tag name="9F08" source="contact" format="TLV" />
-                <Tag name="9F49" source="contact" format="TLV" />
+                <Tag name="57"  source="contact" format="TLV" comment="Track 2 Equivalent Data" />
+                <Tag name="9F1F" source="contact" format="TLV" comment="Track 1 Equivalent Data" />
+                <Tag name="5F20" source="contact" format="TLV" comment="Cardholder Name" />
+                <Tag name="5F30" source="contact" format="TLV" comment="Service Code" />
+                <Tag name="9F08" source="contact" format="TLV" comment="Application Version Number" />
+                <Tag name="9F49" source="contact" format="TLV" comment="Dynamic Data Authentication Object List" />
             </Template>
 		</DGI>
         <DGI name="0401" comment="Paypass IC卡公钥数据">
             <Template name="70">
-                <Tag name="9F46" sig_id="2" source="contactless" format="TLV"/>
-                <Tag name="9F47" type="fixed" value="03" source="contactless" format="TLV" />
-                <Tag name="9F48" sig_id="2" source="contactless" format="TLV" />
+                <Tag name="9F46" sig_id="sig_paypass" source="kms" format="TLV" comment="ICC Public Key Certificate" />
+                <Tag name="9F47" value="03" format="TLV" comment="ICC Public Key Exponent" />
+                <Tag name="9F48" sig_id="sig_paypass" source="kms" format="TLV" comment="ICC Public Key Remainder" />
+                <Tag name="9F51" source="contactless" format="TLV" comment="" />
+                <Tag name="9F5B" source="contactless" format="TLV" comment="" />
             </Template>
 		</DGI>
         <DGI name="0402" comment="通用 静态数据认证数据">
             <Template name="70">
-                <Tag name="9F32"  source="shared" format="TLV" />
-                <Tag name="92" source="shared"  format="TLV" />
-                <Tag name="8F" source="shared" format="TLV" />
+                <Tag name="9F32"  source="kms" format="TLV" comment="Issuer Public Key Exponent" />
+                <Tag name="92" source="kms"  format="TLV" comment="Issuer Public Key Remainder" />
+                <Tag name="8F" source="contactless" format="TLV" comment="Certification Authority Public Key Index" />
             </Template>
 		</DGI>
         <DGI name="0403" comment="通用 发卡行公钥证书">
             <Template name="70">
-                <Tag name="90" source="shared" format="TLV" />
+                <Tag name="90" source="kms" format="TLV" comment="Issuer Public Key Certificate" />
             </Template>
 		</DGI>
         <DGI name="0404" comment="MC IC卡公钥数据">
             <Template name="70">
-                <Tag name="9F46" sig_id="1" source="contact" format="TLV"/>
-                <Tag name="9F47" type="fixed" value="03" source="contact"  format="TLV" />
-                <Tag name="9F48" sig_id="1" source="contact" format="TLV" />
+                <Tag name="9F46" sig_id="sig_MC" format="TLV" comment="ICC Public Key Certificate" />
+                <Tag name="9F47" value="03" format="TLV" comment="ICC Public Key Exponent" />
+                <Tag name="9F48" sig_id="sig_MC" format="TLV" comment="ICC Public Key Remainder" />
             </Template>
 		</DGI>
         <DGI name="A002" comment="风险管理数据参数">
@@ -221,54 +223,53 @@
 		</DGI>
         <DGI name="A00E" comment="Data Storage Configuration">
 			<Tag name="DF41" source="mca" format="V" comment="DS Management Control" />
-            <Tag name="--" type="fixed" value="00" format="V" comment="DS Number of slots" />
+            <Tag name="--" value="00" format="V" comment="DS Number of slots" />
             <Tag name="--" source="mca" format="V" comment="DSPK" />
 		</DGI>
-		<DGI name="8000" comment="MC 对称秘钥">
-			<Tag name="8000" format="V" />
+		<DGI name="8000" comment="MC Master Key">
+			<Tag name="8000" format="V" comment="Application Master Key (contact)"/>
 		</DGI>
-        <DGI name="8001" comment="Paypass 对称秘钥">
-			<Tag name="8001" format="V" />
+        <DGI name="8001" comment="Paypass Master Key">
+			<Tag name="8001" format="V" comment="Application Master Key (contactless)"/>
 		</DGI>
-		<DGI name="9000">
-			<Tag name="9000" format="V" />
+		<DGI name="9000" comment="MC Master KCV">
+			<Tag name="9000" format="V" comment="MC Master KCV"/>
 		</DGI>
-        <DGI name="9001">
-			<Tag name="9001" format="V" />
+        <DGI name="9001" comment="Paypass Master KCV">
+			<Tag name="9001" format="V" comment="Paypass Master KCV"/>
 		</DGI>
         <DGI name="A006" comment="MC IDN Master Key">
-			<Tag name="A006" format="V" />
+			<Tag name="A006" format="V" comment="MC IDN Master Key" />
 		</DGI>
         <DGI name="A016" comment="Paypass IDN Master Key">
-			<Tag name="A016" format="V" />
+			<Tag name="A016" format="V" comment="Paypass IDN Master Key" />
 		</DGI>
-
-		<DGI name="8201">
-			<Tag name="8201" format="V" />
+		<DGI name="8201" comment="ICC Private Key CRT constant q-1 mod p">
+			<Tag name="8201" format="V" comment="ICC Private Key CRT constant q-1 mod p" />
 		</DGI>
 		<DGI name="8202">
-			<Tag name="8202" format="V" />
+			<Tag name="8202" format="V" comment="ICC Private Key CRT constant d mod (q - 1)" />
 		</DGI>
 		<DGI name="8203">
-			<Tag name="8203" format="V" />
+			<Tag name="8203" format="V" comment="ICC Private Key CRT constant d mod (p - 1)" />
 		</DGI>
 		<DGI name="8204">
-			<Tag name="8204" format="V" />
+			<Tag name="8204" format="V" comment="ICC Private Key CRT constant prime factor q" />
 		</DGI>
 		<DGI name="8205">
-			<Tag name="8205" format="V" />
+			<Tag name="8205" format="V" comment="ICC Private Key CRT constant prime factor p" />
 		</DGI>
 		
 		<DGI name="9102">
-			<Template name="A5">
-				<Tag name="50" source="fci" format="TLV" />
-				<Tag name="87" source="fci" format="TLV" />
-				<Tag name="5F2D" source="fci" format="TLV" />
-                <Tag name="9F11" source="fci" format="TLV" />
-                <Tag name="9F12" source="fci" format="TLV" />
-                <Template name="BF0C">
-					<Tag name="9F5D" source="fci" format="TLV" />
-                    <Tag name="9F6E" source="fci" format="TLV" />
+			<Template name="A5" comment="Template A5" >
+				<Tag name="50" source="fci" format="TLV" comment="Application Lable" />
+				<Tag name="87" source="fci" format="TLV" comment="Application Priority Indicator (API)" />
+				<Tag name="5F2D" source="fci" format="TLV" comment="Language Preference" />
+                <Tag name="9F11" source="fci" format="TLV" comment="Issuer Code Table Index" />
+                <Tag name="9F12" source="fci" format="TLV" comment="" />
+                <Template name="BF0C" comment="Template BF0C" >
+					<Tag name="9F5D" source="fci" format="TLV" comment="" />
+                    <Tag name="9F6E" source="fci" format="TLV" comment="" />
 				</Template>
 			</Template>
 		</DGI>
@@ -276,29 +277,29 @@
         <PSE>
         <DGI name="0101">
             <Template name="70">
-                <Template name="61">
-                    <Tag name="4F" source="fci" format="TLV" />
-                    <Tag name="50" source="fci" format="TLV" />
-                    <Tag name="87" source="fci" format="TLV" />
+                <Template name="61" comment="Template 61" >
+                    <Tag name="4F" source="fci" format="TLV" comment="Application Identifier (AID)" />
+                    <Tag name="50" source="fci" format="TLV" comment="Application Lable" />
+                    <Tag name="87" source="fci" format="TLV" comment="Application Priority Indicator (API)" />
                 </Template>
             </Template>
         </DGI>
         <DGI name="9102">
-            <Template name="A5">
-                <Tag name="88" type="fixed" value="01" format="TLV" />
-                <Tag name="5F2D" source="fci" format="TLV" />
-                <Tag name="9F11" source="fci" format="TLV" />
+            <Template name="A5" comment="Template A5" >
+                <Tag name="88" type="fixed" value="01" format="TLV" comment="Short File Identifier(FCI)" />
+                <Tag name="5F2D" source="fci" format="TLV" comment="Language Preference" />
+                <Tag name="9F11" source="fci" format="TLV" comment="Issuer Code Table Index" />
             </Template>
         </DGI>
     </PSE>
     <PPSE>
         <DGI name="9102">
-            <Template name="A5">
-                <Template name="BF0C">
-                    <Template name="61">
-                        <Tag name="4F" source="fci" format="TLV" />
-                        <Tag name="50" source="fci" format="TLV" />
-                        <Tag name="87" source="fci" format="TLV" />
+            <Template name="A5" comment="Template A5" >
+                <Template name="BF0C" comment="Template BF0C" >
+                    <Template name="61" comment="Template 61" >
+                        <Tag name="4F" source="fci" format="TLV" comment="Application Identifier (AID)" />
+                        <Tag name="50" source="fci" format="TLV" comment="Application Lable" />
+                        <Tag name="87" source="fci" format="TLV" comment="Application Priority Indicator (API)" />
                     </Template>
                 </Template>
             </Template>
