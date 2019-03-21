@@ -3,6 +3,17 @@ import sys
 from ctypes import *
 from perso_lib import data_parse_lib,tool_lib
 
+
+def get_files(dirname):
+    files = []
+    if os.path.exists(dirname):
+        filenames = os.listdir(dirname)
+        for name in filenames:
+            file_path = os.path.join(dirname,name)
+            if os.path.isfile(file_path):
+                files.append(file_path)
+    return files
+
 # convert int value to hex string type
 # eg. 48 => '30'
 def int_to_hex_str(int_value):

@@ -2,9 +2,13 @@ import os
 from perso_lib import utils
 
 class FileHandle:
-    def __init__(self,file_name,mode):
+    def __init__(self,file_name,mode,encoding='gbk'):
         self.file_name = file_name
-        self._file = open(file_name,mode)
+        if 'b' in mode: #二进制文件不包含encoding编码
+            self._file = open(file_name,mode)
+        else:
+            self._file = open(file_name,mode,encoding=encoding,errors='ignore')
+        self.offset = 0
 
     @property
     def current_offset(self):
@@ -30,7 +34,7 @@ class FileHandle:
         return value
 
     def read(self,offset,read_len):
-        self._file.seek(offset,0)
+        self._file.seek(offset + self.offset,0)
         return self._file.read(read_len)
 
     def writeline(self,data):
@@ -93,9 +97,7 @@ class FileHandle:
 
 
 if __name__ == '__main__':
-    fh = FileHandle('PBH00PBH.00D','rb+')
-    for i in range(5):
-        value = fh.read_binary(fh.current_offset,2)
-        value = fh.read_int(fh.current_offset)
-        value = fh.read_int(fh.current_offset)
-        value = fh.read_str(fh.current_offset,2)
+    fh = FileHandle('D:\\BOCOM-HK-CJS-20480805.dat','r+')
+    fh.offset = 1969
+    xxx = fh.read_pos(38,40)
+    print(xxx)

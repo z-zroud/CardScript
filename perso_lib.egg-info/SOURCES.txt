@@ -14,7 +14,9 @@ perso_lib/kms.py
 perso_lib/log.py
 perso_lib/mock_dp.py
 perso_lib/pcsc.py
+perso_lib/perso_log_parse.py
 perso_lib/rule.py
+perso_lib/settings.py
 perso_lib/smart_qc.py
 perso_lib/utils.py
 perso_lib/word.py
@@ -27,6 +29,7 @@ perso_lib.egg-info/top_level.txt
 perso_lib/dll/Authencation.dll
 perso_lib/dll/ChineseSM.dll
 perso_lib/dll/DataParse.dll
+perso_lib/dll/DataParse_bak.dll
 perso_lib/dll/Des0.dll
 perso_lib/dll/Log.dll
 perso_lib/dll/PCSC.dll
@@ -43,3 +46,15 @@ perso_lib/dp_format/szsm_dp.py
 perso_lib/dp_format/yinlian_dp.py
 perso_lib/dp_format/zx_dp.py
 perso_lib/template/DpRequirement.docx
+perso_lib/template/jetco/jetco_template.xml
+perso_lib/template/jetco/jetco_template_excel.xml
+perso_lib/template/jetco/jetco_template_excel_include_tag5F24_5F25.xml
+perso_lib/template/mc/mc_TNG.xml
+perso_lib/template/mc/mc_base.xml
+perso_lib/template/mc/mc_with_ENVELOPE.xml
+perso_lib/template/mc/mc_with_MSD.xml
+perso_lib/template/mc/mc_with_OfflinePIN_MSD.xml
+perso_lib/template/mc/mc_with_OfflinePIN_MSD_ENVELOPE.xml
+perso_lib/template/visa/visa_4DF_template.xml
+perso_lib/template/visa/visa_4D_template_THD88_双界面.xml
+perso_lib/template/visa/visa_AP4DF_template.xml

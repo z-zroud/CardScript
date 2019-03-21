@@ -45,6 +45,9 @@ def process_dp(dp_file,rule_file):
         elif card_data == '[03]':
             app_flag = '03'
             continue
+        elif card_data == '[04]': #说明这个是双应用数据(Jetco)
+            app_flag = '04'
+            continue
         dgi = process_data(app_flag,card_data)
         cps.add_dgi(dgi)
     if rule_file is not None:

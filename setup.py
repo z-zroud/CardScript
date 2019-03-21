@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="perso_lib",
-    version="2.0.0.7",
+    version="2.0.0.9",
     author="z_road",
     author_email="489469935@qq.com",
     description="A lib for parse dp data",
@@ -16,12 +16,18 @@ setuptools.setup(
     # packages=['perso_lib'],
     package_data={
 
-        '':['dll/*','template/*'],
+        '':['dll/*',
+            'template/*',
+            'template/jetco/*',
+            'template/mc/*',
+            'template/uics/*',
+            'template/visa/*'],
     },
     install_requires=[
         'openpyxl',
         'python-docx',
         'pillow'
+        'six'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -45,19 +45,24 @@ class Kms():
         self.tags.clear()
         self.is_init = False
 
-    def gen_new_icc_cert(self,pan,sig_id,sig_data):
+    def gen_new_icc_cert(self,pan,sig_data,sig_id=None):
         tag9F46,tag9F48 = algorithm.gen_icc_cert(self.issuer_d,self.issuer_n,self.icc_n,self.exp,pan,sig_data,self.expiry_date)
-        key9F46 = '9F46_' + sig_id
-        key9F48 = '9F48_' + sig_id
+        key9F46 = '9F46'
+        key9F48 = '9F48'
+        if sig_id:
+            key9F46 += '_' + sig_id
+            key9F48 += '_' + sig_id
         self.tags[key9F46] = tag9F46
         self.tags[key9F48] = tag9F48
         return tag9F46,tag9F48
 
-    def gen_new_ssda(self,issuer_bin,sig_id,sig_data):
+    def gen_new_ssda(self,issuer_bin,sig_data,sig_id=None):
         aip = sig_data[-4:]
         sig_data = sig_data[0:-4]
         tag93 = algorithm.gen_tag93(self.issuer_d,self.issuer_n,sig_data,aip)
-        key93 = '93_' + sig_id
+        key93 = '93'
+        if sig_id:
+            key93 += '_' + sig_id
         self.tags[key93] = tag93
         return tag93
 

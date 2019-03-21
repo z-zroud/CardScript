@@ -35,21 +35,8 @@ class PersoLogParse:
                 dgi.add_tag_value(tlv.tag,value)
         return dgi
 
-    def parse_store_data(self,app_type,data,session_key=None,is_encrypted=False,delete80_list=[]):
-        dgi_name = data[0:4]
+    def parse_store_data(self,app_type,dgi_name,data,session_key=None,is_encrypted=False,delete80_list=[]):
         int_dgi_name = int(dgi_name,16)
-        data = data[4:]
-        data_len = 0
-        if data[0:4] == 'FF00':
-            data_len = int(data[4:6],16)
-            data = data[6:]
-        else:
-            data_len = int(data[0:2],16)
-            data = data[2:]
-        if data_len != (len(data) // 2):
-            print('record data error')
-            return None
-
         if is_encrypted and session_key:
             data = des3_ecb_decrypt(session_key,data)
             if dgi_name in delete80_list:
@@ -95,31 +82,57 @@ class PersoLogParse:
         cps = Cps()
         if not delete80_list:
             delete80_list = ['8201','8202','8203','8204','8205']
+        prevous_data = '' #保存上一次的数据，对于一条超长数据，需要使用两条store data指令
+        prevous_data_len = 0
+        is_jetco_app = False
         while not self.log_handle.EOF:
             is_encrypted = False
             data = self.log_handle.read_line()
             data = self._filter(data)
-            if data and data == '00A404000E315041592E5359532E4444463031':
+            if data and data.startswith('00A40400') and not data.startswith('00A4040008A000000003000000'):
                 start_line = True   #从此行开始认定个人化开始
             if start_line and data:
-                if data == '00A404000E315041592E5359532E4444463031':
+                if data.startswith('00A404000E315041592E5359532E4444463031'):
                     app_type = 'PSE'
                     continue
-                elif data == '00A404000E325041592E5359532E4444463031':
+                elif data.startswith('00A404000E325041592E5359532E4444463031'):
                     app_type = 'PPSE'
                     continue
                 elif data.startswith('00A40400'): #应用
                     app_type = 'APP'
+                    if data.startswith('00A4040009A00000047400000001'):
+                        is_jetco_app = True
                     continue
-                if data.startswith('80E2'): #处理store data 数据
-                    if data[4:6] in ('60','E0'):
-                        is_encrypted = True
-                    data = data[10:] #去掉命令头及长度
-                dgi = self.parse_store_data(app_type,data,session_key,is_encrypted,delete80_list)
-                cps.add_dgi(dgi)
-                for tag,value in dgi.get_all_tags().items():
-                    print(tag + '=' + value)
-        cps.save('D:\\perso_log_test')
+                if app_type:
+                    if data.startswith('80E2') and data[4:6] in ('00','60','80','E0'): #处理store data 数据
+                        if data[4:6] in ('60','E0'):
+                            is_encrypted = True
+                        data = data[10:] #去掉命令头及长度
+                        if not prevous_data:
+                            dgi_name = data[0:4] # DGI名称
+                            if is_jetco_app: #默认Jetco为第二应用
+                                dgi_name += '_2'
+                            data = data[4:]
+                            data_len = 0
+                            if data[0:4] == 'FF00':
+                                data_len = int(data[4:6],16)
+                                data = data[6:]
+                            else:
+                                data_len = int(data[0:2],16)
+                                data = data[2:]
+                            if data_len * 2 != len(data):
+                                prevous_data = data
+                                prevous_data_len = data_len
+                                continue
+                        else:
+                            data = prevous_data + data
+                            if prevous_data_len * 2 != len(data):
+                                print("data len error")
+                                return None
+                            prevous_data = ''
+                            prevous_data_len = 0
+                        dgi = self.parse_store_data(app_type,dgi_name,data,session_key,is_encrypted,delete80_list)
+                        cps.add_dgi(dgi)
         return cps
 
     def compare_cps(self,product_cps,mock_cps,ignore_list=[]):
