@@ -13,6 +13,21 @@ class Store_Data_Type:
     end_data = "80"
 
 
+def gpo(pdol):
+    pdol_len = utils.get_strlen(pdol)
+    data = '83' + pdol_len + pdol
+    data_len = utils.get_strlen(data)
+    cmd = '80A80000' + data_len + data
+    return pcsc.send_raw(cmd)
+
+def read_record(sfi,record_no):
+    sfi = (sfi << 3) + 4
+    p1 = utils.int_to_hex_str(record_no)
+    p2 = utils.int_to_hex_str(sfi)
+    cmd = '00B2' + p1 + p2
+    return pcsc.send_raw(cmd)
+    
+
 def delete_app(aid,resp_sw_list=(0x9000,)):
     aid_len = utils.get_strlen(aid)
     data = '4F' + aid_len + aid
@@ -69,7 +84,6 @@ def store_data_mac(data,data_type,dek_session_key,mac_key,reset=False):
     if data_type == "80":
         store_count = 0
     return pcsc.send_raw(cmd)
-
 
 
 def init_update(host_challenge, key_verson='00', key_id='00'):

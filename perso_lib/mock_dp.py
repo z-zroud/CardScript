@@ -755,18 +755,38 @@ class GenDpXml:
                 xml_handle.set_attribute(tag_node,'alias',alias)
                 xml_handle.set_attribute(tag_node,'comment',attr_comment)
                 continue
+            has_diff_value_at_prev_section = False
             for cur_index,cur_tag_node in enumerate(tag_nodes):
-                if index != cur_index:
-                    cur_tag = xml_handle.get_attribute(cur_tag_node,'name')
-                    cur_attr_value = xml_handle.get_attribute(cur_tag_node,'value')
-                    if cur_tag == attr_tag and attr_value != cur_attr_value:
+                cur_tag = xml_handle.get_attribute(cur_tag_node,'name')
+                cur_attr_value = xml_handle.get_attribute(cur_tag_node,'value')
+                if has_diff_value_at_prev_section and index <= cur_index:
+                    has_diff_value_at_prev_section = False # 重置该标记
+                    # 如果上半区遍历完
+                    alias = xml_handle.get_attribute(cur_tag_node,'alias')
+                    if not alias: # 若不存在相同值的tag,才增加别名，若存在相同的值，这alias肯定已经赋值了
                         alias = get_alias()
                         xml_handle.set_attribute(tag_node,'alias',alias)
                         xml_handle.set_attribute(tag_node,'comment',attr_comment)
                         break
-                    xml_handle.set_attribute(tag_node,'comment',attr_comment)
-                else:
-                    xml_handle.set_attribute(tag_node,'comment',attr_comment)
+                if cur_tag == attr_tag:
+                    if index > cur_index:  # 搜寻此tag上半区的Tag节点
+                        if attr_value == cur_attr_value: #若发现有值相同的tag,若存在别名，取该别名
+                            cur_attr_alias = xml_handle.get_attribute(cur_tag_node,'alias')
+                            if cur_attr_alias:
+                                xml_handle.set_attribute(tag_node,'alias',cur_attr_alias)
+                                xml_handle.set_attribute(tag_node,'comment',attr_comment)
+                                break
+                        else: #若发现不同的值，需要先做个标记，等上半区遍历完再下结论
+                            has_diff_value_at_prev_section = True
+                        # xml_handle.set_attribute(tag_node,'comment',attr_comment)
+                    elif index < cur_index: #搜寻此tag下半区的Tag节点
+                        if attr_value != cur_attr_value: 
+                            alias = get_alias()
+                            xml_handle.set_attribute(tag_node,'alias',alias)
+                            xml_handle.set_attribute(tag_node,'comment',attr_comment)
+                            break 
+                    else:
+                        xml_handle.set_attribute(tag_node,'comment',attr_comment)
 
     def _delete_empty_template(self,new_xml_handle,parent_node):
         '''
