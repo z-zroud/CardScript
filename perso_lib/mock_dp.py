@@ -268,8 +268,8 @@ class GoldpacForm:
         source_item.value = self.excel.read_cell_value(row,col + 5)   # Issuer settings
         source_item.source_type = self.excel.read_cell_value(row,col + 6) # file,kms,fixed
         if source_item.tag:
-            source_item.tag = str(source_item.tag) #有些可能读表格时，默认是int类型，需要转str
-            if 'Contactless' in source_item.tag:# Tag列可能是'Tag-Contactless'形式的字符串
+            source_item.tag = str(source_item.tag).strip() #有些可能读表格时，默认是int类型，需要转str
+            if 'Contactless'.lower() in source_item.tag.lower():# Tag列可能是'Tag-Contactless'形式的字符串
                 source_item.tag = source_item.tag.split('-')[0].strip()
                 source_item.data_type = DataType.CONTACTLESS
             else:
@@ -433,7 +433,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Data object name':
-                print('can not get fci header')
+                logging.info('can not get fci header')
                 return None
             start_row += 2
             ignore_template_list = ['6F','A5','BF0C']
@@ -444,7 +444,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Data object name':
-                print('can not get fci header')
+                logging.info('can not get fci header')
                 return None
             start_row += 1
             self.mca_data = self._get_data(DataType.MCA,start_row,start_col)
@@ -454,7 +454,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Contactless mag-stripe data':
-                print('can not get mag header')
+                logging.info('can not get mag header')
                 return None
             start_row += 3
             self.mag_data = self._get_data(DataType.MAGSTRIPE,start_row,start_col + 2,None,'Data object name')
@@ -464,7 +464,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Contactless EMV data':
-                print('can not get contactless header')
+                logging.info('can not get contactless header')
                 return None
             start_row += 3
             self.contactless_data = self._get_data(DataType.CONTACTLESS,start_row,start_col + 2,None,'Data object name')
@@ -474,7 +474,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Contact EMV data':
-                print('can not get contact header')
+                logging.info('can not get contact header')
                 return None
             start_row += 3
             self.contact_data = self._get_data(DataType.CONTACT,start_row,start_col + 2,None,'Data object name')
@@ -484,14 +484,14 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Shared data':
-                print('can not get fci header')
+                logging.info('can not get fci header')
                 return None
             start_row += 3
             self.shared_data = self._get_data(DataType.SHARED,start_row,start_col + 2)
         return self.shared_data
     
     def read_data(self):
-        print('====================1156 form tag list====================')
+        logging.info('====================1156 form tag list====================')
         self.get_fci_data()
         self.get_mca_data()
         self.get_contact_data()
@@ -555,18 +555,18 @@ class GenDpDoc:
             name = self.xml_handle.get_attribute(dgi_child_nodes[0],'name')
             if name and name == '70': 
                 dgi_node = dgi_child_nodes[0]
-        col_count = self._get_deep_template_count(dgi_node) + 4
+        col_count = self._get_deep_template_count(dgi_node) + 5
         new_table = self.docx.add_table(1,col_count)
         # 设置表格标题栏
-        title = ['' for empty in range(col_count - 4)] + ['标签','数据元','长度','值']
+        title = ['' for empty in range(col_count - 5)] + ['标签','数据元','长度','格式','值']
         for col in range(col_count): #设置表格头部栏
             cell = self.docx.get_cell(new_table,0,col)
             self.docx.set_cell_background(cell,'FFCA00')
             self.docx.set_cell_text(cell,title[col])
         # 如果包含非70模板，需要合并标题栏中的Tag列
-        if col_count > 4:
+        if col_count > 5:
             cells = []
-            for col in range(col_count - 3):
+            for col in range(col_count - 4):
                 cells.append(self.docx.get_cell(new_table,0,col))
             self.docx.merge_cell(cells)
         # 设置表格中每个单元格的内容
@@ -576,21 +576,29 @@ class GenDpDoc:
             tag_name = self.xml_handle.get_attribute(tag_node,'name')
             tag_value = self.xml_handle.get_attribute(tag_node,'value')
             tag_type = self.xml_handle.get_attribute(tag_node,'type')
+            tag_format = self.xml_handle.get_attribute(tag_node,'format')
+            tag_eq = self.xml_handle.get_attribute(tag_node,'replace_equal_by_D')
+            tag_ascii = self.xml_handle.get_attribute(tag_node,'convert_to_ascii')
             if not tag_value:
                 tag_value = ''
             if tag_type == 'kms':
                 tag_value = 'From KMS'
+            if tag_eq and tag_eq == 'true':
+                tag_value += '-replace_equal_by_D'
+            if tag_ascii and tag_ascii == 'true':
+                tag_value += '-convert_to_ascii'
             tag_comment = self.xml_handle.get_attribute(tag_node,'comment')
             if not tag_comment:
                 tag_comment = ''
             new_row = new_table.add_row()
             level = self._get_node_level(dgi_node,tag_node)
             self.docx.set_cell_text(new_row.cells[level],tag_name)
-            self.docx.set_cell_text(new_row.cells[-3],tag_comment) #数据元在倒数第3列描述
+            self.docx.set_cell_text(new_row.cells[-4],tag_comment) #数据元在倒数第4列描述
             if tag_value and utils.is_hex_str(tag_value):
-                self.docx.set_cell_text(new_row.cells[-2],utils.get_strlen(tag_value))
+                self.docx.set_cell_text(new_row.cells[-3],utils.get_strlen(tag_value))
             else:
-                self.docx.set_cell_text(new_row.cells[-2],'var') #长度在倒数第2列描述
+                self.docx.set_cell_text(new_row.cells[-3],'var') #长度在倒数第3列描述
+            self.docx.set_cell_text(new_row.cells[-2],tag_format) # 倒数第二列为V,TLV
             self.docx.set_cell_text(new_row.cells[-1],tag_value) #值为最后一列
 
     def gen_dp_docx(self):
@@ -684,7 +692,6 @@ class GenDpXml:
                     self.emboss_items.setdefault(item.tag,emboss_item)
                     item.value = ''
 
-
     def _set_app_info(self,xml_handle,app_nodes):
         '''
         存储双应用信息
@@ -709,7 +716,7 @@ class GenDpXml:
         '''
         if tag and source:  # 根据模板xml中的tag和type来查找数据
             for item in self.cur_source_items:
-                if tag == item.tag and source == item.data_type.name.lower():
+                if tag == item.tag and source.lower() == item.data_type.name.lower():
                     return item
         elif comment:   #有时候需要根据模板xml中的comment来查找tag数据
             for item in self.cur_source_items:
@@ -723,6 +730,76 @@ class GenDpXml:
             item.used = True
             return item.value
         return None
+
+    def _get_aid(self,app_type):
+        if app_type == AppType.VISA_DEBIT or app_type == AppType.VISA_CREDIT:
+            return 'A0000000031010'
+        elif app_type == AppType.MC_DEBIT or app_type == AppType.MC_CREDIT:
+            return 'A0000000041010'
+        elif app_type == AppType.UICS_DEBIT:
+            return 'A000000333010101'
+        elif app_type == AppType.UICS_CREDIT:
+            return 'A000000333010102'
+        elif app_type == AppType.JETCO:
+            return 'A00000047400000001'
+        else:
+            return ''
+    
+    def _get_comment(self,aid,node_name):
+        attr_comment = ''
+        mappings = None
+        if aid == 'A0000000041010':
+            mappings = settings.visa_tag_desc_mappings
+        elif aid == 'A0000000031010':
+            mappings = settings.visa_tag_desc_mappings
+        elif aid == 'A00000047400000001':
+            mappings = settings.jetco_tag_desc_mappings
+        elif aid in ('A000000333010101','A000000333010102'):
+            mappings = settings.uics_tag_desc_mappings
+        elif aid == '315041592E5359532E4444463031':
+            mappings = settings.pse_tag_desc_mappings
+        elif aid == '325041592E5359532E4444463031':
+            mappings = settings.ppse_tag_desc_mappings
+        if mappings:
+            mapping_item = mappings.get(node_name)
+            if mapping_item:
+                attr_comment = mapping_item[0]
+        return attr_comment
+
+    def _get_rsa_len(self):
+        item = self._get_source_item('RSA_Len','contact')
+        if item:
+            item.used = True
+            return item.value
+        return None
+
+    def _get_cert_expiry_date(self,xml_handle,app_node):
+        expiry_date = ''
+        tag5F24_node = xml_handle.get_node_by_attribute(app_node,'Tag',name='5F24')
+        if tag5F24_node:
+            tag5F24 = xml_handle.get_attribute(tag5F24_node,'value')
+            if tag5F24.find('{') != -1:
+                if tag5F24.count('[') == 1:
+                    first_start_mark = tag5F24.find('[')
+                    first_end_mark = tag5F24.find(']')
+                    start,end = tag5F24[first_start_mark + 1:first_end_mark].split(',')
+                    start_pos = int(start)
+                    end_pos = int(end)
+                    mm_start = str(end_pos - 1)
+                    yy_end = str(start_pos + 1)
+                    expiry_date = '[{0},{1}][{2},{3}]'.format(mm_start,end,start,yy_end)
+                elif tag5F24.count('[') == 2:
+                    first_start_mark = tag5F24.find('[')
+                    first_end_mark = tag5F24.find(']')
+                    second_start_mark = tag5F24.rfind('[')
+                    second_end_mark = tag5F24.rfind(']')
+                    expiry_date = tag5F24[second_start_mark:second_end_mark] + tag5F24[first_start_mark:first_end_mark + 1]
+                else:
+                    logging.info('special expiry date of tag5F24, please manually set expiry date of cert')
+            else:
+                logging.info('special expiry date of tag5F24, please manually set expiry date of cert')
+        return expiry_date
+
 
 
     def print_template_unused(self):
@@ -852,8 +929,10 @@ class GenDpXml:
         self._set_app_info(new_xml_handle,app_nodes)
         if app_nodes:
             new_xml_handle.set_attribute(app_nodes[0],'type',self.config.get('app_type').name.lower())
+            new_xml_handle.set_attribute(app_nodes[0],'aid',self._get_aid(self.config.get('app_type')))
             if len(app_nodes) == 2: #支持双应用
                 new_xml_handle.set_attribute(app_nodes[1],'type',self.config.get('second_app_type').name.lower())
+                new_xml_handle.set_attribute(app_nodes[1],'aid',self._get_aid(self.config.get('second_app_type')))
 
         # 设置bin号
         bin_node = new_xml_handle.get_first_node(new_xml_handle.root_element,'Bin')
@@ -872,18 +951,6 @@ class GenDpXml:
         for index, app_node in enumerate(app_nodes):
             aid = new_xml_handle.get_attribute(app_node,'aid')
             if aid not in ('315041592E5359532E4444463031','325041592E5359532E4444463031'):
-                #设置证书配置信息
-                cert_nodes = new_xml_handle.get_nodes(app_node,'Cert')
-                if cert_nodes:
-                    for cert_node in cert_nodes:
-                        # 双应用公用失效日期
-                        new_xml_handle.set_attribute(cert_node,'expireDate',self.config.get('expireDate'))
-                        new_xml_handle.set_attribute(cert_node,'expireDateType',self.config.get('expireDateType'))
-                        if index == 1: #第二应用,若双应用RSA长度一致，则只需设置一个RSA，默认长度为1152位
-                            new_xml_handle.set_attribute(cert_node,'rsa',self.config.get('second_rsa',self.config.get('rsa','1152')))
-                        else:
-                            new_xml_handle.set_attribute(cert_node,'rsa',self.config.get('rsa','1152'))
-                
                 #对于VISA应用，如果RSA长度大于1024,需要新增DGI存储tag9F4B
                 if self.config.get('app_type') in (AppType.VISA_CREDIT,AppType.VISA_DEBIT):
                     self._handle_9F4B(new_xml_handle,app_node)
@@ -898,6 +965,7 @@ class GenDpXml:
                 attr_sig_id = new_xml_handle.get_attribute(tag_node,'sig_id')   # Tag使用的签名数据
                 attr_value = new_xml_handle.get_attribute(tag_node,'value')     # Tag值
                 second_app = new_xml_handle.get_attribute(tag_node,'second_app') # 指定是否使用第二应用数据
+
 
                 # 生成数据,需要设置当前使用的数据集合
                 if self._is_second_app(new_xml_handle,app_node) or (second_app and second_app == 'true'):
@@ -1000,21 +1068,46 @@ class GenDpXml:
                 #设置编码格式和描述，若模板中没有comment属性，则取至settings.py
                 new_xml_handle.set_attribute(tag_node,'format',attr_format)
                 if not attr_comment:
-                    aid = new_xml_handle.get_attribute(app_node,'aid')
-                    if aid == 'A0000000041010':
-                        attr_comment = settings.mc_tag_desc_mappings.get(attr_tag)
-                    elif aid == 'A0000000031010':
-                        attr_comment = settings.visa_tag_desc_mappings.get(attr_tag)
-                    elif aid == 'A00000047400000001':
-                        attr_comment = settings.jetco_tag_desc_mappings.get(attr_tag)
-                    elif aid in ('A000000333010101','A000000333010102'):
-                        attr_comment = settings.uics_tag_desc_mappings.get(attr_tag)
+                    attr_comment = self._get_comment(aid,attr_tag)
                 new_xml_handle.set_attribute(tag_node,'comment',attr_comment)
 
             #最后设置alias
             self._add_alias(new_xml_handle,tag_nodes) 
             # 删除 空模板节点
             self.remove_empty_node(new_xml_handle)
+            #此处需要处理DGI 节点
+            dgi_nodes = new_xml_handle.get_nodes(app_node,'DGI')
+            for dgi_node in dgi_nodes:
+                attr_comment = new_xml_handle.get_attribute(dgi_node,'comment')
+                attr_name = new_xml_handle.get_attribute(dgi_node,'name')
+                if int(attr_name,16) < 0x0A01:
+                    attr_comment = 'SFI ' + attr_name[0:2] + ' Record ' + attr_name[2:]
+                if not attr_comment:
+                    attr_comment = self._get_comment(aid,attr_name)
+                new_xml_handle.set_attribute(dgi_node,'comment',attr_comment)
+
+            # 配置完所有tag节点之后配置证书信息
+            if aid not in ('315041592E5359532E4444463031','325041592E5359532E4444463031'):
+                #设置证书配置信息
+                cert_nodes = new_xml_handle.get_nodes(app_node,'Cert')
+                if cert_nodes:
+                    expiry_date = self._get_cert_expiry_date(new_xml_handle,app_node)
+                    for cert_node in cert_nodes:
+                        # 双应用公用失效日期
+                        if self.config.get('expireDate'):
+                            new_xml_handle.set_attribute(cert_node,'expireDate',self.config.get('expireDate'))
+                        else:
+                            new_xml_handle.set_attribute(cert_node,'expireDate',expiry_date)
+                        new_xml_handle.set_attribute(cert_node,'expireDateType',self.config.get('expireDateType','file'))
+                        rsa_len = self._get_rsa_len()
+                        if rsa_len:
+                            new_xml_handle.set_attribute(cert_node,'rsa',rsa_len)
+                        else:
+                            if index == 1: #第二应用,若双应用RSA长度一致，则只需设置一个RSA，默认长度为1152位
+                                new_xml_handle.set_attribute(cert_node,'rsa',self.config.get('second_rsa',self.config.get('rsa','1152')))
+                            else:
+                                new_xml_handle.set_attribute(cert_node,'rsa',self.config.get('rsa','1152'))
+                
         # 设置完毕后，保存
         new_xml_handle.save(char_set)
 
@@ -1116,6 +1209,8 @@ class MockCps:
                 convert_ascii = self.xml_handle.get_attribute(tag_node,'convert_ascii')
                 if convert_ascii and convert_ascii.lower() == 'true':
                     value = utils.str_to_bcd(value)
+                if not value:
+                    logging.info('tag%s value is empty',tag)
                 if len(value) % 2 != 0:
                     value += 'F'
                 value = self._assemble_value(tag,value,value_format)
@@ -1127,9 +1222,9 @@ class MockCps:
                             func = getattr(mod_obj,'process_tag' + tag)
                             value = self._assemble_value(tag,func(),value_format)
                         else:
-                            print('can not process tag' + tag)
+                            logging.info('can not process tag%s',tag)
                 else:
-                    print('emboss file module can not process tag' + tag)
+                    logging.info('emboss file module can not process tag%s',tag)
         return tag,value
         
     def _parse_template(self,template_node,kms=None):
@@ -1233,9 +1328,12 @@ class MockCps:
 
     def gen_cps(self):
         app_nodes = self.xml_handle.get_nodes(self.xml_handle.root_element,'App')
-        app_count = 0
-        for app_node in app_nodes:
-            app_count += 1
+        for app_count,app_node in enumerate(app_nodes):
+            aid = self.xml_handle.get_attribute(app_node,'aid')
+            if app_count == 0:
+                self.cps.first_app_aid = aid
+            elif app_count == 1:
+                self.cps.second_app_aid = aid
             issuer_bin = self._get_first_bin()
             rsa_len = self._get_rsa_len(app_node)
             kms = Kms()
@@ -1244,17 +1342,21 @@ class MockCps:
             dgi_nodes = self.xml_handle.get_child_nodes(app_node,"DGI") #获取app节点下所有的DGI节点
             for dgi_node in dgi_nodes:
                 dgi = self._process_dgi(dgi_node,kms)
-                if app_count > 1:   # 说明是双应用，DGI形式为[0101_2]
-                    dgi.name = dgi.name + '_' + str(app_count)
+                if app_count > 0:   # 说明是双应用，DGI形式为[0101_2]
+                    dgi.name = dgi.name + '_' + str(app_count + 1)
                 self.cps.add_dgi(dgi)
             kms.close()
         # 处理PSE 和 PPSE
         pse_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'PSE')
         if pse_node:
+            pse_aid = self.xml_handle.get_attribute(pse_node,'aid')
+            self.cps.pse_aid = pse_aid
             pse_dgi = self._process_pse(pse_node)
             self.cps.add_dgi(pse_dgi)
         ppse_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'PPSE')
         if ppse_node:
+            ppse_aid = self.xml_handle.get_attribute(ppse_node,'aid')
+            self.cps.ppse_aid = ppse_aid
             ppse_dgi = self._process_pse(ppse_node)
             self.cps.add_dgi(ppse_dgi)
         return self.cps

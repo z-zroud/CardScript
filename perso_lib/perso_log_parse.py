@@ -151,8 +151,8 @@ class PersoLogParse:
                 product_value = product_dgi.get_value(tag)
                 if product_value != value:
                     print('compare tag %s value failed.' % tag)
-                    print('P_value: %s' % product_value)
-                    print('M_value: %s\n\n' % value)
+                    print('Prod_value: %s' % product_value)
+                    print('Mock_value: %s\n\n' % value)
 
     def compare_xml(self,cps,dp_xml,emboss_file):
         mock_obj = mock_dp.MockCps(dp_xml,emboss_file)

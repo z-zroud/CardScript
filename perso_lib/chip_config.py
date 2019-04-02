@@ -136,6 +136,23 @@ class App:
     mc = 'mc'
     jetco = 'jetco'
 
+    @staticmethod
+    def get_app(aid):
+        if aid == '315041592E5359532E4444463031':
+            return App.pse
+        if aid == '325041592E5359532E4444463031':
+            return App.ppse
+        if aid == 'A000000333010101':
+            return App.uics_debit
+        if aid == 'A000000333010102':
+            return App.uics_credit
+        if aid == 'A0000000041010':
+            return App.mc
+        if aid == 'A0000000031010':
+            return App.visa
+        if aid == 'A00000047400000001':
+            return App.jetco
+
 def get_encrypts(chip):
     index = str(chip).find('_')
     if chip[0:index] == 'hd':

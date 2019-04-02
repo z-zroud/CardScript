@@ -1,5 +1,6 @@
 import sys
 import logging
+from enum import Enum
 from perso_lib import pcsc
 from perso_lib import utils
 from perso_lib.gen_kmc_session import SECURE_LEVEL,DIV_METHOD
@@ -12,20 +13,34 @@ class Store_Data_Type:
     encrypted = "60"
     end_data = "80"
 
+class Crypto_Type(Enum):
+    AAC = 0
+    TC = 4
+    ARQC = 8
+    AAC_CDA = 1
+    TC_CDA = 5
+    ARQC_CDA = 9
 
-def gpo(pdol):
+
+def gpo(pdol,resp_sw_list=(0x9000,)):
     pdol_len = utils.get_strlen(pdol)
     data = '83' + pdol_len + pdol
     data_len = utils.get_strlen(data)
     cmd = '80A80000' + data_len + data
-    return pcsc.send_raw(cmd)
+    return pcsc.send_raw(cmd,resp_sw_list)
 
-def read_record(sfi,record_no):
+def read_record(sfi,record_no,resp_sw_list=(0x9000,)):
     sfi = (sfi << 3) + 4
     p1 = utils.int_to_hex_str(record_no)
     p2 = utils.int_to_hex_str(sfi)
     cmd = '00B2' + p1 + p2
-    return pcsc.send_raw(cmd)
+    return pcsc.send_raw(cmd,resp_sw_list)
+
+
+def gac(crypto_type,data,resp_sw_list=(0x9000,)):
+    p1 = str(crypto_type.value) + '0'
+    cmd = '80AE' + p1 + '00' + utils.get_strlen(data) + data
+    return pcsc.send_raw(cmd,resp_sw_list)
     
 
 def delete_app(aid,resp_sw_list=(0x9000,)):
@@ -35,7 +50,7 @@ def delete_app(aid,resp_sw_list=(0x9000,)):
     cmd = '80E40000' + data_len + data
     return pcsc.send_raw(cmd,resp_sw_list)
 
-def install_app(packet_aid,applet_aid,inst_aid,priviliage,install_param,token='00'):
+def install_app(packet_aid,applet_aid,inst_aid,priviliage,install_param,token='00',resp_sw_list=(0x9000,)):
     cmd_header = '80E60C00'
     packet_aid_len = utils.get_strlen(packet_aid)
     applet_aid_len = utils.get_strlen(applet_aid)
@@ -45,7 +60,7 @@ def install_app(packet_aid,applet_aid,inst_aid,priviliage,install_param,token='0
     data = packet_aid_len + packet_aid + applet_aid_len + applet_aid + inst_aid_len + inst_aid
     data += priviliage_len + priviliage + install_param_len + install_param + token
     cmd = cmd_header + utils.get_strlen(data) + data
-    return pcsc.send_raw(cmd) 
+    return pcsc.send_raw(cmd,resp_sw_list) 
 
 # Select Command
 def select(instance_id):
@@ -56,6 +71,12 @@ def select(instance_id):
 def select_file(file_id):
     file_id_len = utils.get_strlen(file_id)
     cmd = '00A40000' + file_id_len + file_id
+    return pcsc.send_raw(cmd)
+
+def get_data(tag):
+    if len(tag) == 2:
+        tag = '00' + tag
+    cmd = '80CA' + tag
     return pcsc.send_raw(cmd)
 
 store_count = 0
@@ -69,7 +90,7 @@ def store_data(data,data_type,reset=False):
     store_count += 1
     if data_type == "80":
         store_count = 0
-    return pcsc.send_raw(cmd)
+    return pcsc.send_raw(cmd,(0x9000,))
 
 
 def store_data_mac(data,data_type,dek_session_key,mac_key,reset=False):
@@ -83,12 +104,16 @@ def store_data_mac(data,data_type,dek_session_key,mac_key,reset=False):
     store_count += 1
     if data_type == "80":
         store_count = 0
-    return pcsc.send_raw(cmd)
+    return pcsc.send_raw(cmd,(0x9000,))
 
 
 def init_update(host_challenge, key_verson='00', key_id='00'):
     cmd_header = '8050' + key_verson + key_id
     cmd = cmd_header + utils.get_strlen(host_challenge) + host_challenge
+    return pcsc.send_raw(cmd)
+
+def internal_auth(ddol):
+    cmd = '00880000' + utils.get_strlen(ddol) + ddol
     return pcsc.send_raw(cmd)
 
 def ext_auth(kmc,div_method,secure_level,host_challenge,init_update_data):

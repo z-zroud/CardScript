@@ -84,6 +84,12 @@ def perso_no_cps_format(cps_file,encrypt_dgi_list,session_key):
             return False
     return True
 
+def _has_second_app(aid_list):
+    temp_aid = [aid for aid in aid_list if aid not in ('315041592E5359532E4444463031','325041592E5359532E4444463031','')]
+    if temp_aid > 1:
+        return True
+    return False
+
 def get_cps(cps_file):
     '''
     通过cps文件获取cps数据
@@ -92,13 +98,23 @@ def get_cps(cps_file):
     ini = IniParser(cps_file)
     sections = ini.get_sections()
     for section in sections:
-        dgi = Dgi()
-        dgi.name = section
-        options = ini.get_options(section)
-        for option in options:
-            value = ini.get_value(section,option)
-            dgi.add_tag_value(option,value)
-        cps.add_dgi(dgi)
+        if section == 'AID_LIST':
+            value = ini.get_value(section,section)
+            aid_list = value.split(';')
+            cps.pse_aid = aid_list[0]
+            cps.ppse_aid = aid_list[1]
+            cps.first_app_aid = aid_list[2]
+            cps.second_app_aid = aid_list[3]
+        elif section in ('DGI_LIST','DGI_LIST_2'):
+            continue
+        else:
+            dgi = Dgi()
+            dgi.name = section
+            options = ini.get_options(section)
+            for option in options:
+                value = ini.get_value(section,option)
+                dgi.add_tag_value(option,value)
+            cps.add_dgi(dgi)
     return cps
 
 def perso_pse_mem(pse_dgi):

@@ -339,7 +339,6 @@ class SmartQC_EMV:
             for data in compared_data:
                 self.smart_qc.create_tag_node(compare_data_node,data[0],data[1],self._get_description(data[0]),'BCD','error')
 
-
     def create_mc_case(self):
         # 创建配置头部信息
         case_node = self._create_header('MasterCard检测(接触)','mc','PC Twin','MCCheck.dll')
@@ -409,6 +408,11 @@ class SmartQC_EMV:
         for data in compared_data:
             self.smart_qc.create_tag_node(compare_data_node,data[0],data[1],self._get_description(data[0]),'BCD','error')
 
+    def create_uics_case(self):
+        pass
+
+    def create_jetco_case(self):
+        pass
 
 class SmartQC_UICS:
     def __init__(self,cps,project_name):

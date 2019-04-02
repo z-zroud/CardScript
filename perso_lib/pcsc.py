@@ -36,7 +36,7 @@ def init():
         return True
     return False
 
-def send(cmd_header,data,resp_sw_list=(0x9000,)):
+def send(cmd_header,data,resp_sw_list=None):
     '''
     在连接读卡器后，发送APDU指令。
     cmd_header 表示指令头
@@ -47,7 +47,7 @@ def send(cmd_header,data,resp_sw_list=(0x9000,)):
     return send_raw(cmd,resp_sw_list)
 
 #send apdu command
-def send_raw(cmd,resp_sw_list=(0x9000,)):
+def send_raw(cmd,resp_sw_list=None):
     '''
     在连接读卡器后，发送APDU指令。
     cmd 表示要发送的APDU命令，包括命令头，数据长度，数据。
@@ -63,10 +63,9 @@ def send_raw(cmd,resp_sw_list=(0x9000,)):
     apdu_response.request = cmd
     #print('%X'%)
     logging.info('APDU: %X',apdu_response.sw)
-    for sw in resp_sw_list:
-        if sw == apdu_response.sw:
-            return apdu_response
-    sys.exit(1)
+    if resp_sw_list and apdu_response.sw not in resp_sw_list:
+        sys.exit(1)
+    return apdu_response
 
 #Get all smard card readers
 def get_readers():

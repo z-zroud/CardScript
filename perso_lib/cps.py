@@ -94,7 +94,12 @@ class Cps:
     def __init__(self):
         self.dgi_list = []
         self.dp_file_path = ''
-        self.aid = ''
+        self.pse_aid = ''
+        self.ppse_aid = ''
+        self.first_app_aid = ''
+        self.second_app_aid = ''
+        self.first_dgi_list = []
+        self.second_dgi_list = []
 
     def add_dgi(self,dgi):
         '''添加DGI分组，若该DGI分组存在,则直接合并其中的tag'''
@@ -126,10 +131,27 @@ class Cps:
         open(file_name,'w+')    #make sure file is existed.
         ini = IniParser(file_name)
         self.dgi_list.sort(key=_custom_sorted)
+        first_dgi_list = ''
+        second_dgi_list = ''
+        aid_list = '{0};{1};{2};{3}'.format(self.pse_aid,self.ppse_aid,self.first_app_aid,self.second_app_aid)
         for item in self.dgi_list:
+            if item.name not in ('PSE','PPSE'):
+                if item.name.find('_2') == -1:
+                    first_dgi_list += item.name + ';'
+                else:
+                    second_dgi_list += item.name + ';'
             ini.add_section(item.name)
             for key,value in item.tag_value_dict.items():
                 ini.add_option(item.name,key,value)
+        ini.add_section('AID_LIST')
+        ini.add_option('AID_LIST','AID_LIST',aid_list)
+        ini.add_section('DGI_LIST')
+        ini.add_option('DGI_LIST','DGI_LIST',first_dgi_list)
+        if second_dgi_list:
+            ini.add_section('DGI_LIST_2')
+            ini.add_option('DGI_LIST_2','DGI_LIST',first_dgi_list)
+        
+        
 
     def save(self,folder=None):
         if folder:

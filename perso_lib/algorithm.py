@@ -2,6 +2,11 @@ import os
 from ctypes import *
 from perso_lib import sm_lib,des_lib,auth_lib
 
+def gen_hash(data):
+    byte_data = str.encode(data)
+    output = create_string_buffer(64)
+    auth_lib.GenHash(byte_data,output,64)
+    return bytes.decode(output.value)
 
 def gen_rsa(cert_len,cert_exp='03'):
     '''
@@ -256,3 +261,4 @@ def sm4_ecb_encrypt(key,data):
 	bytes_data = str.encode(data)
 	sm_lib.dllSM4_ECB_ENC(bytes_key,bytes_data,output)
 	return bytes.decode(output.value)
+
