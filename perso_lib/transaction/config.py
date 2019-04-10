@@ -1,4 +1,4 @@
-import logging
+from perso_lib.log import Log
 import time
 
 # 终端默认设置
@@ -31,12 +31,12 @@ def get_terminal(tag,length=None,default=None):
     if not value:
         if length:
             value = '0' * length * 2
-        logging.info('can not require terminal settings for tag %s',tag)
+        Log.info('can not require terminal settings for tag %s',tag)
         return default
     else:
         if length and len(value) != length:
             value += '0' * (length * 2 - len(value))
-            logging.info('padding 0 at tag %s',tag)
+            Log.info('padding 0 at tag %s',tag)
     return value
 
 

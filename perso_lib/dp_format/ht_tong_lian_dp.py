@@ -3,6 +3,7 @@ from perso_lib.cps import Cps,Dgi
 from perso_lib import utils
 from perso_lib.rule import Rule,RuleXml
 from perso_lib import algorithm
+from perso_lib.log import Log
 
 def move_to_flag(fh,flag):   
     bcd_flag = utils.str_to_bcd(flag)
@@ -56,10 +57,10 @@ def process_mag_data(fh,rule_file_name):
                     continue
                 dgi.add_tag_value(option,mag)
                 break
-        print('decrypt mag data: ',end='')
-        print(decrypt_mag_list)
-    print('encrypt mag data: ',end='')
-    print(mag_data_list)
+        Log.info('decrypt mag data: ',end='')
+        Log.info(decrypt_mag_list)
+    Log.info('encrypt mag data: ',end='')
+    Log.info(mag_data_list)
     return dgi
 
 def process_pse(dgi,data):
@@ -135,8 +136,8 @@ def get_dgi_list(fh):
     sm_encrypt_dgi_list = []
     for i in range(0,sm_encrypt_dgi_list_len * 2,4):
         sm_encrypt_dgi_list.append(sm_encrypt_dgi_list_str[i : i + 4])
-    print('sm encrypt dgi list: ',end=' ')
-    print(sm_encrypt_dgi_list)
+    Log.info('sm encrypt dgi list: ',end=' ')
+    Log.info(sm_encrypt_dgi_list)
     des_encrypt_dgi_list.extend(sm_encrypt_dgi_list)
     log_dgi_list_len = fh.read_int(fh.current_offset)
     fh.read_binary(fh.current_offset,log_dgi_list_len) #暂时不需要log DGI记录
@@ -154,7 +155,7 @@ def process_card_data(fh,rule_file):
         aid = fh.read_binary(fh.current_offset,aid_len)
         app_data_len = fh.read_int64(fh.current_offset)
         dgi_list, encrypt_dgi_list = get_dgi_list(fh)
-        print('encrypt dgi list :', encrypt_dgi_list)
+        Log.info('encrypt dgi list :', encrypt_dgi_list)
         for item in dgi_list:
             card_dgi = Dgi()
             dgi = fh.read_binary(fh.current_offset,2)

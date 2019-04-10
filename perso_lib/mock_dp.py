@@ -3,7 +3,8 @@
 import importlib
 import os
 import shutil
-import logging
+from enum import Enum
+from xml.dom import Node
 from perso_lib.cps import Cps,Dgi
 from perso_lib import algorithm
 from perso_lib import utils
@@ -13,8 +14,8 @@ from perso_lib.word import Docx
 from perso_lib.file_handle import FileHandle
 from perso_lib.excel import ExcelMode,ExcelOp
 from perso_lib import settings
-from enum import Enum
-from xml.dom import Node
+from perso_lib.log import Log
+
 
 
 alias_count = 0
@@ -198,9 +199,9 @@ class JetcoForm:
         tag_values.append(('9F46',icc_pk))
         tag_values.append(('9F47',exp))
         tag_values.append(('9F48',icc_remainder))
-        logging.info("9F46:" + icc_pk)
-        logging.info("9F47:" + exp)
-        logging.info("9F48:" + icc_remainder)
+        Log.info("9F46:" + icc_pk)
+        Log.info("9F47:" + exp)
+        Log.info("9F48:" + icc_remainder)
         return tag_values
 
     def _handle_issuer_file(self):
@@ -222,9 +223,9 @@ class JetcoForm:
         tag_values.append(('90',issuer_pk))
         tag_values.append(('92',issuer_remainder))
         tag_values.append(('9F32',exp))
-        logging.info("90:" + issuer_pk)
-        logging.info("92:" + issuer_remainder)
-        logging.info("9F32:" + exp)
+        Log.info("90:" + issuer_pk)
+        Log.info("92:" + issuer_remainder)
+        Log.info("9F32:" + exp)
         return tag_values       
 
 
@@ -241,8 +242,8 @@ class JetcoForm:
         exp = fh.read_binary(fh.current_offset,exp_len)
         tag_values = []
         # tag_values.append(('8F',ca_index))
-        logging.info('ca_mod: ' + ca_pk_mod)
-        logging.info('ca_exp: ' + exp)
+        Log.info('ca_mod: ' + ca_pk_mod)
+        Log.info('ca_exp: ' + exp)
         return tag_values
 
 # 金邦达专用定义的Excel表格
@@ -285,7 +286,7 @@ class GoldpacForm:
                     if source_item.value.lower() == 'empty':
                         source_item.value = 'empty' #如果为empty,也需要个人化此tag
                     elif not utils.is_hex_str(source_item.value): #此时认为是不合规的值
-                        logging.info('parse tag %s error: value is incorrect format',source_item.tag)
+                        Log.info('parse tag %s error: value is incorrect format',source_item.tag)
                         source_item.value = None
                 elif source_item.source_type == 'Emboss File':
                     source_item.source_type = 'file'
@@ -337,7 +338,7 @@ class McForm:
                 elif worksheet_name == 'recordcontactless':
                     item.data_type = DataType.CONTACTLESS
                 else:
-                    logging.info('Unkonwn worksheet name.')
+                    Log.info('Unkonwn worksheet name.')
                 self.source_items.append(item)
         return self.source_items
 
@@ -434,7 +435,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Data object name':
-                logging.info('can not get fci header')
+                Log.info('can not get fci header')
                 return None
             start_row += 2
             ignore_template_list = ['6F','A5','BF0C']
@@ -445,7 +446,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Data object name':
-                logging.info('can not get fci header')
+                Log.info('can not get fci header')
                 return None
             start_row += 1
             self.mca_data = self._get_data(DataType.MCA,start_row,start_col)
@@ -455,7 +456,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Contactless mag-stripe data':
-                logging.info('can not get mag header')
+                Log.info('can not get mag header')
                 return None
             start_row += 3
             self.mag_data = self._get_data(DataType.MAGSTRIPE,start_row,start_col + 2,None,'Data object name')
@@ -465,7 +466,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Contactless EMV data':
-                logging.info('can not get contactless header')
+                Log.info('can not get contactless header')
                 return None
             start_row += 3
             self.contactless_data = self._get_data(DataType.CONTACTLESS,start_row,start_col + 2,None,'Data object name')
@@ -475,7 +476,7 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Contact EMV data':
-                logging.info('can not get contact header')
+                Log.info('can not get contact header')
                 return None
             start_row += 3
             self.contact_data = self._get_data(DataType.CONTACT,start_row,start_col + 2,None,'Data object name')
@@ -485,14 +486,14 @@ class Form1156:
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Shared data':
-                logging.info('can not get fci header')
+                Log.info('can not get fci header')
                 return None
             start_row += 3
             self.shared_data = self._get_data(DataType.SHARED,start_row,start_col + 2)
         return self.shared_data
     
     def read_data(self):
-        logging.info('====================1156 form tag list====================')
+        Log.info('====================1156 form tag list====================')
         self.get_fci_data()
         self.get_mca_data()
         self.get_contact_data()
@@ -798,28 +799,28 @@ class GenDpXml:
                     second_end_mark = tag5F24.rfind(']')
                     expiry_date = tag5F24[second_start_mark:second_end_mark] + tag5F24[first_start_mark:first_end_mark + 1]
                 else:
-                    logging.info('special expiry date of tag5F24, please manually set expiry date of cert')
+                    Log.info('special expiry date of tag5F24, please manually set expiry date of cert')
             else:
-                logging.info('special expiry date of tag5F24, please manually set expiry date of cert')
+                Log.info('special expiry date of tag5F24, please manually set expiry date of cert')
         return expiry_date
 
 
 
     def print_template_unused(self):
-        logging.info('no used tag list at first application----------------------------')
+        Log.info('no used tag list at first application----------------------------')
         for item in self.source_items:
             if not item.used:
-                logging.info("tag:{0:6s} |value:{1:30s}|".format(item.tag,item.value))
+                Log.info("tag:{0:6s} |value:{1:30s}|".format(item.tag,item.value))
         if self.second_source_items:
-            logging.info('no used tag list at second application----------------------------')
+            Log.info('no used tag list at second application----------------------------')
             for item in self.second_source_items:
                 if not item.used:
-                    logging.info("tag:{0:6s} |value:{1:30s}|".format(item.tag,item.value))
-        logging.info('no used tag list at template----------------------------')
+                    Log.info("tag:{0:6s} |value:{1:30s}|".format(item.tag,item.value))
+        Log.info('no used tag list at template----------------------------')
         ignore_tag_list = ['8000','8001','9000','9001','A006','A016','8401','8400','8201','8202','8203','8204','8205']
         for data in self.unused_data:
             if data[0] not in ignore_tag_list:
-                logging.info("tag:{0:6s} |source:{1:30s}|".format(data[0],data[1]))        
+                Log.info("tag:{0:6s} |source:{1:30s}|".format(data[0],data[1]))        
 
     def _add_alias(self,xml_handle,tag_nodes):
         '''
@@ -890,7 +891,7 @@ class GenDpXml:
                 if not dgi_child_nodes:
                     dgi_name = new_xml_handle.get_attribute(dgi_node,'name')
                     new_xml_handle.remove(dgi_node)
-                    logging.info('Remove DGI: %s',dgi_name)
+                    Log.info('Remove DGI: %s',dgi_name)
 
     def _handle_9F4B(self,new_xml_handle,app_node):
         if self.config.get('dgi_9F4B'):
@@ -1152,16 +1153,16 @@ class MockCps:
         解析tag5F24/5F25格式
         '''
         if len(date) < 4:
-            logging.info('len of date is too short')
+            Log.info('len of date is too short')
             return None
         yy = date[0:2]
         mm = date[2:4]
         dd_flag = date[4:]
         if not yy.isdigit():
-            logging.info('date of yy is incorrected format')
+            Log.info('date of yy is incorrected format')
             return None
         if not mm.isdigit() or int(mm) > 12 or int(mm) == 0:
-            logging.info('date of mm is incorrected format')
+            Log.info('date of mm is incorrected format')
             return None
         if dd_flag == r'{FD}':
             return yy + mm + '01'
@@ -1207,7 +1208,7 @@ class MockCps:
             value = self._assemble_value(tag,attrs['value'],value_format)
         elif value_type == 'kms':   #处理KMS生成的数据
             if not kms:
-                logging.info('kms is not inited. can not process tag %s with kms type',tag)
+                Log.info('kms is not inited. can not process tag %s with kms type',tag)
             else:
                 kms_tag = tag
                 if 'sig_id' in attrs:
@@ -1227,7 +1228,7 @@ class MockCps:
                 if convert_ascii and convert_ascii.lower() == 'true':
                     value = utils.str_to_bcd(value)
                 if not value:
-                    logging.info('tag%s value is empty',tag)
+                    Log.info('tag%s value is empty',tag)
                 if len(value) % 2 != 0:
                     value += 'F'
                 value = self._assemble_value(tag,value,value_format)
@@ -1239,9 +1240,9 @@ class MockCps:
                             func = getattr(mod_obj,'process_tag' + tag)
                             value = self._assemble_value(tag,func(),value_format)
                         else:
-                            logging.info('can not process tag%s',tag)
+                            Log.info('can not process tag%s',tag)
                 else:
-                    logging.info('emboss file module can not process tag%s',tag)
+                    Log.info('emboss file module can not process tag%s',tag)
         return tag,value
         
     def _parse_template(self,template_node,kms=None):
@@ -1283,7 +1284,7 @@ class MockCps:
         if bin_node:
             issuer_bin = self.xml_handle.get_attribute(bin_node,'value')
             if not issuer_bin or issuer_bin == '':
-                logging.info('Please provide card Bin number, if not, card will use default Bin number:654321')
+                Log.info('Please provide card Bin number, if not, card will use default Bin number:654321')
                 issuer_bin = '654321'
             else:
                 issuer_bin = issuer_bin.split(',')[0]    #取第一个bin号生成证书

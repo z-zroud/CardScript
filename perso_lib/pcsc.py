@@ -1,7 +1,7 @@
 import os
 import sys
-import logging
 from perso_lib import utils
+from perso_lib.log import Log
 from ctypes import *
 
 __all__ = ['ApduResponse','init','send','get_readers','open_reader','warm_reset']
@@ -57,12 +57,11 @@ def send_raw(cmd,resp_sw_list=None):
     bytes_cmd = str.encode(cmd)
     resp_len = c_int(2048)
     resp_data = create_string_buffer(resp_len.value)
-    logging.info('APDU: %s',cmd)
+    Log.info('APDU: %s',cmd)
     apdu_response.sw = _pcsc_lib.SendApdu(bytes_cmd,resp_data,resp_len)
     apdu_response.response = bytes.decode(resp_data.value)
     apdu_response.request = cmd
-    #print('%X'%)
-    logging.info('APDU: %X',apdu_response.sw)
+    Log.info('RESP: %X',apdu_response.sw)
     if resp_sw_list and apdu_response.sw not in resp_sw_list:
         sys.exit(1)
     return apdu_response

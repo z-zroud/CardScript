@@ -4,6 +4,7 @@ from perso_lib.file_handle import FileHandle
 from perso_lib.cps import Cps,Dgi
 from perso_lib import utils
 from perso_lib import algorithm
+from perso_lib.log import Log
 
 class GoldpacDgi:
     '''
@@ -29,9 +30,9 @@ def get_pse_and_ppse_dgi_list(sddf_dgi_list):
     pse_index,_ = _aid_list_info.get('315041592E5359532E4444463031',('F','')) #_aid_list_info['315041592E5359532E4444463031']
     ppse_index,_ = _aid_list_info.get('325041592E5359532E4444463031',('F','')) #_aid_list_info['325041592E5359532E4444463031']
     if pse_index == 'F':
-        print('无法获取PSE DGI相关列表')
+        Log.error('无法获取PSE DGI相关列表')
     if ppse_index == 'F':
-        print('无法获取PPSE DGI相关列表')
+        Log.error('无法获取PPSE DGI相关列表')
     for dgi in sddf_dgi_list:
         if dgi[4] == pse_index:
             pse_dgi_list.append(dgi)
@@ -264,10 +265,10 @@ def split_rsa(xml,goldpac_dgi_list,is_second_app):
         sddf_tag = sddf_tag[0:4] + get_first_app_index() + sddf_tag[5:8]
     encrypted_data = get_goldpac_data(goldpac_dgi_list,sddf_tag,is_second_app)
     if encrypted_data is None:
-        print('无法获取RSA数据[tag' + sddf_tag + ']缺少数据')
+        Log.error('无法获取RSA数据[tag' + sddf_tag + ']缺少数据')
     decrypted_data = algorithm.des3_ecb_decrypt(key,encrypted_data)
     if len(decrypted_data) <= 2 or decrypted_data[0:2] != '30':
-        print('RSA解密失败')
+        Log.error('RSA解密失败')
         return None
     decrypted_data = decrypted_data[2:]
     _,decrypted_data = get_rsa_dgi_len(decrypted_data)
@@ -294,7 +295,7 @@ def split_rsa(xml,goldpac_dgi_list,is_second_app):
             continue
         dgi.add_tag_value(dgi.name[0:4],dgi_data)
         dgi_list.append(dgi)
-        print(dgi.name[0:4] + '=' + dgi_data)
+        Log.info(dgi.name[0:4] + '=' + dgi_data)
     return dgi_list
         
 #sddf_tag不需要区分是否为第二应用
@@ -381,7 +382,7 @@ def process_dp(dp_file,rule_file,is_mc_app=False):
         goldpac_dgi_list.append(item)
     for item in goldpac_dgi_list:   #获取sddf dgi所包含的数据
         item.data = fh.read_binary(fh.current_offset,item.data_len)
-        print(item.goldpac_dgi + ' = ' + item.data)
+        Log.info(item.goldpac_dgi + ' = ' + item.data)
     xml = XmlParser(rule_file)
     get_aid_list_info(xml)  #获取AID应用列表信息
     sddf_dgi_list = []

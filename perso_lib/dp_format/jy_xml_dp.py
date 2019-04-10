@@ -2,6 +2,7 @@ from perso_lib.xml_parse import XmlParser
 from perso_lib import utils
 from perso_lib.cps import Dgi,Cps
 from perso_lib.rule import Rule,RuleXml
+from perso_lib.log import Log
 
 def _parse_tlv(dgi_name,data):
     dgi = Dgi()
@@ -9,7 +10,7 @@ def _parse_tlv(dgi_name,data):
     int_dgi = utils.str_to_int(dgi_name)
     if int_dgi < 0x0B01:
         if data[0:2] != '70':
-            print('数据有误，小于0B01的DGI应包含70模板')
+            Log.error('数据有误，小于0B01的DGI应包含70模板')
             return None
         data = utils.remove_template70(data)
     if not utils.is_rsa(dgi_name) and utils.is_tlv(data):

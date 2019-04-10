@@ -3,6 +3,7 @@ from perso_lib.cps import Cps,Dgi
 from perso_lib import utils
 from perso_lib.rule import Rule,RuleXml
 from perso_lib import algorithm
+from perso_lib.log import Log
 import os
 
 def move_to_flag(fh,flag):   
@@ -38,8 +39,8 @@ def process_mag_data(fh,rule_file_name):
     track_flag_list.append(fh.read(fh.current_offset + 1,1))
     mag_data = fh.read_binary(fh.current_offset,mag_data_len - 5)
     mag_data_list = [x for x in mag_data.split('7C') if len(x) > 0]
-    print('decrypt mag data: ',end='')
-    print(mag_data_list)
+    Log.info('decrypt mag data: ',end='')
+    Log.info(mag_data_list)
     dgi = Dgi()
     dgi.name = 'Magstrip'
     if mag_node is not None:
@@ -62,8 +63,8 @@ def process_mag_data(fh,rule_file_name):
                     continue
                 dgi.add_tag_value(option,mag)
                 break
-        print('decrypt mag data: ',end='')
-        print(decrypt_mag_list)
+        Log.info('decrypt mag data: ',end='')
+        Log.info(decrypt_mag_list)
     return dgi
 
 def process_pse(dgi,data):
@@ -142,7 +143,7 @@ def process_card_data(fh,rule_file):
         aid = fh.read_binary(fh.current_offset,aid_len)
         app_data_len = fh.read_int64(fh.current_offset)
         dgi_list, encrypt_dgi_list = get_dgi_list(fh)
-        print('encrypt dgi list :', encrypt_dgi_list)
+        Log.info('encrypt dgi list :', encrypt_dgi_list)
         for item in dgi_list:
             card_dgi = Dgi()
             dgi = fh.read_binary(fh.current_offset,2)

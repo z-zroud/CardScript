@@ -2,7 +2,7 @@
 from perso_lib.transaction.trans_base import *
 from perso_lib import utils
 from perso_lib.apdu import Crypto_Type
-import logging
+from perso_lib.log import Log
 
 
 
@@ -45,7 +45,7 @@ class PureTrans(TransBase):
         data = self.assemble_dol(tag8C)
         resp = super().gac(Crypto_Type.ARQC,data)
         if resp.sw != 0x9000:
-            logging.info('send gac1 failed.')
+            Log.info('send gac1 failed.')
             return
         tlvs = utils.parse_tlv(resp.response)
         self.output_apdu_response(resp)
@@ -70,7 +70,7 @@ class PureTrans(TransBase):
         data = self.assemble_dol(tag8D)
         resp = super().gac(Crypto_Type.TC,data)
         if resp.sw != 0x9000:
-            logging.info('send gac1 failed.')
+            Log.info('send gac1 failed.')
             return
         return resp
 
@@ -84,10 +84,10 @@ if __name__ == '__main__':
     from perso_lib.pcsc import get_readers,open_reader
     from perso_lib.transaction.config import set_terminal
     from perso_lib.transaction import auth
-    from perso_lib import log
+    from perso_lib.log import Log
     import time
 
-    log.init()
+    Log.init()
     set_terminal('UDK','B5DA8C6123075213573EFD0870BCB349FD8C5EEF5E01319D98808C25C416732C89CEFEDC68BAEF68851076978F5E2070')
     set_terminal('OfflineAuth','CDA')
     set_terminal('9F06','A0000000558020')

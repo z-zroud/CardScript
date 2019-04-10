@@ -155,7 +155,6 @@ def process_dp(dp_file,rule_file):
             dgi.name = dgi_seq
             next_len = get_next_len(fh)
             n_dgi_seq = utils.hex_str_to_int(dgi_seq)
-            #print('dgi=' + dgi_seq)
             if n_dgi_seq <= 0x0B00: #认为是记录
                 template70 = fh.read_binary(fh.current_offset,1)
                 if template70 != '70':

@@ -2,7 +2,7 @@
 from perso_lib.transaction.trans_base import *
 from perso_lib import utils
 from perso_lib.apdu import Crypto_Type
-import logging
+from perso_lib.log import Log
 
 
 
@@ -45,11 +45,11 @@ class VisaTrans(TransBase):
         data = self.assemble_dol(tag8C)
         resp = super().gac(Crypto_Type.ARQC,data)
         if resp.sw != 0x9000:
-            logging.info('send gac1 failed.')
+            Log.info('send gac1 failed.')
             return
         tlvs = utils.parse_tlv(resp.response)
         if len(tlvs) != 1 and tlvs[0].tag != '80':
-            logging.info('gac1 response data error')
+            Log.info('gac1 response data error')
         data = tlvs[0].value
         self.store_tag(PROCESS_STEP.FIRST_GAC,'9F27',data[0:2])
         self.store_tag(PROCESS_STEP.FIRST_GAC,'9F36',data[2:6])
@@ -65,7 +65,7 @@ class VisaTrans(TransBase):
             tag5A = self.get_tag(PROCESS_STEP.READ_RECORD,'5A')
             tag5F34 = self.get_tag(PROCESS_STEP.READ_RECORD,'5F34')
             key = auth.gen_udk(key,tag5A,tag5F34)
-        arpc = auth.gen_arpc(key,tag9F26,arc)
+        arpc = auth.gen_arpc_by_des3(key,tag9F26,arc)
         resp = apdu.external_auth(arpc,arc)
         if resp.sw == 0x9000:
             return True
@@ -77,7 +77,7 @@ class VisaTrans(TransBase):
         data = self.assemble_dol(tag8D)
         resp = super().gac(Crypto_Type.TC,data)
         if resp.sw != 0x9000:
-            logging.info('send gac1 failed.')
+            Log.info('send gac1 failed.')
             return
         return resp
 
@@ -95,13 +95,13 @@ class VisaTrans(TransBase):
 if __name__ == '__main__':
     from perso_lib.pcsc import get_readers,open_reader
     from perso_lib.transaction.config import set_terminal
-    from perso_lib import log
+    from perso_lib.log import Log
     import time
     a = [1,2,3,4,5,6]
     print(a[2:-2])
     print(time.strftime('%C%m'))
     # print(time.strftime("%d/%m/%Y"))
-    log.init()
+    Log.init()
     set_terminal('UDK','CB40040401DABCBCC197FE2A01AD15B961CEE091A267BA6EFBB329A262B97616E01F7F3E7904641AE3862A07943276AE')
     trans = VisaTrans()
     readers = get_readers()
