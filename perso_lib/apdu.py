@@ -80,7 +80,7 @@ def get_data(tag):
     return pcsc.send_raw(cmd)
 
 store_count = 0
-def store_data(data,data_type,reset=False):
+def store_data(data_type,data,reset=False):
     global store_count
     if reset:
         store_count = 0
@@ -114,6 +114,11 @@ def init_update(host_challenge, key_verson='00', key_id='00'):
 
 def internal_auth(ddol):
     cmd = '00880000' + utils.get_strlen(ddol) + ddol
+    return pcsc.send_raw(cmd)
+
+def external_auth(arpc,arc):
+    data = arpc + arc
+    cmd = '00820000' + utils.get_strlen(data) + data
     return pcsc.send_raw(cmd)
 
 def ext_auth(kmc,div_method,secure_level,host_challenge,init_update_data):

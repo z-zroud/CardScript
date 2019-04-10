@@ -3,6 +3,7 @@ import time
 
 # 终端默认设置
 terminal_cfg = {
+    'OfflineAuth':'DDA',
     '9F7A':'01',    # 电子现金终端支持指示器，默认支持
     '9F02':'000000000100',      # 授权金额，默认一元
     '9F03':'000000000000',  #其他金额，默认无
@@ -13,20 +14,29 @@ terminal_cfg = {
     '95':'0000000000',  #终端交易结果，默认全0
     '9A':time.strftime('%C%m%d'), #交易日期
     '9C':'00', #交易类型(消费交易)
-    '8A':'0000' # 终端生成的授权响应码
+    '8A':'0000', # 终端生成的授权响应码
+    '9F35':'22', # 终端类型
+    '9F34':'000000'
 }
 
 # 用户可根据该函数重置终端相关数据
-def set_termianl(tag,value):
-    if terminal_cfg.get(tag):
+def set_terminal(tag,value):
+    if not terminal_cfg.get(tag):
         terminal_cfg.setdefault(tag,value)
+    else:
+        terminal_cfg[tag] = value
 
-def get_terminal(tag,length=None):
+def get_terminal(tag,length=None,default=None):
     value = terminal_cfg.get(tag)
     if not value:
         if length:
-            value = '0' * length
+            value = '0' * length * 2
         logging.info('can not require terminal settings for tag %s',tag)
+        return default
+    else:
+        if length and len(value) != length:
+            value += '0' * (length * 2 - len(value))
+            logging.info('padding 0 at tag %s',tag)
     return value
 
 

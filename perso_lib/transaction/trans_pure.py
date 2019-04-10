@@ -6,7 +6,7 @@ import logging
 
 
 
-class VisaTrans(TransBase):
+class PureTrans(TransBase):
     def __init__(self):
         super().__init__()
 
@@ -24,9 +24,9 @@ class VisaTrans(TransBase):
             data = self.assemble_dol(tag9F38)
         resp = super().gpo(data)
         if resp.sw == 0x9000:
-            self.output_contact_gpo_info(resp)
-            self.store_tag(PROCESS_STEP.GPO,'82',resp.response[4:8])
-            self.store_tag(PROCESS_STEP.GPO,'94',resp.response[8:])
+            self.output_apdu_response(resp)
+            tlvs = utils.parse_tlv(resp.response)
+            self.store_tag_group(PROCESS_STEP.GPO,tlvs)
             self.run_case('case_gpo','run_visa',resp)
         return resp
 
@@ -48,28 +48,21 @@ class VisaTrans(TransBase):
             logging.info('send gac1 failed.')
             return
         tlvs = utils.parse_tlv(resp.response)
-        if len(tlvs) != 1 and tlvs[0].tag != '80':
-            logging.info('gac1 response data error')
-        data = tlvs[0].value
-        self.store_tag(PROCESS_STEP.FIRST_GAC,'9F27',data[0:2])
-        self.store_tag(PROCESS_STEP.FIRST_GAC,'9F36',data[2:6])
-        self.store_tag(PROCESS_STEP.FIRST_GAC,'9F26',data[6:22])
-        self.store_tag(PROCESS_STEP.FIRST_GAC,'9F10',data[22:])
+        self.output_apdu_response(resp)
+        self.store_tag_group(PROCESS_STEP.FIRST_GAC,tlvs)
         return resp
 
     def issuer_auth(self):
         tag9F26 = self.get_tag(PROCESS_STEP.FIRST_GAC,'9F26')
-        arc = '3030'
+        csu = '00820000' 
         key = self.key_ac
         if self.key_flag == App_Key.MDK:
             tag5A = self.get_tag(PROCESS_STEP.READ_RECORD,'5A')
             tag5F34 = self.get_tag(PROCESS_STEP.READ_RECORD,'5F34')
             key = auth.gen_udk(key,tag5A,tag5F34)
-        arpc = auth.gen_arpc(key,tag9F26,arc)
-        resp = apdu.external_auth(arpc,arc)
-        if resp.sw == 0x9000:
-            return True
-        return False
+        
+        arpc = auth.gen_arpc_by_mac(key,tag9F26,csu)
+        config.set_terminal('91',arpc + csu)
 
 
     def gac2(self):
@@ -87,32 +80,29 @@ class VisaTrans(TransBase):
         resp = super().gac(Crypto_Type.ARQC_CDA,data)
 
 
-
-
-
-
-
 if __name__ == '__main__':
     from perso_lib.pcsc import get_readers,open_reader
     from perso_lib.transaction.config import set_terminal
+    from perso_lib.transaction import auth
     from perso_lib import log
     import time
-    a = [1,2,3,4,5,6]
-    print(a[2:-2])
-    print(time.strftime('%C%m'))
-    # print(time.strftime("%d/%m/%Y"))
+
     log.init()
-    set_terminal('UDK','CB40040401DABCBCC197FE2A01AD15B961CEE091A267BA6EFBB329A262B97616E01F7F3E7904641AE3862A07943276AE')
-    trans = VisaTrans()
+    set_terminal('UDK','B5DA8C6123075213573EFD0870BCB349FD8C5EEF5E01319D98808C25C416732C89CEFEDC68BAEF68851076978F5E2070')
+    set_terminal('OfflineAuth','CDA')
+    set_terminal('9F06','A0000000558020')
+    set_terminal('5F2A','0036')
+    set_terminal('9F40','0000')
+
+    trans = PureTrans()
     readers = get_readers()
     for index,reader in enumerate(readers):
         print("{0}: {1}".format(index,reader))
     index = input('select readers: ')
     if open_reader(readers[int(index)]):
-        trans.application_selection('A0000000031010')
+        trans.application_selection('A0000000558020')
         trans.gpo()
         trans.read_record()
-        trans.get_data(['9F75','9F72'])
         trans.do_dda()
         trans.gac1()
         trans.issuer_auth()

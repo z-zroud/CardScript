@@ -30,7 +30,6 @@ def gen_recovery_data(pN,pE,child_cert):
     auth_lib.DES_GenRecovery(byte_pN,byte_pE,byte_child_cert,recovery_data,2048)
     return bytes.decode(recovery_data.value)
 
-
 def get_issuer_pub_key(ca_pub_key,ca_exp,tag90,tag92,tag9F32,tag5A,tag5F24):
     '''
     获取发卡行公钥
@@ -52,7 +51,7 @@ def get_issuer_pub_key(ca_pub_key,ca_exp,tag90,tag92,tag9F32,tag5A,tag5F24):
     now = int(time.strftime('%C%m'))
     if expiry_date < now:
         logging.info('issuer cert has been overdue')
-        return issuer_pub_key
+        # return issuer_pub_key
     if expiry_date < int(tag5F24[0:4]):
         logging.info('issuer cert overdue earlier than application expiry date')
         return issuer_pub_key
@@ -92,7 +91,7 @@ def get_icc_pub_key(issuer_pub_key,tag9F32,tag9F46,tag9F48,tag9F47,sig_data,tag5
     now = int(time.strftime('%C%m'))
     if expiry_date < now:
         logging.info('icc cert has been overdue')
-        return icc_pub_key
+        # return icc_pub_key
     if expiry_date < int(tag5F24[0:4]):
         logging.info('icc cert overdue earlier than application expiry date')
         return icc_pub_key
@@ -131,8 +130,47 @@ def validate_9F4B(icc_pub_key,icc_exp,ddol,tag9F4B):
         return False
     icc_dynamic_data_len = int(recovery_data[8:10],16) * 2
     tag9F4C = recovery_data[10:10 + icc_dynamic_data_len]
-    config.set_termianl('9F4C',tag9F4C)
+    config.set_terminal('9F4C',tag9F4C)
     return True
+
+def gen_arpc_by_des3(key,ac,arc):
+    byte_key = str.encode(key)
+    byte_ac = str.encode(ac)
+    byte_arc = str.encode(arc)
+    arpc = create_string_buffer(33)
+    auth_lib.GenArpcByDes3(byte_key,byte_ac,byte_arc,arpc,0)
+    return bytes.decode(arpc.value)
+
+def gen_arpc_by_mac(key,ac,csu,prop_auth_data=''):
+    byte_key = str.encode(key)
+    byte_ac = str.encode(ac)
+    byte_csu = str.encode(csu)
+    byte_prop_auth_data = str.encode(prop_auth_data)
+    arpc = create_string_buffer(17)
+    auth_lib.GenArpcByMac(byte_key,byte_ac,byte_csu,byte_prop_auth_data,arpc)
+    return bytes.decode(arpc.value)
+
+def gen_udk(key,tag5A,tag5F34):
+    b_key = str.encode(key)
+    b_tag5A = str.encode(tag5A)
+    b_tag5F34 = str.encode(tag5F34)
+    udk = create_string_buffer(33)
+    auth_lib.GenUdk(b_key,b_tag5A,b_tag5F34,0)
+    return bytes.decode(udk.value)
+
+def gen_udk_session_key_uics(key,atc):
+    b_key = str.encode(key)
+    b_tag9F36 = str.encode(atc)
+    session_key = create_string_buffer(33)
+    auth_lib.GenUdkSessionKey(b_key,b_tag9F36,session_key,0)
+    return bytes.decode(session_key.value)
+
+def gen_udk_session_key_emv(key,atc):
+    b_key = str.encode(key)
+    b_tag9F36 = str.encode(atc)
+    session_key = create_string_buffer(33)
+    auth_lib.GenVisaUdkSessionKey(b_key,b_tag9F36,session_key)
+    return bytes.decode(session_key.value)
 
 
 if __name__ == '__main__':

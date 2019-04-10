@@ -77,9 +77,9 @@ def perso_no_cps_format(cps_file,encrypt_dgi_list,session_key):
                 if i != 0:
                     reset = False
                 data_block = data[i * max_len : (i + 1) * max_len]
-                resp = apdu.store_data(data_block,data_type,reset)
+                resp = apdu.store_data(data_type,data_block,reset)
         else:
-            resp = apdu.store_data(data,data_type,reset)
+            resp = apdu.store_data(data_type,data,reset)
         if resp.sw != 0x9000:
             return False
     return True
@@ -131,7 +131,7 @@ def perso_pse_mem(pse_dgi):
         reset = True if count == 1 else False
         if count == data_count:
             data_type = '80'
-        resp = apdu.store_data(data,data_type,reset)
+        resp = apdu.store_data(data_type,data,reset)
         if resp.sw != 0x9000:
             return False
     return True
@@ -166,9 +166,9 @@ def perso_cps_mem(dgi_list,encrypt_dgi_list,session_key):
                 if i != 0:
                     reset = False
                 data_block = data[i * max_len : (i + 1) * max_len]
-                resp = apdu.store_data(data_block,data_type,reset)
+                resp = apdu.store_data(data_type,data_block,reset)
         else:
-            resp = apdu.store_data(data,data_type,reset)
+            resp = apdu.store_data(data_type,data,reset)
         if resp.sw != 0x9000:
             return False
     return True
@@ -210,9 +210,9 @@ def perso_cps(cps_file,encrypt_dgi_list,session_key):
                 if i != 0:
                     reset = False
                 data_block = data[i * max_len : (i + 1) * max_len]
-                resp = apdu.store_data(data_block,data_type,reset)
+                resp = apdu.store_data(data_type,data_block,reset)
         else:
-            resp = apdu.store_data(data,data_type,reset)
+            resp = apdu.store_data(data_type,data,reset)
         if resp.sw != 0x9000:
             return False
     return True

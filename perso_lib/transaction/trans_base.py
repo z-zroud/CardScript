@@ -11,6 +11,8 @@ class PROCESS_STEP(Enum):
     GPO = 1
     READ_RECORD = 2
     GET_DATA = 3
+    FIRST_GAC = 4
+    SECOND_GAC = 5
 
 class TransTag:
     def __init__(self,step,tag,value):
@@ -18,12 +20,34 @@ class TransTag:
         self.tag = tag
         self.value = value
 
+class App_Key(Enum):
+    MDK = 0
+    UDK = 1
+
 # 交易流程基础类，该类仅实现纯APDU交互，
 # 仅涉及每个步骤的实现，并不对步骤直接的关联性做任何处理
 class TransBase:
     def __init__(self):
         self.sig_data = ''
         self.tags_info = []
+        self.cvn = ''
+        self.dki = ''
+        self.key_ac = ''
+        self.key_mac = ''
+        self.key_enc = ''
+        self.key_flag = App_Key.UDK
+        key = config.get_terminal('UDK')
+        if key:
+            self.key_ac = key[0:32]
+            self.key_mac = key[32:64]
+            self.key_enc = key[64:96]
+            self.key_flag = App_Key.UDK
+        key = config.get_terminal('MDK')
+        if key:
+            self.key_ac = key[0:32]
+            self.key_mac = key[32:64]
+            self.key_enc = key[64:96]
+            self.key_flag = App_Key.MDK
 
     def run_case(self,module_name,func_name,apdu_resp=None):
         module_name = 'perso_lib.transaction.cases.' + module_name

@@ -139,7 +139,7 @@ class PersoLogParse:
         mock_dgis = mock_cps.get_all_dgis()
         if not ignore_list:
             # 涉及KMS相关的值，不比较
-            ignore_list = ['90','92','9F32','9F46','9F48','93','8201','8202','8203','8204','8205','8000','9000','A006','A016','8400','8401','8001','9001','B010','B023']
+            ignore_list = ['8F','90','92','9F32','9F46','9F48','93','8201','8202','8203','8204','8205','8000','9000','A006','A016','8400','8401','8001','9001','B010','B023']
         for mock_dgi in mock_dgis:
             product_dgi = product_cps.get_dgi(mock_dgi.name)
             if not product_dgi:

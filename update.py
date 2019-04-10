@@ -9,24 +9,13 @@ perso_lib_path = os.path.join(cwd,'perso_lib')
 lib_link_path = os.path.join(cwd,'perso_lib.egg-info')
 
 
-
-
-
-#通过校验MD5 判断B内的文件与A 不同
-def get_MD5(file_path):
-    files_md5 = os.popen('md5 %s' % file_path).read().strip()
-    file_md5 = files_md5.replace('MD5 (%s) = ' % file_path, '')
-    return file_md5
-
-
 def main(path, out):
     for files in os.listdir(path):
         name = os.path.join(path, files)
         back_name = os.path.join(out, files)
         if os.path.isfile(name):      
             if os.path.isfile(back_name):
-                if get_MD5(name) != get_MD5(back_name):
-                    shutil.copy(name,back_name)     
+                shutil.copy(name,back_name)     
             else:
                 shutil.copy(name, back_name)
         else:

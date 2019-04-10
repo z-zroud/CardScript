@@ -62,9 +62,10 @@ class EmbossItem:
     value 一种描述取值方式的字符串,例如 "[10,20]001[12,33]"
     表示从emboss file中取位置10到20的字符串 + 固定字符串001 + 从emboss file取位置12到33的字符串
     '''
-    def __init__(self,convert_to_ascii,replace_equal_by_D,value):
+    def __init__(self,convert_to_ascii,replace_equal_by_D,trim_right_space,value):
         self.convert_to_ascii = convert_to_ascii
         self.replace_equal_by_D = replace_equal_by_D
+        self.trim_right_space = trim_right_space
         self.value = value
 
 # 港澳地区专用的纯Jetco应用Excel表格
@@ -299,7 +300,7 @@ class GoldpacForm:
         self.source_items.clear() #读数据前，将旧数据清空
         if self.excel.open_worksheet(sheet_name):
             first_header = self.excel.read_cell_value(start_row,start_col)
-            if str(first_header).strip() != 'Data Type':
+            if str(first_header).strip() != 'Data Category':
                 print('can not found form start position')
                 return None
             start_row += 1 #默认标题行之后就是数据行
@@ -668,7 +669,7 @@ class GenDpXml:
         self._init_emboss_items()
         
     def _parse_file_value(self,value):
-        emboss_item = EmbossItem(False,False,'')
+        emboss_item = EmbossItem(False,False,False,'')
         item = value.split('-')
         if not item:
             return None
@@ -679,6 +680,8 @@ class GenDpXml:
                     emboss_item.convert_to_ascii = True
                 if data.strip() == 'EQ':
                     emboss_item.replace_equal_by_D = True
+                if data.strip() == 'TRIM':
+                    emboss_item.trim_right_space = True
         return emboss_item
         
     def _init_emboss_items(self):
@@ -767,7 +770,7 @@ class GenDpXml:
         return attr_comment
 
     def _get_rsa_len(self):
-        item = self._get_source_item('RSA_Len','contact')
+        item = self._get_source_item('Rsa_len','contact')
         if item:
             item.used = True
             return item.value
@@ -890,34 +893,38 @@ class GenDpXml:
                     logging.info('Remove DGI: %s',dgi_name)
 
     def _handle_9F4B(self,new_xml_handle,app_node):
-        dgi_for_tag9F4B = int(self.config.get('dgi_9F4B'),16)
-        dgi_nodes = new_xml_handle.get_nodes(app_node,'DGI')
-        before_node = None
-        for dgi_node in dgi_nodes:
-            dgi_name = new_xml_handle.get_attribute(dgi_node,'name')
-            if dgi_name and utils.is_hex_str(dgi_name):
-                int_dgi = int(dgi_name,16)
-                if int_dgi < dgi_for_tag9F4B:
-                    before_node = dgi_node
-                else:
-                    new_node = new_xml_handle.create_node('DGI')
-                    new_xml_handle.set_attribute(new_node,'name',self.config.get('dgi_9F4B'))
-                    attr = dict()
-                    attr['name'] = 'FFFF'
-                    attr['format'] = 'V'
-                    attr['type'] = 'fixed'
-                    rsa = int(self.config.get('rsa'))
-                    str_rsa = utils.int_to_hex_str(rsa // 8)
-                    str_rsa = '9F4B81' + str_rsa
-                    str_tlv_len = utils.int_to_hex_str(rsa // 8 + 4)
-                    value = '7081' + str_tlv_len + str_rsa
-                    attr['value'] = value
-                    new_xml_handle.add_node(new_node,'Tag',**attr)
-                    new_xml_handle.insert_before(app_node,new_node,before_node)     
-                    break  
+        if self.config.get('dgi_9F4B'):
+            dgi_of_tag9F4B = int(self.config.get('dgi_9F4B'),16)
+            dgi_nodes = new_xml_handle.get_nodes(app_node,'DGI')
+            before_node = None
+            for dgi_node in dgi_nodes:
+                dgi_name = new_xml_handle.get_attribute(dgi_node,'name')
+                if dgi_name and utils.is_hex_str(dgi_name):
+                    int_dgi = int(dgi_name,16)
+                    if int_dgi < dgi_of_tag9F4B:
+                        before_node = dgi_node
+                    else:
+                        new_node = new_xml_handle.create_node('DGI')
+                        new_xml_handle.set_attribute(new_node,'name',self.config.get('dgi_9F4B'))
+                        attr = dict()
+                        attr['name'] = 'FFFF'
+                        attr['format'] = 'V'
+                        attr['type'] = 'fixed'
+                        rsa_len = self._get_rsa_len()
+                        if not rsa_len:
+                            rsa_len = self.config.get('rsa','1152')
+                        rsa = int(rsa_len)
+                        str_rsa = utils.int_to_hex_str(rsa // 8)
+                        str_rsa = '9F4B81' + str_rsa
+                        str_tlv_len = utils.int_to_hex_str(rsa // 8 + 4)
+                        value = '7081' + str_tlv_len + str_rsa
+                        attr['value'] = value
+                        new_xml_handle.add_node(new_node,'Tag',**attr)
+                        new_xml_handle.insert_before(app_node,new_node,before_node)     
+                        break  
 
     def gen_xml(self,new_xml,char_set='UTF-8'):
-        tags_from_kms = ('8F','9F32','8000','8001','9000','9001','8400','8401','A006','A016','90','92','93','9F46','9F48','8201','8202','8203','8204','8205','DC','DD')
+        tags_from_kms = ('8F','9F32','8000','8001','9000','9001','8400','8401','A006','A016','90','92','93','9F46','9F47', '9F48','8201','8202','8203','8204','8205','DC','DD')
         fpath,_ = os.path.split(new_xml)    #分离文件名和路径
         if not os.path.exists(fpath):
             os.makedirs(fpath)
@@ -1000,7 +1007,10 @@ class GenDpXml:
                 # 对于visa项目,如果RSA长度小于等于1024,需要在9115,9116,9117中添加9F4B81XX
                 # 注意,这里默认visa为第一应用,若出现visa为第二应用的情况，则不适用。
                 if self.config.get('app_type') in (AppType.VISA_CREDIT,AppType.VISA_DEBIT):
-                    rsa = int(self.config.get('rsa','1152'))
+                    rsa_len = self._get_rsa_len()
+                    if not rsa_len:
+                        rsa_len = self.config.get('rsa','1152')
+                    rsa = int(rsa_len)
                     if  rsa <= 1024 and attr_tag == 'FFFF': #这里使用特殊的tagFFFF表示DGI9115,9116,9117中的TL结构
                         attr_value += '9F4B81' + utils.int_to_hex_str(rsa // 8)
 
@@ -1024,6 +1034,8 @@ class GenDpXml:
                                 new_xml_handle.set_attribute(tag_node,'convert_ascii','true')
                             if item.replace_equal_by_D:
                                 new_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
+                            if item.trim_right_space:
+                                new_xml_handle.set_attribute(tag_node,'trim_right_space','true')
                         else:
                             # 若无法找到该tag节点，则删除之，并加入not found列表中
                             new_xml_handle.remove(tag_node)
@@ -1057,6 +1069,8 @@ class GenDpXml:
                                     new_xml_handle.set_attribute(tag_node,'convert_ascii','true')
                                 if item.replace_equal_by_D:
                                     new_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
+                                if item.trim_right_space:
+                                    new_xml_handle.set_attribute(tag_node,'trim_right_space','true')
                         else:   #说明无法从数据来源中获取该Tag的相关信息
                             new_xml_handle.remove(tag_node)
                             self.unused_data.append((attr_tag,attr_source,attr_comment))
@@ -1203,6 +1217,9 @@ class MockCps:
             value = self.xml_handle.get_attribute(tag_node,'value')
             if value:
                 value = self._get_value_from_file(value)
+                trim_right_space = self.xml_handle.get_attribute(tag_node,'trim_right_space')
+                if trim_right_space:
+                    value = value.rstrip()
                 replaceD = self.xml_handle.get_attribute(tag_node,'replace_equal_by_D')
                 if replaceD:
                     value = value.replace('=','D')

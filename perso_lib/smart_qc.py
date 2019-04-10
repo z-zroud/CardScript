@@ -3,7 +3,7 @@ from perso_lib import utils
 
 no_contain_list = ['9F46','93','90','92','9F48','9F36','9F6C','8F','5F24','5F25','DF41']
 warn_list = ['57','9F1F','5F20','5A']
-no_must_contain_list = ['57','5F20','9F6C','5F34','9F36','DF41']
+no_must_contain_list = ['57','5F20','9F6C','5F34','9F36','DF41','9F13']
 
 tag_desc = {
     '4F':'Application Identifier (AID)',
@@ -200,7 +200,9 @@ class SmartQC_EMV:
             # value_format = self.dp_xml_handle.get_attribute(node,'type')
             tag = self.dp_xml_handle.get_attribute(node,'name')
             value = self.dp_xml_handle.get_attribute(node,'value')
-            if tag != '--' and (value and len(value) > 0 and utils.is_hex_str(value)):
+            if tag == '9F5D' and value == '000000000001':   #9F5D需要特殊处理
+                tag.value = '000000000000'
+            elif tag != '--' and (value and len(value) > 0 and utils.is_hex_str(value)):
                 tags.append((tag,value))
         return tags
 
@@ -216,7 +218,6 @@ class SmartQC_EMV:
         app_node = self.dp_xml_handle.get_node_by_attribute(self.dp_xml_handle.root_element,'App',aid=aid)
         node = self.dp_xml_handle.get_node_by_attribute(app_node,'DGI',name=name)
         return self._get_tags(node)
-
 
     def _get_dgis(self,tag94):
         dgi_list = []
@@ -248,6 +249,22 @@ class SmartQC_EMV:
             special_input_data_node = self.smart_qc.create_node(case_node,'SpecialInputData')
             self.smart_qc.create_tag_node(special_input_data_node,'DF01','A0000000041010','AID',None)
         elif case_type == 'visa':
+            # <Specification>
+            specification_path = '..\\Config\\VISASpec.xml'
+            self.smart_qc.create_text_node(case_node,'Specification',specification_path)
+            # <SpecialInputData>
+            special_input_data_node = self.smart_qc.create_node(case_node,'SpecialInputData')
+            self.smart_qc.create_tag_node(special_input_data_node,'DF01','A0000000031010','AID',None)
+        elif case_type == 'uics':
+            # <Specification>
+            specification_path = '..\\Config\\UICSSpec.xml'
+            self.smart_qc.create_text_node(case_node,'Specification',specification_path)
+            # <SpecialInputData>
+            special_input_data_node = self.smart_qc.create_node(case_node,'SpecialInputData')
+            app_node = self.dp_xml_handle.get_first_node(self.dp_xml_handle.root_element,'App')
+            aid = self.dp_xml_handle.get_attribute(app_node,'aid')
+            self.smart_qc.create_tag_node(special_input_data_node,'DF01',aid,'AID',None)
+        elif case_type == 'jetco':
             # <Specification>
             specification_path = '..\\Config\\VISASpec.xml'
             self.smart_qc.create_text_node(case_node,'Specification',specification_path)
@@ -345,7 +362,6 @@ class SmartQC_EMV:
         # <CompareData>
         mc_app_node = self.dp_xml_handle.get_node_by_attribute(self.dp_xml_handle.root_element,'App',aid='A0000000041010')
         node_A005 = self.dp_xml_handle.get_node_by_attribute(mc_app_node,'DGI',name='A005')
-        # node_B005 = self.dp_xml_handle.get_node_by_attribute(mc_app_node,'DGI',name='B005')
         node_tag94 = self.dp_xml_handle.get_node_by_attribute(node_A005,'Tag',name='94')
         tag94 = self.dp_xml_handle.get_attribute(node_tag94,'value')
         dgi_names = self._get_dgis(tag94)
@@ -354,7 +370,6 @@ class SmartQC_EMV:
         compared_data.extend(self._get_pse_tags())
         compared_data.extend(self._get_dgi_tags('A0000000041010','9102'))
         compared_data.extend(self._get_tags(node_A005))
-        # compared_data.extend(self._get_tags(node_B005)) #无法比较非接D8,D9
         for dgi_name in dgi_names:
             node = self.dp_xml_handle.get_node_by_attribute(mc_app_node,'DGI',name=dgi_name)
             compared_data.extend(self._get_tags(node))
@@ -409,10 +424,98 @@ class SmartQC_EMV:
             self.smart_qc.create_tag_node(compare_data_node,data[0],data[1],self._get_description(data[0]),'BCD','error')
 
     def create_uics_case(self):
-        pass
+        case_node = self._create_header('UICS接触检测','uics','PC Twin','UICSCheck.dll')
+        # <CompareData>
+        compare_data_node = self.smart_qc.create_node(case_node,'CompareData')
+        
+        uics_app_node = self.dp_xml_handle.get_node_by_attribute(self.dp_xml_handle.root_element,'App',aid='A000000333010101')
+        if not uics_app_node:
+            uics_app_node = self.dp_xml_handle.get_node_by_attribute(self.dp_xml_handle.root_element,'App',aid='A000000333010102')
+        node_9104 = self.dp_xml_handle.get_node_by_attribute(uics_app_node,'DGI',name='9104')
+        node_tag94 = self.dp_xml_handle.get_node_by_attribute(node_9104,'Tag',name='94')
+        tag94 = self.dp_xml_handle.get_attribute(node_tag94,'value')
+        dgi_names = self._get_dgis(tag94)
+
+        compared_data = []
+        compared_data.extend(self._get_pse_tags())
+        aid = self.dp_xml_handle.get_attribute(uics_app_node,'aid')
+        compared_data.extend(self._get_dgi_tags(aid,'9102'))
+        compared_data.extend(self._get_tags(node_9104))
+
+        risk_mgm_data = []
+        risk_mgm_data.extend(self._get_dgi_tags(aid,'0D01'))
+        risk_mgm_data.extend(self._get_dgi_tags(aid,'0E01'))
+
+        compared_data.extend(risk_mgm_data)
+        for dgi_name in dgi_names:
+            node = self.dp_xml_handle.get_node_by_attribute(uics_app_node,'DGI',name=dgi_name)
+            compared_data.extend(self._get_tags(node))
+
+        for data in compared_data: #data为二元组，tag-value的形式
+            if data[0] not in no_contain_list:
+                if data[0] in warn_list:
+                    self.smart_qc.create_tag_node(compare_data_node,data[0],data[1],self._get_description(data[0]),'BCD','warn')
+                else:
+                    self.smart_qc.create_tag_node(compare_data_node,data[0],data[1],self._get_description(data[0]),'BCD','error')
+        risk_tag_list = ''
+        for item in risk_mgm_data:
+            tag = item[0]
+            if tag not in no_must_contain_list:
+                if len(tag) == 2:
+                    tag = '00' + tag
+                risk_tag_list += tag + ','
+        risk_tag_list = risk_tag_list[0:-1] #去掉最后一个逗号
+        self.smart_qc.create_text_node(case_node,'MustContain',risk_tag_list)
+        # <ShowCardFace>
+        self.smart_qc.create_node(case_node,'ShowCardFace')
+
+        # UICS非接触检测
+        case_node = self._create_header('MasterCard检测(非接)','uics','PC Twin2','UICSCheck_CL.dll')
+        compare_data_node = self.smart_qc.create_node(case_node,'CompareData')
+        compared_data = []
+        compared_data.extend(self._get_ppse_tags())
+        compared_data.extend(self._get_dgi_tags(aid,'9103'))
+        for data in compared_data:
+            self.smart_qc.create_tag_node(compare_data_node,data[0],data[1],self._get_description(data[0]),'BCD','error')
 
     def create_jetco_case(self):
-        pass
+        case_node = self._create_header('Jetco接触检测','jetco','PC Twin','JETCOCheck.dll')
+        # <CompareData>
+        compare_data_node = self.smart_qc.create_node(case_node,'CompareData')
+        
+        jetco_app_node = self.dp_xml_handle.get_node_by_attribute(self.dp_xml_handle.root_element,'App',aid='A000000333010101')
+       
+        node_9104 = self.dp_xml_handle.get_node_by_attribute(jetco_app_node,'DGI',name='9104')
+        node_tag94 = self.dp_xml_handle.get_node_by_attribute(node_9104,'Tag',name='94')
+        tag94 = self.dp_xml_handle.get_attribute(node_tag94,'value')
+        dgi_names = self._get_dgis(tag94)
+
+        compared_data = []
+        compared_data.extend(self._get_pse_tags())
+        aid = self.dp_xml_handle.get_attribute(jetco_app_node,'aid')
+        compared_data.extend(self._get_dgi_tags(aid,'9102'))
+        compared_data.extend(self._get_tags(node_9104))
+
+        risk_mgm_data = []
+        risk_mgm_data.extend(self._get_dgi_tags(aid,'0D01'))
+        risk_mgm_data.extend(self._get_dgi_tags(aid,'0E01'))
+
+        compared_data.extend(risk_mgm_data)
+        for dgi_name in dgi_names:
+            node = self.dp_xml_handle.get_node_by_attribute(jetco_app_node,'DGI',name=dgi_name)
+            compared_data.extend(self._get_tags(node))
+
+        risk_tag_list = ''
+        for item in risk_mgm_data:
+            tag = item[0]
+            if tag not in no_must_contain_list:
+                if len(tag) == 2:
+                    tag = '00' + tag
+                risk_tag_list += tag + ','
+        risk_tag_list = risk_tag_list[0:-1] #去掉最后一个逗号
+        self.smart_qc.create_text_node(case_node,'MustContain',risk_tag_list)
+        # <ShowCardFace>
+        self.smart_qc.create_node(case_node,'ShowCardFace')
 
 class SmartQC_UICS:
     def __init__(self,cps,project_name):
