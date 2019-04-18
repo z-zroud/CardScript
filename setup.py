@@ -27,7 +27,8 @@ setuptools.setup(
         'openpyxl',
         'python-docx',
         'pillow',
-        'six'
+        'six',
+        'colorama'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -228,6 +228,19 @@ def des3_full_mac(key,in_data,init_data = '0000000000000000'):
 	des_lib.Full_3DES_CBC_MAC(bytes_in_data,bytes_key,bytes_init_data,output)
 	return bytes.decode(output.value)
 
+def des3_mac_padding00(key,data):
+    b_key = str.encode(key)
+    b_data = str.encode(data)
+    output = create_string_buffer(17)
+    auth_lib.GenMacPading00(b_key,b_data,output)
+    return bytes.decode(output.value)
+
+def des3_mac_padding80(key,data):
+    b_key = str.encode(key)
+    b_data = str.encode(data)
+    output = create_string_buffer(17)
+    auth_lib.GenMacPading80(b_key,b_data,output,0)
+    return bytes.decode(output.value)
 
 # xor two string. note data1 and data2 must have the same length.
 def xor(data1, data2):

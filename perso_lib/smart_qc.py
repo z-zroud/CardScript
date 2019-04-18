@@ -3,7 +3,7 @@ from perso_lib import utils
 
 no_contain_list = ['9F46','93','90','92','9F48','9F36','9F6C','8F','5F24','5F25','DF41']
 warn_list = ['57','9F1F','5F20','5A']
-no_must_contain_list = ['57','5F20','9F6C','5F34','9F36','DF41','9F13']
+no_must_contain_list = ['57','5F20','9F6C','5F34','9F36','DF41']
 
 tag_desc = {
     '4F':'Application Identifier (AID)',

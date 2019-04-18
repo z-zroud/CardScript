@@ -31,12 +31,12 @@ def get_terminal(tag,length=None,default=None):
     if not value:
         if length:
             value = '0' * length * 2
-        Log.info('can not require terminal settings for tag %s',tag)
+        Log.warn('can not require terminal settings for tag %s',tag)
         return default
     else:
-        if length and len(value) != length:
+        if length and len(value) != length * 2:
             value += '0' * (length * 2 - len(value))
-            Log.info('padding 0 at tag %s',tag)
+            Log.warn('padding 0 at tag %s',tag)
     return value
 
 

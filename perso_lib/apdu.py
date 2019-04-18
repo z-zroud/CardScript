@@ -36,13 +36,11 @@ def read_record(sfi,record_no,resp_sw_list=(0x9000,)):
     cmd = '00B2' + p1 + p2
     return pcsc.send_raw(cmd,resp_sw_list)
 
-
 def gac(crypto_type,data,resp_sw_list=(0x9000,)):
     p1 = str(crypto_type.value) + '0'
     cmd = '80AE' + p1 + '00' + utils.get_strlen(data) + data
     return pcsc.send_raw(cmd,resp_sw_list)
     
-
 def delete_app(aid,resp_sw_list=(0x9000,)):
     aid_len = utils.get_strlen(aid)
     data = '4F' + aid_len + aid
@@ -92,7 +90,6 @@ def store_data(data_type,data,reset=False):
         store_count = 0
     return pcsc.send_raw(cmd,(0x9000,))
 
-
 def store_data_mac(data,data_type,dek_session_key,mac_key,reset=False):
     global store_count
     if reset:
@@ -105,7 +102,6 @@ def store_data_mac(data,data_type,dek_session_key,mac_key,reset=False):
     if data_type == "80":
         store_count = 0
     return pcsc.send_raw(cmd,(0x9000,))
-
 
 def init_update(host_challenge, key_verson='00', key_id='00'):
     cmd_header = '8050' + key_verson + key_id
@@ -150,7 +146,6 @@ def ext_auth(kmc,div_method,secure_level,host_challenge,init_update_data):
         mac = algorithm.des3_mac(mac_session_key, cmd)
     cmd += mac
     return dek_session_key,pcsc.send_raw(cmd)
-
 
 def open_secure_channel(kmc,div_method=DIV_METHOD.NO_DIV,secure_level=SECURE_LEVEL.SL_NO_SECURE):
     host_challenge = '1122334455667788'

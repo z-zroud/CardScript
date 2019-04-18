@@ -19,7 +19,7 @@
 		<Sig id="sig_qVSDC">
 			<Tag name="5A"   source="contact" format="TLV" />
 			<Tag name="5F24" source="contact" format="TLV" />
-			<Tag name="82"   source="contactless" format="V" />
+			<Tag name="82"   source="9117" format="V" />
 			<Cert />
 		</Sig>
 		<DGI name="0101"> 
@@ -148,7 +148,7 @@
 			<Tag name="94" source="contact" format="TLV"/>
 		</DGI>	
 		<DGI name="9115">
-			<Tag name="82" source="contactless" format="TLV"/>
+			<Tag name="82" source="9115" format="TLV"/>
 			<Tag name="57"  source="contact" format="TLV"/>
 			<Tag name="5F34" source="contact"  format="TLV"/>
 			<Tag name="9F10" source="contactless" format="TLV"/>
@@ -158,7 +158,7 @@
 			<Tag name="9F07"  source="contactless" format="TLV"/>
 		</DGI>
 		<DGI name="9116">
-			<Tag name="82" source="contactless" format="TLV"/>
+			<Tag name="82" source="9116" format="TLV"/>
 			<Tag name="94" source="contactless" format="TLV"/>
 			<Tag name="57"  source="contact" format="TLV"/>
 			<Tag name="5F34" source="contact"  format="TLV"/>	    
@@ -168,7 +168,7 @@
 			<Tag name="9F6E" source="contactless"  format="TLV"/>
 		</DGI>
 		<DGI name="9117">
-			<Tag name="82" source="contactless" format="TLV"/>
+			<Tag name="82" source="9117" format="TLV"/>
 			<Tag name="94" source="contactless" format="TLV"/>
 			<Tag name="57" source="contact" format="TLV"/>
 			<Tag name="5F34" source="contact"  format="TLV"/>    

@@ -49,22 +49,22 @@ class Log(Singleton):
         logging.info(fmt,*arg)
 
     @staticmethod
-    def warn(fmt,*arg,end=''):
+    def warn(fmt,*arg,end='\n'):
         console_fmt = '%s' + fmt
         print(console_fmt % (Fore.YELLOW,*arg),end=end)
-        logging.info(fmt,*arg)
+        logging.info('[warn]:' + fmt,*arg)
 
     @staticmethod
-    def debug(fmt,*arg,end=''):
+    def debug(fmt,*arg,end='\n'):
         console_fmt = '%s' + fmt
         print(console_fmt % (Fore.BLUE,*arg),end=end)
         logging.info(fmt,*arg)
 
     @staticmethod
-    def error(fmt,*arg,end=''):
+    def error(fmt,*arg,end='\n'):
         console_fmt = '%s' + fmt
         print(console_fmt % (Fore.RED,*arg),end=end)
-        logging.info(fmt,*arg)
+        logging.info('[error]:' + fmt,*arg)
 
 
 if __name__ == "__main__":
