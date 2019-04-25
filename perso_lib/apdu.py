@@ -21,6 +21,20 @@ class Crypto_Type(Enum):
     TC_CDA = 5
     ARQC_CDA = 9
 
+def put_data(tag,data,mac,resp_sw_list=(0x9000,)):
+    lc = utils.get_strlen(data + mac)
+    if len(tag) == 2:
+        tag = '00' + tag
+    cmd = '04DA' + tag + lc + data + mac
+    return pcsc.send_raw(cmd,resp_sw_list)
+
+def unlock_app(mac,resp_sw_list=(0x9000,)):
+    cmd = '84180000' + utils.get_strlen(mac) + mac
+    return pcsc.send_raw(cmd,resp_sw_list)
+
+def lock_app(mac,resp_sw_list=(0x9000,)):
+    cmd = '841E0000' + utils.get_strlen(mac) + mac
+    return pcsc.send_raw(cmd,resp_sw_list)
 
 def gpo(pdol,resp_sw_list=(0x9000,)):
     pdol_len = utils.get_strlen(pdol)

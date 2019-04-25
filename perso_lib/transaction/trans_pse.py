@@ -37,12 +37,20 @@ class PpseTrans(TransBase):
     def run_case(self,module_name,apdu_resp=None):
         super().run_case(module_name,'run_ppse',apdu_resp)
 
-    def application_selection(self,aid):
+    def application_selection(self):
+        aids = []
         resp = super().application_selection('325041592E5359532E4444463031')
+        if resp.sw != 0x9000:
+            Log.error('select ppse failed, sw=%0X',resp.sw)
+            return aids
         tools.output_apdu_info(resp)
-        self.store_tag_group(PROCESS_STEP.SELECT,utils.parse_tlv(resp.response))
+        tlvs = utils.parse_tlv(resp.response)
+        for tlv in tlvs:
+            if tlv.tag == '4F':
+                aids.append(tlv.value)
+        self.store_tag_group(PROCESS_STEP.SELECT,tlvs)
         # self.run_case('case_application_selection',resp)
-        return resp
+        return aids
 
 
 if __name__ == "__main__":

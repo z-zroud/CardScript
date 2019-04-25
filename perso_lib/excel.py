@@ -32,3 +32,10 @@ class ExcelOp:
 
     def read_cell(self,cell_name):
         return self.current_sheet[cell_name].value
+
+    def write_cell_value(self,row,col,value):
+        cell_name = self._get_cell_name(row,col)
+        self.current_sheet[cell_name].value = value
+
+    def save(self):
+        self.wb.save(self.file_name)

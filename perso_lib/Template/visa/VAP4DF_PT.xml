@@ -2,18 +2,18 @@
 <Bin />
 	<App aid="A0000000031010" sda="false" dda="true">
 		<Sig id="sig_VSDC">
-			<Tag name="5A"    source="contact" format="TLV" />
-			<Tag name="5F24"  source="contact" format="TLV" />
-			<Tag name="5F25"  source="contact" format="TLV" />
-			<Tag name="5F34"  source="contact" format="TLV" />
-			<Tag name="9F07"  source="contact" format="TLV" />
-			<Tag name="8E"    source="contact" format="TLV" />
-			<Tag name="9F0D"  source="contact" format="TLV" />
-			<Tag name="9F0E"  source="contact" format="TLV" />
-			<Tag name="9F0F"  source="contact" format="TLV" />
-			<Tag name="5F28"  source="contact" format="TLV" />    
-			<Tag name="9F4A"  source="contact" format="TLV" />
-			<Tag name="82"    source="contact" format="V" />
+			<Tag name="5A"   source="contact" format="TLV" />
+			<Tag name="5F24" source="contact" format="TLV" />
+			<Tag name="5F25" source="contact" format="TLV" />
+			<Tag name="5F34" source="contact" format="TLV" />
+			<Tag name="9F07" source="contact" format="TLV" />
+			<Tag name="8E"   source="contact" format="TLV" />
+			<Tag name="9F0D" source="contact" format="TLV" />
+			<Tag name="9F0E" source="contact" format="TLV" />
+			<Tag name="9F0F" source="contact" format="TLV" />
+			<Tag name="5F28" source="contact" format="TLV" />    
+			<Tag name="9F4A" source="contact" format="TLV" />
+			<Tag name="82"   source="contact" format="V" />
 			<Cert />
 		</Sig>
 		<Sig id="sig_qVSDC">
@@ -51,7 +51,7 @@
 		</DGI>
 		<DGI name="0203">
 			<Template name="70">
-				<Tag name="9F47" value="03"  format="TLV"/>
+				<Tag name="9F47" source="kms" format="TLV"/>
 				<Tag name="9F48" sig_id="sig_VSDC" source="kms" format="TLV"/>
 				<Tag name="9F49" source="contact" format="TLV"/>
 			</Template>
@@ -77,7 +77,7 @@
 		</DGI>
 		<DGI name="0207">
 			<Template name="70">
-				<Tag name="9F47" value="03" format="TLV"/>
+				<Tag name="9F47" source="kms" format="TLV"/>
 				<Tag name="9F48" sig_id="sig_qVSDC" source="kms" format="TLV"/>
 				<Tag name="9F4A" source="contact" format="TLV"/>
 				<Tag name="9F07" source="contactless" format="TLV"/>
@@ -123,10 +123,14 @@
 			<Tag name="9F79" source="contactless" format="TLV"/>
 		</DGI>
 		<DGI name="8000">
-			<Tag name="8000" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique AC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique MAC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique ENC Key"/>
 		</DGI>
 		<DGI name="9000">
-			<Tag name="9000" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKMAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKENC"/>
 		</DGI>
 		<DGI name="8201">
 			<Tag name="8201" source="kms" format="V"/>
@@ -144,23 +148,23 @@
 			<Tag name="8205" source="kms" format="V"/>
 		</DGI>
 		<DGI name="9104">
-			<Tag name="82" source="contact" format="TLV"/>
-			<Tag name="94" source="contact" format="TLV"/>
+			<Tag name="82"   source="contact" format="TLV"/>
+			<Tag name="94"   source="contact" format="TLV"/>
 		</DGI>	
 		<DGI name="9115">
-			<Tag name="82" source="9115" format="TLV"/>
-			<Tag name="57"  source="contact" format="TLV"/>
+			<Tag name="82"   source="9115" format="TLV"/>
+			<Tag name="57"   source="contact" format="TLV"/>
 			<Tag name="5F34" source="contact"  format="TLV"/>
 			<Tag name="9F10" source="contactless" format="TLV"/>
 			<Tag name="FFFF" type="fixed" value="9F26089F27019F3602" format="V"/>
 			<Tag name="9F6C" source="contactless" format="TLV"/>
 			<Tag name="9F6E" source="contactless"  format="TLV"/>
-			<Tag name="9F07"  source="contactless" format="TLV"/>
+			<Tag name="9F07" source="contactless" format="TLV"/>
 		</DGI>
 		<DGI name="9116">
-			<Tag name="82" source="9116" format="TLV"/>
-			<Tag name="94" source="contactless" format="TLV"/>
-			<Tag name="57"  source="contact" format="TLV"/>
+			<Tag name="82"   source="9116" format="TLV"/>
+			<Tag name="94"   source="contactless" format="TLV"/>
+			<Tag name="57"   source="contact" format="TLV"/>
 			<Tag name="5F34" source="contact"  format="TLV"/>	    
 			<Tag name="9F10" source="contactless" format="TLV"/>
 			<Tag name="FFFF" type="fixed" value="9F26089F27019F3602" format="V"/>
@@ -168,9 +172,9 @@
 			<Tag name="9F6E" source="contactless"  format="TLV"/>
 		</DGI>
 		<DGI name="9117">
-			<Tag name="82" source="9117" format="TLV"/>
-			<Tag name="94" source="contactless" format="TLV"/>
-			<Tag name="57" source="contact" format="TLV"/>
+			<Tag name="82"   source="9117" format="TLV"/>
+			<Tag name="94"   source="contactless" format="TLV"/>
+			<Tag name="57"   source="contact" format="TLV"/>
 			<Tag name="5F34" source="contact"  format="TLV"/>    
 			<Tag name="9F10" source="contactless" format="TLV"/>
 			<Tag name="FFFF" type="fixed" value="9F26089F27019F3602" format="V"/>
@@ -182,8 +186,8 @@
 		</DGI>
 		<DGI name="9102">
 			<Template name="A5">
-				<Tag name="50" source="contact" format="TLV"/>
-				<Tag name="87" source="contact" format="TLV"/>
+				<Tag name="50"   source="contact" format="TLV"/>
+				<Tag name="87"   source="contact" format="TLV"/>
 				<Tag name="5F2D" source="contact" format="TLV"/>
 				<Tag name="9F11" source="contact" format="TLV"/>
 				<Tag name="9F12" source="contact" format="TLV"/>

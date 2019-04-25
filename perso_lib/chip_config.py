@@ -61,6 +61,17 @@ dt_encrypts = [
     ('8204',True),
     ('8205',True),
 ]
+
+slc32_encrypts = [
+    ('8000',False),
+    ('8020',False),
+    ('8201',True),
+    ('8202',True),
+    ('8203',True),
+    ('8204',True),
+    ('8205',True),
+]
+
 kmc = '404142434445464748494A4B4C4D4E4F'
 
 #华大芯片安装参数集合
@@ -116,6 +127,10 @@ fd_G90140092_uics_credit = dict(packet='',applet='',inst='A000000333010102',priv
 fd_G90140092_pboc_debit = dict(packet='50424F435F444343',applet='50424F435F4443435F3031',inst='A000000333010101',priviliage='12',param='C900')
 fd_G90140092_pboc_credit = dict(packet='',applet='',inst='A000000333010102',priviliage='',param='')
 
+# SLC32 安装参数集合
+slc32_O1130893_pse = dict(packet='A00000001830070100000000000001FF',applet='A00000001830070100000000000001',inst='315041592E5359532E4444463031',priviliage='00',param='C9020180')
+slc32_O1130893_ppse = dict(packet='A00000001830070100000000000001FF',applet='A00000001830070100000000000001',inst='325041592E5359532E4444463031',priviliage='00',param='C900')
+slc32_O1130893_amex = dict(packet='A0000000250101013131',applet='A000000025010101',inst='',priviliage='10',param='C90102')
 
 class Chip:
     tf_G8C140026 = 'tf_G8C140026'
@@ -124,6 +139,7 @@ class Chip:
     ifx_05059081 = 'ifx_05059081'
     hd_G81140042 = 'hd_G81140042'
     fd_G90140092 = 'fd_G90140092'
+    slc32_O1130893 = 'slc32_O1130893'
 
 class App:
     pse = 'pse'
@@ -135,6 +151,7 @@ class App:
     visa = 'visa'
     mc = 'mc'
     jetco = 'jetco'
+    amex = 'amex'
 
     @staticmethod
     def get_app(aid):
@@ -152,8 +169,10 @@ class App:
             return App.visa
         if aid == 'A00000047400000001':
             return App.jetco
+        if aid in ('A000000025010900','A000000025010402'):
+            return App.amex
 
-def get_encrypts(chip):
+def get_encrypt_dgis(chip):
     index = str(chip).find('_')
     if chip[0:index] == 'hd':
         return hd_encrypts
@@ -165,6 +184,8 @@ def get_encrypts(chip):
         return fd_encrypts
     elif chip[0:index] == 'tf':
         return tf_encrypts
+    elif chip[0:index] == 'slc32':
+        return slc32_encrypts
 
 
 def get_tf_G8C140026_param(app):
@@ -190,6 +211,7 @@ def get_param(chip,module_code=None):
     visa = chip + '_visa'
     mc = chip + '_mc'
     jetco = chip + '_jetco'
+    amex = chip + '_amex'
     mod = sys.modules[__name__]
     pse_param = getattr(mod,pse,None)
     ppse_param = getattr(mod,ppse,None)
@@ -200,7 +222,8 @@ def get_param(chip,module_code=None):
     visa_param = getattr(mod,visa,None)
     mc_param = getattr(mod,mc,None)
     jetco_param = getattr(mod,jetco,None)
+    amex_param = getattr(mod,amex,None)
     return dict(pse=pse_param,ppse=ppse_param,pboc_credit=pboc_credit_param,pboc_debit=pboc_debit_param,
-    uics_credit=uics_credit_param,uics_debit=uics_debit_param,visa=visa_param,mc=mc_param,jetco=jetco_param)
+    uics_credit=uics_credit_param,uics_debit=uics_debit_param,visa=visa_param,mc=mc_param,jetco=jetco_param,amex=amex_param)
 
     

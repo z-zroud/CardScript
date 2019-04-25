@@ -24,6 +24,8 @@ class PROCESS_STEP(Enum):
     FIRST_GAC   = 4
     SECOND_GAC  = 5
 
+
+
 class TransTag:
     '''
     定义了tag信息

@@ -24,7 +24,7 @@
 				<Tag name="5F20" source="contact" format="TLV"/>
 			</Template>
 		</DGI>
-		<DGI name="0201" comment="Jecto记录数据">
+		<DGI name="0201">
 			<Template name="70">
 				<Tag name="90"   source="kms" format="TLV"/>
 			</Template>
@@ -43,7 +43,7 @@
 		</DGI>
 		<DGI name="0204">
 			<Template name="70">
-				<Tag name="9F47" value="03" format="TLV"/>
+				<Tag name="9F47" source="kms" format="TLV"/>
 				<Tag name="9F48" sig_id="sig_Jecto" source="kms" format="TLV"/>
 				<Tag name="9F49" source="contact" format="TLV"/>
 			</Template>
@@ -110,20 +110,20 @@
 			<Tag name="8205" source="kms" format="V"/>
 		</DGI>
 		<DGI name="7FF1">
-			<Tag name="DF41" source="contact" format="TLV"/>
-			<Tag name="DF42" source="contact" format="TLV"/>
+			<Tag name="DF41" source="contact" format="TLV"/>			
 		</DGI>
 		<DGI name="7FF2">
-			<Tag name="DF20" source="contact" format="TLV"/>
+			<Tag name="DF42" source="contact" format="TLV"/>			
 		</DGI>	
 		<DGI name="7FF3">
+			<Tag name="DF20" source="contact" format="TLV"/>
 			<Tag name="DF21" source="contact" format="TLV"/>
 			<Tag name="DF22" source="contact" format="TLV"/>
 			<Tag name="DF23" source="contact" format="TLV"/>
-			<Tag name="DF25" source="contact" format="TLV"/>
+			<Tag name="DF26" source="contact" format="TLV"/>
 		</DGI>	
 		<DGI name="7FF4">
-			<Tag name="DF26" source="contact" format="TLV"/>
+			<Tag name="DF25" source="contact" format="TLV"/>
 			<Tag name="DF50" source="contact" format="TLV"/>
 		</DGI>
 		<DGI name="7FF5">

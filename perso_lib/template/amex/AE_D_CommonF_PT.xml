@@ -1,0 +1,346 @@
+<Root>
+<Bin />
+	<App aid="A000000025010402" sda="false" dda="true">
+		<Sig id="sig_AEIP">
+			<Tag name="5F24" source="contact" format="TLV" />
+			<Tag name="5F25" source="contact" format="TLV" />
+			<Tag name="5A"   source="contact" format="TLV" />
+			<Tag name="5F34" source="contact" format="TLV" />
+			<Tag name="9F07" source="contact" format="TLV" />
+			<Tag name="8C"   source="contact" format="TLV" />
+			<Tag name="8D"   source="contact" format="TLV" />
+			<Tag name="8E"   source="contact" format="TLV" />
+			<Tag name="9F0D" source="contact" format="TLV" />
+			<Tag name="9F0E" source="contact" format="TLV" />
+			<Tag name="9F0F" source="contact" format="TLV" />
+			<Tag name="5F28" source="contact" format="TLV" />
+			<Tag name="5F30" source="contact" format="TLV" />
+			<Tag name="9F42" source="contact" format="TLV" />
+			<Tag name="9F08" source="contact" format="TLV" />
+			<Tag name="82"   source="contact" format="V" />
+			<Cert />
+		</Sig>
+		<Sig id="sig_XPEMV">
+			<Tag name="5F24" source="contact" format="TLV" />
+			<Tag name="5F25" source="contact" format="TLV" />
+			<Tag name="5A"   source="contact" format="TLV" />
+			<Tag name="5F34" source="contact" format="TLV" />
+			<Tag name="9F07" source="contactless" format="TLV" />
+			<Tag name="8C"   source="contact" format="TLV" />
+			<Tag name="8D"   source="contact" format="TLV" />
+			<Tag name="8E"   source="contactless" format="TLV" />
+			<Tag name="9F0D" source="contactless" format="TLV" />
+			<Tag name="9F0E" source="contactless" format="TLV" />
+			<Tag name="9F0F" source="contactless" format="TLV" />
+			<Tag name="5F28" source="contact" format="TLV" />
+			<Tag name="5F30" source="contactless" format="TLV" />
+			<Tag name="9F42" source="contact" format="TLV" />
+			<Tag name="9F08" source="contact" format="TLV" />
+			<Tag name="82"   source="contact" format="V" />
+			<Cert />
+		</Sig>
+		<Sig id="sig_XPMS">
+			<Tag name="5F24" source="contact" format="TLV" />
+			<Tag name="5F25" source="contact" format="TLV" />
+			<Tag name="5A"   source="contact" format="TLV" />
+			<Tag name="5F34" source="contact" format="TLV" />
+			<Tag name="9F07" source="contactless" format="TLV" />
+			<Tag name="8C"   source="contact" format="TLV" />
+			<Tag name="8D"   source="contact" format="TLV" />
+			<Tag name="8E"   source="contactless" format="TLV" />
+			<Tag name="9F0D" source="magstripe" format="TLV" />
+			<Tag name="9F0E" source="magstripe" format="TLV" />
+			<Tag name="9F0F" source="magstripe" format="TLV" />
+			<Tag name="5F28" source="contact" format="TLV" />
+			<Tag name="5F30" source="contactless" format="TLV" />
+			<Tag name="9F42" source="contact" format="TLV" />
+			<Tag name="9F08" source="contact" format="TLV" />	
+			<Tag name="82"   source="magstripe" format="V" />
+			<Cert />
+		</Sig>
+		<DGI name="9104">
+			<Tag name="82" source="contact" format="TLV"/>
+			<Tag name="94" source="contact" format="TLV"/>		
+		</DGI>
+		<DGI name="9105">
+			<Tag name="82" source="contactless" format="TLV"/>
+			<Tag name="94" source="contactless" format="TLV"/>		
+		</DGI>
+		<DGI name="9106">
+			<Tag name="82" source="magstripe" format="TLV"/>
+			<Tag name="94" source="magstripe" format="TLV"/>
+		</DGI>
+		<DGI name="9102">
+			<Template name="A5">
+				<Tag name="50"   source="contact" format="TLV"/>
+				<Tag name="87"   source="contact" format="TLV"/>
+				<Tag name="5F2D" source="contact" format="TLV"/>
+				<Tag name="9F11" source="contact" format="TLV"/>
+				<Tag name="9F12" source="contact" format="TLV"/>
+				<Tag name="BF0C" source="contact" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="9103">
+			<Template name="A5">
+				<Tag name="50"   source="contact" format="TLV"/>
+				<Tag name="87"   source="contact" format="TLV"/>
+				<Tag name="9F38" source="contactless" format="TLV"/>
+				<Tag name="5F2D" source="contact" format="TLV"/>
+				<Tag name="9F11" source="contact" format="TLV"/>
+				<Tag name="9F12" source="contact" format="TLV"/>
+				<Tag name="BF0C" source="contact" format="TLV"/>
+			</Template>
+		</DGI>		
+		<DGI name="0101">
+			<Template name="C0010170">
+				<Tag name="57"   source="contact" format="TLV"/>
+				<Tag name="5F20" source="contact" format="TLV"/>
+			</Template>
+			<Template name="C0010270">
+				<Tag name="57"   source="contactless" format="TLV"/>
+				<Tag name="5F20" source="contactless" format="TLV"/>
+			</Template>
+			<Template name="C0010470">
+				<Tag name="57"   source="magstripe" format="TLV"/>
+				<Tag name="5F20" source="magstripe" format="TLV"/>
+			</Template>			
+		</DGI>
+		<DGI name="0102">
+			<Template name="70">
+				<Tag name="5F24" source="contact" format="TLV" />
+				<Tag name="5F25" source="contact" format="TLV" />
+				<Tag name="5A"   source="contact" format="TLV" />
+				<Tag name="5F34" source="contact" format="TLV" />
+				<Tag name="9F07" source="contact" format="TLV" />
+				<Tag name="8C"   source="contact" format="TLV" />
+				<Tag name="8D"   source="contact" format="TLV" />
+				<Tag name="8E"   source="contact" format="TLV" />
+				<Tag name="9F0D" source="contact" format="TLV" />
+				<Tag name="9F0E" source="contact" format="TLV" />
+				<Tag name="9F0F" source="contact" format="TLV" />
+				<Tag name="5F28" source="contact" format="TLV" />
+				<Tag name="5F30" source="contact" format="TLV" />
+				<Tag name="9F42" source="contact" format="TLV" />
+				<Tag name="9F08" source="contact" format="TLV" />
+			</Template>
+		</DGI>
+		<DGI name="0103">
+			<Template name="70">
+				<Tag name="5F24" source="contact" format="TLV" />
+				<Tag name="5F25" source="contact" format="TLV" />
+				<Tag name="5A"   source="contact" format="TLV" />
+				<Tag name="5F34" source="contact" format="TLV" />
+				<Tag name="9F07" source="contactless" format="TLV" />
+				<Tag name="8C"   source="contact" format="TLV" />
+				<Tag name="8D"   source="contact" format="TLV" />
+				<Tag name="8E"   source="contactless" format="TLV" />
+				<Tag name="9F0D" source="contactless" format="TLV" />
+				<Tag name="9F0E" source="contactless" format="TLV" />
+				<Tag name="9F0F" source="contactless" format="TLV" />
+				<Tag name="5F28" source="contact" format="TLV" />
+				<Tag name="5F30" source="contactless" format="TLV" />
+				<Tag name="9F42" source="contact" format="TLV" />
+				<Tag name="9F08" source="contact" format="TLV" />
+			</Template>
+		</DGI>
+		<DGI name="0104">
+			<Template name="70">
+				<Tag name="5F24" source="contact" format="TLV" />
+				<Tag name="5F25" source="contact" format="TLV" />
+				<Tag name="5A"   source="contact" format="TLV" />
+				<Tag name="5F34" source="contact" format="TLV" />
+				<Tag name="9F07" source="contactless" format="TLV" />
+				<Tag name="8C"   source="contact" format="TLV" />
+				<Tag name="8D"   source="contact" format="TLV" />
+				<Tag name="8E"   source="contactless" format="TLV" />
+				<Tag name="9F0D" source="magstripe" format="TLV" />
+				<Tag name="9F0E" source="magstripe" format="TLV" />
+				<Tag name="9F0F" source="magstripe" format="TLV" />
+				<Tag name="5F28" source="contact" format="TLV" />
+				<Tag name="5F30" source="contactless" format="TLV" />
+				<Tag name="9F42" source="contact" format="TLV" />
+				<Tag name="9F08" source="contact" format="TLV" />
+			</Template>
+		</DGI>
+		<DGI name="0201">
+			<Template name="70">
+				<Tag name="90" source="kms" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="0202">
+			<Template name="70">
+				<Tag name="8F"   source="kms" format="TLV"/>
+				<Tag name="92"   source="kms" format="TLV"/>
+				<Tag name="9F32" source="kms" format="TLV"/>
+				<Tag name="9F4A" source="contact" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="0401">
+			<Template name="70">
+				<Tag name="9F46" sig_id="sig_AEIP" source="kms" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="0402">
+			<Template name="70">
+				<Tag name="9F47" source="kms" format="TLV"/>
+				<Tag name="9F48" sig_id="sig_AEIP" source="kms" format="TLV"/>
+				<Tag name="9F49" source="contact" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="0403">
+			<Template name="70">
+				<Tag name="9F46" sig_id="sig_XPEMV" source="kms" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="0404">
+			<Template name="70">
+				<Tag name="9F47" source="kms" format="TLV"/>
+				<Tag name="9F48" sig_id="sig_XPEMV" source="kms" format="TLV"/>
+				<Tag name="9F49" source="contact" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="0405">
+			<Template name="70">
+				<Tag name="9F46" sig_id="sig_XPMS" source="kms" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="0406">
+			<Template name="70">
+				<Tag name="9F47" source="kms" format="TLV"/>
+				<Tag name="9F48" sig_id="sig_XPMS" source="kms" format="TLV"/>
+				<Tag name="9F49" source="contact" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="0D01">
+			<Tag name="DF03" source="contact" format="TLV"/>
+			<Tag name="9F36" source="contact" format="TLV"/>
+			<Tag name="9F13" source="contact" format="TLV"/>
+			<Tag name="9F58" source="contact" format="TLV"/>
+			<Tag name="9F59" source="contact" format="TLV"/>
+			<Tag name="9F53" source="contact" format="TLV"/>
+			<Tag name="9F55" source="contact" format="TLV"/>
+			<Tag name="9F62" source="contact" format="TLV"/>
+			<Tag name="9F54" source="contact" format="TLV"/>
+			<Tag name="9F51" source="contact" format="TLV"/>
+			<Tag name="9F52" source="contact" format="TLV"/>
+			<Tag name="9F50" source="contact" format="TLV"/>
+			<Tag name="9F42" source="contact" format="TLV"/>
+			<Tag name="5F28" source="contact" format="TLV"/>
+			<Tag name="9F60" source="contact" format="TLV"/>
+			<Tag name="9F61" source="contact" format="TLV"/>
+			<Tag name="9F63" source="contact" format="TLV"/>
+			<Tag name="9F64" source="contact" format="TLV"/>
+			<Tag name="9F65" source="contact" format="TLV"/>
+			<Tag name="9F68" source="contact" format="TLV"/>
+			<Tag name="9F69" source="contact" format="TLV"/>
+			<Tag name="9F6C" source="contact" format="TLV"/>
+		</DGI>		
+		<DGI name="3001">
+			<Tag name="DF03"  source="contactless" format="TLV"/>
+		</DGI>
+		<DGI name="8000">
+			<Tag name="--"   source="kms" format="V" comment="Unique AC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique MAC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique ENC Key"/>
+		</DGI>
+		<DGI name="9000">
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKMAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKENC"/>
+		</DGI>
+		<DGI name="8010">
+			<Tag name="--" source="contact" format="V" comment="Reference PIN"/>
+		</DGI>
+		<DGI name="9010">
+			<Tag name="--" source="contact" format="V" comment="PIN Try Limit"/>
+			<Tag name="--" source="contact" format="V" comment="PIN Try Limit"/>
+		</DGI>
+		<DGI name="8201">
+			<Tag name="8201" source="kms" format="V"/>
+		</DGI>
+		<DGI name="8202">
+			<Tag name="8202" source="kms" format="V"/>
+		</DGI>
+		<DGI name="8203">
+			<Tag name="8203" source="kms" format="V"/>
+		</DGI>
+		<DGI name="8204">
+			<Tag name="8204" source="kms" format="V"/>
+		</DGI>
+		<DGI name="8205">
+			<Tag name="8205" source="kms" format="V"/>
+		</DGI>
+		<DGI name="9200">
+			<Tag name="9F10" source="contact" format="TLV"/>
+		</DGI>
+	</App>
+	<App aid="A000000025010900">
+		<DGI name="9102">
+			<Template name="A5">
+				<Tag name="50"   source="alias" format="TLV"/>
+				<Tag name="87"   source="alias" format="TLV"/>
+				<Tag name="5F2D" source="contact" format="TLV"/>
+				<Tag name="9F11" source="contact" format="TLV"/>
+				<Tag name="9F12" source="alias" format="TLV"/>
+				<Tag name="BF0C" source="alias" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="9103">
+			<Template name="A5">
+				<Tag name="50"   source="alias" format="TLV"/>
+				<Tag name="87"   source="alias" format="TLV"/>
+				<Tag name="9F38" source="contactless" format="TLV"/>
+				<Tag name="5F2D" source="contact" format="TLV"/>
+				<Tag name="9F11" source="contact" format="TLV"/>
+				<Tag name="9F12" source="alias" format="TLV"/>
+				<Tag name="BF0C" source="alias" format="TLV"/>
+			</Template>
+		</DGI>
+		<DGI name="9090">
+			<Tag name="--" source="contact" format="V" comment="Data sharing"/>
+		</DGI>
+	</App>
+	<PSE aid="315041592E5359532E4444463031">
+		<DGI name="0101">
+			<Template name="70">
+				<Template name="61">
+					<Tag name="4F"   source="contact" format="TLV"/>
+					<Tag name="50"   source="contact" format="TLV"/>
+					<Tag name="87"   source="contact" format="TLV"/>
+					<Tag name="9F12" source="contact" format="TLV"/>
+				</Template>
+				<Template name="61">
+					<Tag name="4F"   source="alias" format="TLV"/>
+					<Tag name="50"   source="alias" format="TLV"/>
+					<Tag name="87"   source="alias" format="TLV"/>
+					<Tag name="9F12" source="alias" format="TLV"/>
+				</Template>
+			</Template>
+		</DGI>
+		<DGI name="9102">
+			<Template name="A5">
+				<Tag name="88"   value="01" format="TLV"/>
+				<Tag name="5F2D" source="contact" format="TLV"/>
+				<Tag name="9F11" source="contact" format="TLV"/>
+			</Template>
+		</DGI>
+	</PSE>
+	<PPSE aid="325041592E5359532E4444463031">
+		<DGI name="9102">
+			<Template name="A5">
+				<Template name="BF0C">
+					<Template name="61">
+						<Tag name="4F" source="contact" format="TLV"/>
+						<Tag name="50" source="contact" format="TLV"/>
+						<Tag name="87" source="contact" format="TLV"/>
+					</Template>
+					<Template name="61">
+						<Tag name="4F" source="alias" format="TLV"/>
+						<Tag name="50" source="alias" format="TLV"/>
+						<Tag name="87" source="alias" format="TLV"/>
+					</Template>
+				</Template>
+			</Template>
+		</DGI>
+	</PPSE>
+</Root>

@@ -1,4 +1,33 @@
 
+from enum import Enum
+
+class App(Enum):
+    PSE     = 0
+    PPSE    = 1
+    UICS    = 2
+    VISA    = 3
+    MCA     = 4
+    JETCO   = 5
+
+class LenType(Enum):
+	Fixed = 0
+	Range = 1
+
+
+def get_tag_len(tag,aid):
+	mappings = None
+	if aid == '315041592E5359532E4444463031':
+		mappings = pse_tag_desc_mappings
+	elif aid == '325041592E5359532E4444463031':
+		mappings = ppse_tag_desc_mappings
+	elif aid == 'A0000000031010':
+		mappings = visa_tag_desc_mappings
+	elif aid == 'A0000000041010':
+		mappings = mc_tag_desc_mappings
+	elif aid in ('A000000333010101','A000000333010102'):
+		mappings = uics_tag_desc_mappings
+
+
 visa_tag_desc_mappings = {
 #Command Response Data-DGI
 	'9104' : ('GPO Response Data for VSDC',),
@@ -33,22 +62,22 @@ visa_tag_desc_mappings = {
 	'A5' : ('FCI Proprietary Template',),
 	'BF0C' : ('FCI Issuer Discretionary Data',),	
 #FCI Data
-	'4F' : ('AID','[5,16]'),
-	'50' : ('Application Label','[1,16]'),
+	'4F' : ('AID','5-16'),
+	'50' : ('Application Label','1-16'),
 	'87' : ('Application Priority Indicator','1'),
-	'5F2D' : ('Language Preference','[2,8]'),
+	'5F2D' : ('Language Preference','2-8'),
 	'9F38' : ('PDOL'),
 	'9F11' : ('Issuer Code Table Index','1'),
-	'9F12' : ('Application Preferred Name','[1,16]'),
+	'9F12' : ('Application Preferred Name','1-16'),
 	'9F4D' : ('Log Entry','2'),
 	'5F55' : ('Issuer Country Code (alpha2)','2'),
 	'5F56' : ('Issuer Country Code (alpha3)','3'),	
-	'9F5A' : ('Program ID','[5,16]'),
+	'9F5A' : ('Program ID','5-16'),
 #Record Data
-	'57' : ('Track 2 Equivalent Data','[1,19]'),
+	'57' : ('Track 2 Equivalent Data','1-19'),
 	'9F1F' : ('Track 1 Discretionary Data',),
-	'5F20' : ('Cardholder Name','[2,26]'),
-	'5A' : ('PAN','[1,10]'),
+	'5F20' : ('Cardholder Name','2-26'),
+	'5A' : ('PAN','1-10'),
 	'5F24' : ('Application Expiration Date','3'),
 	'5F25' : ('Application Effective Date','3'),
 	'5F34' : ('Application PAN Sequence Number','1'),
@@ -73,10 +102,10 @@ visa_tag_desc_mappings = {
 	'9F46' : ('ICCPK Certificate',),
 	'9F47' : ('ICCPK Exponent','1|3',),
 	'9F48' : ('ICCPK Remainder',),
-	'9F69' : ('Card authentication related data','[5,16]'),
+	'9F69' : ('Card authentication related data','5-16'),
 	'9F4B' : ('Signed Dynamic Application Data',),
 	'9F6E' : ('Form Factor Indicator','4'),
-	'9F7C' : ('Customer Exclusive Data','[1,32]'),
+	'9F7C' : ('Customer Exclusive Data','1-32'),
 #Internal Data
 	'82' : ('AIP','2'),
 	'94' : ('AFL',),
@@ -153,35 +182,35 @@ mc_tag_desc_mappings = {
 	'A5' : ('FCI Proprietary Template',),
 	'BF0C' : ('FCI Issuer Discretionary Data',),	
 #FCI Data
-	'4F' : ('AID','[5,16]'),
-	'50' : ('Application Label','[1,16]'),
+	'4F' : ('AID','5-16'),
+	'50' : ('Application Label','1-16'),
 	'87' : ('Application Priority Indicator','1'),
-	'5F2D' : ('Language Preference','[2,8]'),
+	'5F2D' : ('Language Preference','2-8'),
 	'9F38' : ('PDOL',),
 	'9F11' : ('Issuer Code Table Index','1'),
-	'9F12' : ('Application Preferred Name','[1,16]'),
+	'9F12' : ('Application Preferred Name','1-16'),
 	'9F4D' : ('Log Entry','2'),
 	'9F5D' : ('Application Capabilities information','3'),
 	'9F0A' : ('Application Selection Registered Proprietary Data',),
 	'5F55' : ('Issuer Country Code(alpha2 format)','2'),
 	'42' : ('Issuer Identification Number','3'),
-	'9F5E' : ('DS ID','[8,11]'),
-	'9F6E' : ('Third Party Data','[5,32]'),	
+	'9F5E' : ('DS ID','8-11'),
+	'9F6E' : ('Third Party Data','5-32'),	
 #Record Data
-	'56' : ('Track 1 Data','[1,76]'),
+	'56' : ('Track 1 Data','1-76'),
 	'9F62' : ('PCVC3 TRACK1','2'),
 	'9F63' : ('PUNATC TRACK1','6'),
 	'9F64' : ('NATC TRACK1','1'),
 	'9F65' : ('PCVC3 TRACK2','2'),
 	'9F66' : ('PUNATC TRACK2','2'),
 	'9F67' : ('NATC TRACK2','1'),
-	'9F6B' : ('Track 2 Data','[1,19]'),
+	'9F6B' : ('Track 2 Data','1-19'),
 	'9F6C' : ('MagStripe Application Version Number','2'),
 
-	'57' : ('Track 2 Equivalent Data','[1,19]'),
+	'57' : ('Track 2 Equivalent Data','1-19'),
 	'9F1F' : ('Track 1 Discretionary Data',),
-	'5F20' : ('Cardholder Name','[2,26]'),
-	'5A' : ('PAN','[1,10]'),
+	'5F20' : ('Cardholder Name','2-26'),
+	'5A' : ('PAN','1-10'),
 	'5F24' : ('Application Expiration Date','3'),
 	'5F25' : ('Application Effective Date','3'),
 	'5F34' : ('Application PAN Sequence Number','1'),
@@ -212,6 +241,106 @@ mc_tag_desc_mappings = {
 	'9F56' : ('Issuer Proprietary Bitmap(Contact)',),
 }
 
+amex_tag_desc_mappings = {
+#Command Response Data-DGI
+	'9104' : ('GPO Response Data for contact',),
+	'9105' : ('GPO Response Data for EMV contactless',),
+	'9106' : ('GPO Response Data for Magnetic stripe contactless',),
+	'9200' : ('Issuer application data',),
+	'9300' : ('Issuer application data for EMV contactless',),
+	'9400' : ('Issuer application data for Magnetic stripe contactless',),	
+	'9102' : ('SELECT Command Response for contact mode',),
+	'9103' : ('SELECT Command Response for contactless mode',),
+#Internal Data-DGI
+	'0D01' : ('Internal data',),
+	'3001' : ('Internal data contactless',),
+	'90B0' : ('Record Data Object Link',),
+	'9090' : ('Data sharing',),	
+#Key-DGI
+	'8000' : ('DES keys',),
+	'9000' : ('DES Key Check Values',),
+	'8080' : ('DES keys for EMV contactless',),
+	'9080' : ('DES Key Check Values for EMV contactless',),
+	'8088' : ('DES keys for Magnetic stripe contactless',),
+	'9088' : ('DES Key Check Values for Magnetic stripe contactless',),
+	'8010' : ('PIN block',),
+	'9010' : ('PIN Related Data(PTC/PTL)',),
+	'8201' : ('ICC Key CRT constant q-1 mod p',),
+	'8202' : ('ICC Key CRT constant d mod (q – 1)',),
+	'8203' : ('ICC Key CRT constant d mod (p – 1)',),
+	'8204' : ('ICC Key CRT constant prime factor q',),
+	'8205' : ('ICC Key CRT constant prime factor p',),
+#Template Data
+	'70' : ('Record Template',),
+	'61' : ('Application Template',),
+	'A5' : ('FCI Proprietary Template',),
+	'BF0C' : ('Issuer Discretionary Data',),
+	'C0' : ('Interface data object',),
+#FCI Data
+	'4F' : ('AID','5-16'),
+	'50' : ('Application Label','1-16'),
+	'87' : ('Application Priority Indicator','1'),
+	'5F2D' : ('Language Preference','2-8'),
+	'9F38' : ('PDOL'),
+	'9F11' : ('Issuer Code Table Index','1'),
+	'9F12' : ('Application Preferred Name','1-16'),
+	'9F4D' : ('Log Entry','2'),
+	'9F0A' : ('Application Specific Registered Proprietary Data',),
+#Record Data
+	'57' : ('Track 2 Equivalent Data','1-19'),
+	'9F1F' : ('Track 1 Discretionary Data','1-16'),
+	'5F20' : ('Cardholder Name','2-26'),
+	'5A' : ('PAN','1-10'),
+	'5F24' : ('Application Expiration Date','3'),
+	'5F25' : ('Application Effective Date','3'),
+	'5F34' : ('Application PAN Sequence Number','1'),
+	'9F07' : ('Application Usage Control','2'),
+	'8E' : ('CVM List'),
+	'9F0D' : ('IAC-Default','5'),
+	'9F0E' : ('IAC-Denial','5'),
+	'9F0F' : ('IAC-Online','5'),
+	'5F28' : ('Issuer Country Code','2'),
+	'9F4A' : ('Static Data Authentication Tag List','1'),
+	'8C' : ('CDOL1',),
+	'8D' : ('CDOL2',),
+	'5F30' : ('Service Code','2'),
+	'9F08' : ('Application Version Number','2'),
+	'9F49' : ('DDOL','1-32'),
+	'9F42' : ('Application Currency Code','2'),
+	'9F44' : ('Application Currency Exponent','1'),
+	'8F' : ('CA PKI','1'),
+	'90' : ('IPK Certificate',),
+	'92' : ('IPK Remainder',),
+	'9F32' : ('IPK Exponent','1|3'),
+	'9F46' : ('ICCPK Certificate',),
+	'9F47' : ('ICCPK Exponent','1|3',),
+	'9F48' : ('ICCPK Remainder',),
+#Internal Data
+	'82' : ('AIP','2'),
+	'94' : ('AFL',),
+	'9F10' : ('Issuer Application Data',),
+	'DF03' : ('Application Default Action','2'),
+	'9F36' : ('Application Transaction Counter (ATC)','2'),
+	'9F13' : ('Last Online ATC Register','2'),
+	'9F58' : ('LCOL','1'),
+	'9F59' : ('UCOL','1'),
+	'9F54' : ('CTTALL','6'),
+	'9F62' : ('CTTAUL','6'),
+	'9F53' : ('NDCTL','1'),
+	'9F50' : ('ADCC','2'),
+	'9F51' : ('CTTALLDC','6'),
+	'9F52' : ('CTTAULDC','6'),
+	'9F55' : ('NDUCOL','1'),
+	'9F60' : ('CTTALL','6'),
+	'9F61' : ('CTTAUL','6'),
+	'9F63' : ('NDCTL','1'),
+	'9F64' : ('STVUL','6'),
+	'9F65' : ('STVULDC','6'),
+	'9F68' : ('NDCTUL','1'),
+	'9F69' : ('NDTTALLDC','6'),
+	'9F6C' : ('CTTAULDC','6'),
+}
+
 jetco_tag_desc_mappings = {
 #Command Response Data-DGI
 	'9104' : ('GPO Response Data',),
@@ -236,21 +365,21 @@ jetco_tag_desc_mappings = {
 	'A5' : ('FCI Proprietary Template',),
 	'BF0C' : ('FCI Issuer Discretionary Data',),	
 #FCI Data
-	'4F' : ('AID','[5,16]'),
-	'50' : ('Application Label','[1,16]'),
+	'4F' : ('AID','5-16'),
+	'50' : ('Application Label','1-16'),
 	'87' : ('Application Priority Indicator','1'),
-	'5F2D' : ('Language Preference','[2,8]'),
+	'5F2D' : ('Language Preference','2-8'),
 	'9F38' : ('PDOL',),
 	'9F11' : ('Issuer Code Table Index','1'),
-	'9F12' : ('Application Preferred Name','[1,16]'),
+	'9F12' : ('Application Preferred Name','1-16'),
 	'9F4D' : ('Log Entry','2'),
 #Record Data
-	'57' : ('Track 2 Equivalent Data','[1,19]'),
+	'57' : ('Track 2 Equivalent Data','1-19'),
 	'9F1F' : ('Track 1 Discretionary Data',),
-	'5F20' : ('Cardholder Name','[2,26]'),
-	'9F61' : ('Cardholder ID number','[1,40]'),
+	'5F20' : ('Cardholder Name','2-26'),
+	'9F61' : ('Cardholder ID number','1-40'),
 	'9F62' : ('Cardholder ID type','1'),	
-	'5A' : ('PAN','[1,10]'),
+	'5A' : ('PAN','1-10'),
 	'5F24' : ('Application Expiration Date','3'),
 	'5F25' : ('Application Effective Date','3'),
 	'5F34' : ('Application PAN Sequence Number','1'),
@@ -330,23 +459,23 @@ uics_tag_desc_mappings = {
 	'A5' : ('FCI Proprietary Template',),
 	'BF0C' : ('FCI Issuer Discretionary Data',),	
 #FCI Data
-	'4F' : ('AID','[5,16]'),
-	'50' : ('Application Label','[1,16]'),
+	'4F' : ('AID','5-16'),
+	'50' : ('Application Label','1-16'),
 	'87' : ('Application Priority Indicator','1'),
-	'5F2D' : ('Language Preference','[2,8]'),
+	'5F2D' : ('Language Preference','2-8'),
 	'9F38' : ('PDOL',),
 	'9F11' : ('Issuer Code Table Index','1'),
-	'9F12' : ('Application Preferred Name','[1,16]'),
+	'9F12' : ('Application Preferred Name','1-16'),
 	'9F4D' : ('Log Entry','2'),
 	'DF4D' : ('E-cash circular log entry','2'),
 	'DF61' : ('Card Additional Function Indicator','1'),
 #Record Data
-	'57' : ('Track 2 Equivalent Data','[1,19]'),
+	'57' : ('Track 2 Equivalent Data','1-19'),
 	'9F1F' : ('Track 1 Discretionary Data',),
-	'5F20' : ('Cardholder Name','[2,26]'),
-	'9F61' : ('Cardholder ID number','[1,40]'),
+	'5F20' : ('Cardholder Name','2-26'),
+	'9F61' : ('Cardholder ID number','1-40'),
 	'9F62' : ('Cardholder ID type','1'),	
-	'5A' : ('PAN','[1,10]'),
+	'5A' : ('PAN','1-10'),
 	'5F24' : ('Application Expiration Date','3'),
 	'5F25' : ('Application Effective Date','3'),
 	'5F34' : ('Application PAN Sequence Number','1'),
@@ -426,12 +555,12 @@ pse_tag_desc_mappings = {
 	'A5' : ('FCI Proprietary Template',),
 	'BF0C' : ('FCI Issuer Discretionary Data',),	
 #FCI Data
-	'4F' : ('AID','[5,16]'),
-	'50' : ('Application Label','[1,16]'),
+	'4F' : ('AID','5-16'),
+	'50' : ('Application Label','1-16'),
 	'87' : ('Application Priority Indicator','1'),
 	'9F11' : ('Issuer Code Table Index','1'),
 	'5F2D':('preference language','2|4'),
-	'9F12' : ('Application Preferred Name','[1,16]'),
+	'9F12' : ('Application Preferred Name','1-16'),
 	'88' : ('SFI','1'),
 }
 ppse_tag_desc_mappings = {
@@ -446,11 +575,11 @@ ppse_tag_desc_mappings = {
 	'A5' : ('FCI Proprietary Template',),
 	'BF0C' : ('FCI Issuer Discretionary Data',),	
 #FCI Data
-	'4F' : ('AID','[5,16]'),
-	'50' : ('Application Label','[1,16]'),
+	'4F' : ('AID','5-16'),
+	'50' : ('Application Label','1-16'),
 	'87' : ('Application Priority Indicator','1'),
 	'9F11' : ('Issuer Code Table Index','1'),
-	'9F12' : ('Application Preferred Name','[1,16]'),
+	'9F12' : ('Application Preferred Name','1-16'),
 	'5F2D':('preference language','2|4'),
 	'88' : ('SFI','1'),
 }

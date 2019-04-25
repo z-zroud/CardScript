@@ -275,3 +275,11 @@ def sm4_ecb_encrypt(key,data):
 	sm_lib.dllSM4_ECB_ENC(bytes_key,bytes_data,output)
 	return bytes.decode(output.value)
 
+
+
+if __name__ == '__main__':
+    ret = ''
+    ret = des3_mac_padding00('1C71E2AE1EED4375603877A357427247','04DA9F790E000225E8EECE59D0B9AA000000090000')
+    ret = des3_mac_padding80('1C71E2AE1EED4375603877A357427247','04DA9F790E000225E8EECE59D0B9AA000000090000')
+    ret = des3_mac('1C71E2AE1EED4375603877A357427247','04DA9F790E000225E8EECE59D0B9AA000000090000')
+    ret = ''

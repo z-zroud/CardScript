@@ -50,7 +50,7 @@ def get_issuer_pub_key(ca_pub_key,ca_exp,tag90,tag92,tag9F32,tag5A,tag5F24):
         Log.error('issuer_bin required from recovery data is not accord with tag5A')
         return issuer_pub_key
     expiry_date = int(recovery_data[14:16] + recovery_data[12:14])
-    now = int(time.strftime('%C%m'))
+    now = int(time.strftime('%y%m'))
     if expiry_date < now:
         Log.warn('expiry date: %s',recovery_data[14:16] + recovery_data[12:14])
         Log.warn('issuer cert has been overdue')
@@ -99,7 +99,7 @@ def get_icc_pub_key(issuer_pub_key,tag9F32,tag9F46,tag9F48,tag9F47,sig_data,tag5
         Log.error('pan required from recovery data is not accord with tag5A')
         return icc_pub_key
     expiry_date = int(recovery_data[26:28] + recovery_data[24:26])
-    now = int(time.strftime('%C%m'))
+    now = int(time.strftime('%y%m'))
     if expiry_date < now:
         Log.warn('expiry date: %s',recovery_data[26:28] + recovery_data[24:26])
         Log.warn('icc cert has been overdue')
@@ -201,8 +201,7 @@ def gen_udk_session_key_emv(key,atc):
 
 def gen_ac(key,data):
     return algorithm.des3_mac(key,data)
-    # dddd  = algorithm.des3_mac_padding00(key,data)
-    # return algorithm.des3_mac_padding80(key,data)
+
 
 if __name__ == '__main__':
     pass

@@ -3,6 +3,7 @@
 import importlib
 import os
 import shutil
+import time
 from enum import Enum
 from xml.dom import Node
 from perso_lib.cps import Cps,Dgi
@@ -26,12 +27,12 @@ def get_alias():
 
 
 # 定义数据类型枚举
-class DataType(Enum):
+class MediaType(Enum):
     FCI         = 0     #MC 专用
     SHARED      = 1     #MC 专用
     CONTACT     = 2
     CONTACTLESS = 3
-    MCA         = 4     #MC 专用
+    INTERNAL    = 4     #MC 专用
     MAGSTRIPE   = 5     #MC 专用
 
 class AppType(Enum):
@@ -42,6 +43,7 @@ class AppType(Enum):
     UICS_DEBIT  = 'UICS_DEBIT'  #UICS 借记
     UICS_CREDIT = 'UICS_CREDIT' #UICS 贷记
     JETCO       = 'JETCO'       #JETCO
+    AMEX        = 'AMEX'        #AMEX
 
 # 该类描述了来源数据的结构呈现形式
 class SourceItem:
@@ -50,8 +52,8 @@ class SourceItem:
         self.tag = ''       #tag标签
         self.len = ''       #tag长度
         self.value = ''     #tag值
-        self.source_type = None   #标识数据值的来源,fixed,file,kms
-        self.data_type = None #tag数据类型,由DataType定义
+        self.data_type = None   #标识数据值类型,fixed,file,kms
+        self.media_type = None #tag数据类型,由MediaType定义
         self.used = False   #个人化时，是否被使用到
 
 # 描述了从emboss file文件中获取的tag标签信息
@@ -71,6 +73,7 @@ class DpItem:
         self.trim_right_space = False   # 是否需要取掉值右边的空格
         self.value = '' # tag值
         self.source = None    # tag来源 contact或contactless
+        self.live = '' # 针对tag9F10测试环境和正式环境,DKI值不同
         self.comment = ''   # tag描述
 
 # 港澳地区专用的纯Jetco应用Excel表格
@@ -109,7 +112,7 @@ class JetcoForm:
         data_item = SourceItem()
         data_item.tag = '8000'
         data_item.value = tag8000
-        data_item.data_type = DataType.CONTACT
+        data_item.media_type = 'contact'
         self.data_list.append(data_item)
         return tag8000
 
@@ -118,7 +121,7 @@ class JetcoForm:
         data_item = SourceItem()
         data_item.tag = '9000'
         data_item.value = tag9000
-        data_item.data_type = DataType.CONTACT
+        data_item.media_type = 'contact'
         self.data_list.append(data_item)
         return tag9000
 
@@ -142,7 +145,7 @@ class JetcoForm:
                         if title[0] == '5A' and len(data) % 2 != 0:
                             data = data + 'F'
                         item = SourceItem()
-                        item.data_type = DataType.CONTACT
+                        item.media_type = 'contact'
                         item.tag = title[0]
                         item.value = data
                         self.data_list.append(item)
@@ -156,7 +159,7 @@ class JetcoForm:
         tag_value_list += self._handle_ic_pk_file()
         for item in tag_value_list:
             data_item = SourceItem()
-            data_item.data_type = DataType.CONTACT
+            data_item.media_type = 'contact'
             data_item.tag = item[0]
             data_item.value = item[1]
             self.data_list.append(data_item)
@@ -256,9 +259,9 @@ class GoldpacForm:
         self.excel = ExcelOp(form_name)
         self.source_items = []
         
-    def get_data(self,tag,data_type,desc=None):
+    def get_data(self,tag,media_type,desc=None):
         for item in self.source_items:
-            if item.data_type == data_type and item.tag == tag:
+            if item.media_type == media_type and item.tag == tag:
                 item.used = True
                 return item.value
         return None
@@ -272,30 +275,31 @@ class GoldpacForm:
         #     continue    #模板直接忽略
         source_item.len = self.excel.read_cell_value(row,col + 3)     # 长度(字符串)
         source_item.value = self.excel.read_cell_value(row,col + 5)   # Issuer settings
-        source_item.source_type = self.excel.read_cell_value(row,col + 6) # file,kms,fixed
+        source_item.data_type = self.excel.read_cell_value(row,col + 6) # file,kms,fixed
         if source_item.tag:
             source_item.tag = str(source_item.tag).strip() #有些可能读表格时，默认是int类型，需要转str
-            if 'Contactless'.lower() in source_item.tag.lower():# Tag列可能是'Tag-Contactless'形式的字符串
-                source_item.tag = source_item.tag.split('-')[0].strip()
-                source_item.data_type = DataType.CONTACTLESS
+            temp = source_item.tag.split('-')
+            if len(temp) == 2 and temp[1].strip():
+                source_item.tag = temp[0].strip()
+                source_item.media_type = temp[1].strip().lower()
             else:
-                source_item.data_type = DataType.CONTACT #自主Excel表格，仅包含CONTACT和CONTACTLESS类型
+                source_item.media_type = 'contact'
         if source_item.value:
             # 过滤掉空格和换行符
             source_item.value = str(source_item.value)
             source_item.value = source_item.value.replace(' ','').replace('\n','')
             if source_item.value != 'N.A':
-                if source_item.source_type == 'Fixed':
-                    source_item.source_type = 'fixed'   #保持和模板xml中的type一致
+                if source_item.data_type == 'Fixed':
+                    source_item.data_type = 'fixed'   #保持和模板xml中的type一致
                     if source_item.value.lower() == 'empty':
                         source_item.value = 'empty' #如果为empty,也需要个人化此tag
-                    elif not utils.is_hex_str(source_item.value): #此时认为是不合规的值
+                    elif not utils.is_hex_str(source_item.value) and  source_item.tag != '9F10': #此时认为是不合规的值
                         Log.info('parse tag %s error: value is incorrect format',source_item.tag)
                         source_item.value = None
-                elif source_item.source_type == 'Emboss File':
-                    source_item.source_type = 'file'
-                elif source_item.source_type == 'Kms':
-                    source_item.source_type = 'kms'
+                elif source_item.data_type == 'Emboss File':
+                    source_item.data_type = 'file'
+                elif source_item.data_type == 'Kms':
+                    source_item.data_type = 'kms'
                     source_item.value = 'kms'
         if source_item.value is not None and source_item.tag:   #确保tag和value都存在
             return source_item
@@ -334,13 +338,13 @@ class McForm:
                     item.tag = '--'
                 item.value = self.xml_handle.get_attribute(child_node,'VALUE')
                 if worksheet_name == 'fci':
-                    item.data_type = DataType.FCI
+                    item.media_type = MediaType.FCI
                 elif worksheet_name == 'internal':
-                    item.data_type = DataType.MCA
+                    item.media_type = MediaType.INTERNAL
                 elif worksheet_name == 'recordcontact':
-                    item.data_type = DataType.CONTACT
+                    item.media_type = MediaType.CONTACT
                 elif worksheet_name == 'recordcontactless':
-                    item.data_type = DataType.CONTACTLESS
+                    item.media_type = MediaType.CONTACTLESS
                 else:
                     Log.info('Unkonwn worksheet name.')
                 self.source_items.append(item)
@@ -350,7 +354,7 @@ class McForm:
 class Form1156:
     def __init__(self,tablename):
         self.excel = ExcelOp(tablename)
-        self.data_list = []
+        self.source_items = []
 
     def _filter_data(self,data):
         if isinstance(data,int):
@@ -373,33 +377,32 @@ class Form1156:
 
     def print_unused_data(self):
         print('====================1156 form unused tag list====================')
-        for item in self.data_list:
+        for item in self.source_items:
             if not item.used:
-                #print(str(item.data_type) + '||' + item.tag + '||' + item.value + '||' + item.name)
-                print("%-20s||%-10s||%-60s||%-100s" % (item.data_type.name,item.tag,item.value,item.name))
+                print("%-20s||%-10s||%-60s||%-100s" % (item.media_type.name,item.tag,item.value,item.name))
 
-    def get_data(self,tag,data_type,desc=None):
-        for item in self.data_list:
-            if item.data_type == data_type and item.tag == tag:
+    def get_data(self,tag,media_type,desc=None):
+        for item in self.source_items:
+            if item.media_type == media_type and item.tag == tag:
                 item.used = True
                 return item.value
         return None
                 
-    def get_data_by_desc(self,desc,data_type):
+    def get_data_by_desc(self,desc,media_type):
         '''
         某些MCA数据没有标签一栏，可以通过desc描述找到对应的tag值，
         前提是模板中已经有对应的comment字符串
         '''
-        for item in self.data_list:
-            if item.data_type == data_type and item.name == desc:
+        for item in self.source_items:
+            if item.media_type == media_type and item.name == desc:
                 item.used = True
                 return item.value
         return None
 
-    def _get_data(self,data_type,start_row,start_col,ignore_list=None,end_flag=None):
+    def _get_data(self,media_type,start_row,start_col,ignore_list=None,end_flag=None):
         for row in range(start_row,200):
             item = SourceItem()
-            item.data_type = data_type
+            item.media_type = media_type
             item.name = self.excel.read_cell_value(row,start_col)
             item.name = self._filter_data(item.name)
             if not item.name:
@@ -417,7 +420,7 @@ class Form1156:
             item.value = self._filter_data(self.excel.read_cell_value(row,start_col + 3))
             if not item.value:
                 continue    #过滤空值
-            item.value = self._handle_tag_value(item.value)
+            # item.value = self._handle_tag_value(item.value)
             if item.name == 'Length Of ICC Public Key Modulus': #处理ICC公钥长度问题
                 if item.value == '1152':
                     item.value = '90'
@@ -425,14 +428,13 @@ class Form1156:
                     item.value = '80'
             if item.value:
                 item.tag = str(item.tag)
-                #print(str(item.data_type) + '||' + item.tag + '||' + item.value + '||' + item.name)
-                print("%-20s||%-10s||%-60s||%-100s" % (str(item.data_type),item.tag,item.value,item.name))
-                self.data_list.append(item)
+                print("%-20s||%-10s||%-60s||%-100s" % (str(item.media_type),item.tag,item.value,item.name))
+                self.source_items.append(item)
                 if item.tag == '84':
                     item4F = item
                     item4F.tag = '4F'
-                    self.data_list.append(item4F)
-        return self.data_list
+                    self.source_items.append(item4F)
+        return self.source_items
     
     # 处理FCI数据
     def get_fci_data(self,sheet_name='FCI (1)',start_row=5,start_col=2):
@@ -443,18 +445,18 @@ class Form1156:
                 return None
             start_row += 2
             ignore_template_list = ['6F','A5','BF0C']
-            self.fci_data = self._get_data(DataType.FCI,start_row,start_col,ignore_template_list)
+            self.fci_data = self._get_data(MediaType.FCI,start_row,start_col,ignore_template_list)
         return self.fci_data
 
-    def get_mca_data(self,sheet_name='MCA data objects (1)',start_row=5,start_col=2):
+    def get_internal_data(self,sheet_name='MCA data objects (1)',start_row=5,start_col=2):
         if self.excel.open_worksheet(sheet_name):
             header = self.excel.read_cell_value(start_row,start_col)
             if str(header).strip() != 'Data object name':
                 Log.info('can not get fci header')
                 return None
             start_row += 1
-            self.mca_data = self._get_data(DataType.MCA,start_row,start_col)
-        return self.mca_data
+            self.internal_data = self._get_data(MediaType.INTERNAL,start_row,start_col)
+        return self.internal_data
 
     def get_mag_data(self,sheet_name='Records (1)',start_row=5,start_col=2):
         if self.excel.open_worksheet(sheet_name):
@@ -463,7 +465,7 @@ class Form1156:
                 Log.info('can not get mag header')
                 return None
             start_row += 3
-            self.mag_data = self._get_data(DataType.MAGSTRIPE,start_row,start_col + 2,None,'Data object name')
+            self.mag_data = self._get_data(MediaType.MAGSTRIPE,start_row,start_col + 2,None,'Data object name')
         return self.mag_data
 
     def get_contactless_data(self,sheet_name='Records (1)',start_row=18,start_col=2):
@@ -473,7 +475,7 @@ class Form1156:
                 Log.info('can not get contactless header')
                 return None
             start_row += 3
-            self.contactless_data = self._get_data(DataType.CONTACTLESS,start_row,start_col + 2,None,'Data object name')
+            self.contactless_data = self._get_data(MediaType.CONTACTLESS,start_row,start_col + 2,None,'Data object name')
         return self.contactless_data
 
     def get_contact_data(self,sheet_name='Records (1)',start_row=43,start_col=2):
@@ -483,7 +485,7 @@ class Form1156:
                 Log.info('can not get contact header')
                 return None
             start_row += 3
-            self.contact_data = self._get_data(DataType.CONTACT,start_row,start_col + 2,None,'Data object name')
+            self.contact_data = self._get_data(MediaType.CONTACT,start_row,start_col + 2,None,'Data object name')
         return self.contact_data
 
     def get_shared_data(self,sheet_name='Records (1)',start_row=77,start_col=2):
@@ -493,18 +495,82 @@ class Form1156:
                 Log.info('can not get fci header')
                 return None
             start_row += 3
-            self.shared_data = self._get_data(DataType.SHARED,start_row,start_col + 2)
+            self.shared_data = self._get_data(MediaType.SHARED,start_row,start_col + 2)
         return self.shared_data
     
     def read_data(self):
         Log.info('====================1156 form tag list====================')
         self.get_fci_data()
-        self.get_mca_data()
+        self.get_internal_data()
         self.get_contact_data()
         self.get_contactless_data()
         self.get_mag_data()
         self.get_shared_data()
-        return self.data_list
+        return self.source_items
+
+class ImportForm:
+    def _get_value(self,items,tag,media,name):
+        has_found = False
+        value = ''
+        if tag in ('D9','94'): # AFL 不从MC原始数据中获取
+            return ''
+        if tag == 'D8': # goldpac Form中定义了D8为非接，但原始数据中的D8在internal数据中
+            media = ''
+        for item in items:
+            if media: # 若有传入media,则需要比对media
+                if item.tag.strip() == tag.strip() and item.media_type == media.lower():
+                    item.used = True
+                    value = item.value
+                    has_found = True
+                    break
+            else:
+                if item.tag.strip() == tag.strip():
+                    item.used = True
+                    value = item.value
+                    has_found = True
+                    break
+        
+        if not has_found: # 如果通过tag和media无法找到，则通过name查找
+            for item in items:
+                if item.name.strip() == name.strip():
+                    item.used = True
+                    value = item.value
+                    break
+        return value
+
+    def write(self,items,goldpac_form,sheet_name,start_row=5,start_col=2):
+        excel = ExcelOp(goldpac_form)
+        if excel.open_worksheet(sheet_name):
+            first_header = excel.read_cell_value(start_row,start_col)
+            if str(first_header).strip() != 'Data Category':
+                print('can not found form start position')
+                return None
+            start_row += 1 #默认标题行之后就是数据行
+            for row in range(start_row,200):
+                name = excel.read_cell_value(row,start_col + 1)
+                tag = excel.read_cell_value(row,start_col + 2)
+                if not tag:
+                    break
+                tag = str(tag).strip()
+                value = str(excel.read_cell_value(row,start_col + 5)).strip()
+                media = ''
+                temp = tag.split('-')
+                if len(temp) == 2:
+                    tag = temp[0].strip()
+                    media = temp[1].strip()
+                item_value = self._get_value(items,tag,media,name)
+                if not item_value:
+                    Log.warn('can not find: tag:%s,   name:%s',tag,name)
+                    item_value = 'N.A'
+                if tag not in ('94','D9'):
+                    excel.write_cell_value(row,start_col + 5,item_value)
+            excel.save()
+
+    def print_unsed_item(self,items):
+        Log.info('no used tag list at first application----------------------------')
+        for item in items:
+            if not item.used:
+                Log.info("tag:{0:6s} |value:{1:30s}|name:{2}".format(item.tag,item.value,item.name))
 
 # 根据dp xml文件生成Word文档DP需求
 class GenDpDoc:
@@ -544,15 +610,20 @@ class GenDpDoc:
             level += 1
         return level
 
-    def _get_children_nodes(self,parent_node):
+    def _get_children_nodes(self,parent_node,nodes):
         '''
         获取父节点下的所有子节点
         '''
+        # name = self.xml_handle.get_attribute(parent_node,'name')
+        # if name:
+        #     print('name:' + name)
         children_nodes = self.xml_handle.get_child_nodes(parent_node)
         for child_node in children_nodes[:]:
             # print(self.xml_handle.get_attribute(child_node,'name'))
-            children_nodes.extend(self._get_children_nodes(child_node))
-        return children_nodes
+            nodes.append(child_node)
+            self._get_children_nodes(child_node,nodes)
+
+
 
     def _create_table(self,dgi_node):
         # 若DGI包含70模板，则不将70模板包含到表格中(过滤70模板)
@@ -577,9 +648,14 @@ class GenDpDoc:
             self.docx.merge_cell(cells)
         # 设置表格中每个单元格的内容
         # 设置每个tag标签
-        dgi_child_nodes = self._get_children_nodes(dgi_node)
+        dgi_child_nodes = []
+        self._get_children_nodes(dgi_node,dgi_child_nodes)
         for tag_node in dgi_child_nodes:
+            tag_comment = self.xml_handle.get_attribute(tag_node,'comment')
             tag_name = self.xml_handle.get_attribute(tag_node,'name')
+            if tag_name == 'FFFF':
+                tag_name = '--'
+                tag_comment = '--'
             tag_value = self.xml_handle.get_attribute(tag_node,'value')
             tag_type = self.xml_handle.get_attribute(tag_node,'type')
             tag_format = self.xml_handle.get_attribute(tag_node,'format')
@@ -593,7 +669,7 @@ class GenDpDoc:
                 tag_value += '-replace_equal_by_D'
             if tag_ascii and tag_ascii == 'true':
                 tag_value += '-convert_to_ascii'
-            tag_comment = self.xml_handle.get_attribute(tag_node,'comment')
+            
             if not tag_comment:
                 tag_comment = ''
             new_row = new_table.add_row()
@@ -605,7 +681,14 @@ class GenDpDoc:
             else:
                 self.docx.set_cell_text(new_row.cells[-3],'var') #长度在倒数第3列描述
             self.docx.set_cell_text(new_row.cells[-2],tag_format) # 倒数第二列为V,TLV
-            self.docx.set_cell_text(new_row.cells[-1],tag_value) #值为最后一列
+            if tag_name == '9F10':
+                uat = tag_value[2:4]
+                tag_value = tag_value[0:2] + '(DKI)' + tag_value[4:]
+                live = self.xml_handle.get_attribute(tag_node,'live')
+                tag_value += '\nUAT DKI:' + uat + '\nLIVE DKI:' + live
+                self.docx.set_cell_text(new_row.cells[-1],tag_value) #值为最后一列
+            else:
+                self.docx.set_cell_text(new_row.cells[-1],tag_value) #值为最后一列
 
     def gen_dp_docx(self):
         app_maps = {
@@ -616,6 +699,8 @@ class GenDpDoc:
             'A000000333010102':'UICS/PBOC 贷记应用分组',
             'A0000000031010':'Visa 应用分组',
             'A00000047400000001':'Jetco 应用分组',
+            'A000000025010402':'Amex应用分组',
+            'A000000025010900':'Amex辅助应用分组',
         }
         app_nodes = self.xml_handle.get_child_nodes(self.xml_handle.root_element,'App')
         pse_node = self.xml_handle.get_first_node(self.xml_handle.root_element,'PSE')
@@ -627,7 +712,7 @@ class GenDpDoc:
         for app_node in app_nodes:
             # 添加应用分组标题
             aid = self.xml_handle.get_attribute(app_node,'aid')
-            self.docx.add_heading(2,app_maps.get(aid,'应用分组'))
+            self.docx.add_heading(2,app_maps.get(aid,'应用分组 Aid:' +aid))
             # 设置每个应用的DGI分组
             dgi_nodes = self.xml_handle.get_child_nodes(app_node,'DGI')
             for dgi_node in dgi_nodes:
@@ -644,7 +729,7 @@ class GenDpDoc:
             self.docx.save_as(self.dp_docx)
 
 
-class DpTemplateXml():
+class DpTemplateXml:
     def __init__(self,app_type='',name=''):
         self.app_type = app_type
         self.name = name
@@ -718,11 +803,13 @@ class GenDpXml:
                     if tag == item.tag:
                         return item
                 else: #对于其他tag,需要认清是contact还是contactless
-                    if tag == item.tag and source.lower() == item.data_type.name.lower():
+                    if tag == item.tag and source.lower() == item.media_type.lower():
                         return item
-        elif comment:   #有时候需要根据模板xml中的comment来查找tag数据
+        #有时候需要根据模板xml中的comment来查找tag数据
+        # 如果根据tag和source仍找不到，则可以通过comment查找
+        if comment:   
             for item in self.cur_source_items:
-                if item.name == comment:
+                if item.name and item.name.strip() == comment.strip():
                     return item
         return None
 
@@ -766,6 +853,8 @@ class GenDpXml:
             mappings = settings.pse_tag_desc_mappings
         elif aid == '325041592E5359532E4444463031':
             mappings = settings.ppse_tag_desc_mappings
+        elif aid in ('A000000025010402','A000000025010900'):
+            mappings = settings.amex_tag_desc_mappings
         if mappings:
             mapping_item = mappings.get(node_name)
             if mapping_item:
@@ -925,18 +1014,38 @@ class GenDpXml:
                         new_xml_handle.insert_before(app_node,new_node,before_node)     
                         break  
 
-    def _handle_visa_contactless_82(self,source):
-        dp_item = None
-        source_item = self._get_source_item('82-' + source,'contact')
+    def _handle_9F10(self,tag,source):
+        source_item = self._get_source_item(tag,source)
+        dp_item = DpItem()
+        value = source_item.value
+        index_start = value.find('[')
+        index_mid = value.find('|')
+        index_end = value.find(']')
+        dp_item.value = value[0:index_start] + value[index_start + 1:index_mid] + value[index_end + 1:]
+        dp_item.live = value[index_mid + 1:index_end]
+        # print(value[0:index_start])
+        # print(value[index_start + 1:index_mid])
+        # print(value[index_end + 1:])
+        # print(value[index_mid + 1:index_end])
         if source_item:
             source_item.used = True
-            dp_item = self._parse_value(source_item.value)
-            dp_item.tag = '82'
-                # dp_item.source = source
-                # dp_item.comment = comment
+            dp_item.tag = tag
+            dp_item.source = source
         return dp_item
-        
-        
+   
+    def _get_afls(self,tag94):
+        dgi_list = []
+        afls = utils.parse_afl(tag94)
+        for afl in afls:
+            dgi_list.append(utils.int_to_hex_str(afl.sfi) + utils.int_to_hex_str(afl.record_no))
+        return dgi_list
+
+    def _get_sig_dgi(self,tag94):
+        afls = utils.parse_afl(tag94)
+        for afl in afls:
+            if afl.is_static_sign_data:
+                return utils.int_to_hex_str(afl.sfi) + utils.int_to_hex_str(afl.record_no)
+        return ''
 
     def gen_xml(self,new_xml,char_set='UTF-8'):
         # 复制模板
@@ -950,10 +1059,12 @@ class GenDpXml:
         app_nodes = new_xml_handle.get_child_nodes(new_xml_handle.root_element,'App')
         if app_nodes:
             new_xml_handle.set_attribute(app_nodes[0],'type',self.config.get('app_type').name.lower())
-            new_xml_handle.set_attribute(app_nodes[0],'aid',self._get_aid(self.config.get('app_type')))
+            if self.config.get('app_type') in (AppType.UICS_CREDIT,AppType.UICS_DEBIT):
+                new_xml_handle.set_attribute(app_nodes[0],'aid',self._get_aid(self.config.get('app_type')))
             if len(app_nodes) == 2: #支持双应用
                 new_xml_handle.set_attribute(app_nodes[1],'type',self.config.get('second_app_type').name.lower())
-                new_xml_handle.set_attribute(app_nodes[1],'aid',self._get_aid(self.config.get('second_app_type')))
+                if self.config.get('app_type') in (AppType.UICS_CREDIT,AppType.UICS_DEBIT):
+                    new_xml_handle.set_attribute(app_nodes[1],'aid',self._get_aid(self.config.get('second_app_type')))
         self._set_app_info(new_xml_handle,app_nodes) #需要设置第一应用和第二应用信息
 
         # 设置bin号
@@ -972,6 +1083,10 @@ class GenDpXml:
         # 设置Tag节点
         for index, app_node in enumerate(app_nodes):
             aid = new_xml_handle.get_attribute(app_node,'aid')
+
+            contact_tag94 = ''
+            contactless_tag94 = ''
+            sig_dgis = []
             
             #对于VISA应用，如果RSA长度大于1024,需要新增DGI存储tag9F4B
             if aid == 'A0000000031010':
@@ -980,13 +1095,15 @@ class GenDpXml:
             tag_nodes = new_xml_handle.get_nodes(app_node,'Tag') #取应用下面的Tag节点
             for tag_node in tag_nodes:
                 attr_tag = new_xml_handle.get_attribute(tag_node,'name')        # Tag标签
-                attr_type = new_xml_handle.get_attribute(tag_node,'type')       # Tag值类型,fixed,file,kms
                 attr_source = new_xml_handle.get_attribute(tag_node,'source')   # Tag来源 contact,contactless,fci...
                 attr_format = new_xml_handle.get_attribute(tag_node,'format')   # Tag 形式,TLV,V结构
                 attr_comment = new_xml_handle.get_attribute(tag_node,'comment') # Tag描述信息
                 attr_sig_id = new_xml_handle.get_attribute(tag_node,'sig_id')   # Tag使用的签名数据
                 attr_value = new_xml_handle.get_attribute(tag_node,'value')     # Tag值
                 second_app = new_xml_handle.get_attribute(tag_node,'second_app') # 指定是否使用第二应用数据
+
+                parent_node = new_xml_handle.get_parent(tag_node)   # 获取tag所在的DGI节点
+                dgi_name = new_xml_handle.get_attribute(parent_node,'name') # DGI节点名称
 
 
                 # 生成数据,需要设置当前使用的数据集合(是第一个应用还是第二个应用的集合)
@@ -1011,15 +1128,19 @@ class GenDpXml:
                 dp_item = DpItem()
                 dp_item.value = attr_value
                 if not dp_item.value:
-                    # visa tag82 需特殊处理
-                    if aid == 'A0000000031010' and attr_tag == '82' and attr_source in ('9115','9116','9117'):
-                        dp_item = self._handle_visa_contactless_82(attr_source)
+                    if not attr_tag or attr_tag.strip() == '--':
+                        dp_item = self._get_dp_item(comment=attr_comment)
                     else:
-                        if not attr_tag or attr_tag.strip() == '--':
-                            dp_item = self._get_dp_item(comment=attr_comment)
+                        if attr_tag == '9F10':
+                            dp_item = self._handle_9F10(tag=attr_tag, source=attr_source)
                         else:
                             dp_item = self._get_dp_item(tag=attr_tag, source=attr_source)
                 tags_from_kms = ('8F','9F32','8000','8001','9000','9001','8400','8401','A006','A016','90','92','93','9F46','9F47', '9F48','8201','8202','8203','8204','8205','DC','DD')
+                
+                # 对 App key做特殊处理
+                if dgi_name in ('8000','9000','8001','9001'):
+                    attr_tag = dgi_name
+                
                 # 过滤无法从数据中查找到的数据
                 if not dp_item and attr_tag not in tags_from_kms:
                     new_xml_handle.remove(tag_node)
@@ -1028,6 +1149,12 @@ class GenDpXml:
                 if attr_tag not in tags_from_kms:
                     Log.info('tag:%6s,source:%15s,value:%s',dp_item.tag,dp_item.source,dp_item.value)
 
+                # 记录每个应用的AFL, 用于在comment 中添加那些分组是用于接触/非接
+                if attr_tag == '94' and attr_source == 'contact':
+                    contact_tag94 = dp_item.value
+                elif attr_tag in ('94','D9') and attr_source == 'contactless':
+                    contactless_tag94 = dp_item.value
+
                 # 对于visa项目,如果RSA长度小于等于1024,需要在9115,9116,9117中添加9F4B81XX
                 # 注意,这里默认visa为第一应用,若出现visa为第二应用的情况，则不适用。
                 if aid == 'A0000000031010':
@@ -1035,7 +1162,7 @@ class GenDpXml:
                     if not rsa_len:
                         rsa_len = self.config.get('rsa','1152')
                     rsa = int(rsa_len)
-                    if  rsa <= 1024 and attr_tag == 'FFFF': #这里使用特殊的tagFFFF表示DGI9115,9116,9117中的TL结构
+                    if  rsa <= 1024 and attr_tag == 'FFFF' and dgi_name in ('9116','9117'): #这里使用特殊的tagFFFF表示DGI9116,9117中的TL结构
                         dp_item.value += '9F4B81' + utils.int_to_hex_str(rsa // 8)
 
                 if attr_tag in tags_from_kms:
@@ -1051,8 +1178,16 @@ class GenDpXml:
                     if dp_item.value.strip().lower() == 'empty':
                         new_xml_handle.set_attribute(tag_node,'value','')
                     elif dp_item.value == 'N.A':
-                        new_xml_handle.remove(tag_node)
-                        self.unused_data.append((attr_tag,attr_source,attr_comment))
+                        if aid == 'A0000000031010' and dp_item.tag == '82':
+                            Log.warn('remove DGI %s',dgi_name)
+                            new_xml_handle.remove(parent_node)
+                            continue
+                        else:
+                            new_xml_handle.remove(tag_node)
+                            self.unused_data.append((attr_tag,attr_source,attr_comment))
+                    elif dp_item.tag == '9F10':
+                        new_xml_handle.set_attribute(tag_node,'value',dp_item.value)
+                        new_xml_handle.set_attribute(tag_node,'live',dp_item.live)
                     else:
                         new_xml_handle.set_attribute(tag_node,'value',dp_item.value)
 
@@ -1083,13 +1218,39 @@ class GenDpXml:
             self._add_alias(new_xml_handle,tag_nodes) 
             # 删除 空模板节点
             self.remove_empty_node(new_xml_handle)
-            #此处需要处理DGI 节点
+            if aid == 'A0000000041010': #对于mc应用，如果不支持磁条交易，需删除DGI8400和DGI8401
+                node_dgi_0101 = new_xml_handle.get_node_by_attribute(app_node,'DGI',name="0101")
+                if not node_dgi_0101:
+                    node_dgi_8400 = new_xml_handle.get_node_by_attribute(app_node,'DGI',name="8400")
+                    node_dgi_8401 = new_xml_handle.get_node_by_attribute(app_node,'DGI',name="8401")
+                    if node_dgi_8400:
+                        new_xml_handle.remove(node_dgi_8400)
+                    if node_dgi_8401:
+                        new_xml_handle.remove(node_dgi_8401)
+            # 给comment属性添加 contact/contactless和signature单词
             dgi_nodes = new_xml_handle.get_nodes(app_node,'DGI')
+            contact_dgi_names = self._get_afls(contact_tag94)
+            contactless_dgi_names = self._get_afls(contactless_tag94)
+            sig_dgis.append(self._get_sig_dgi(contact_tag94))
+            sig_dgis .append(self._get_sig_dgi(contactless_tag94))
             for dgi_node in dgi_nodes:
                 attr_comment = new_xml_handle.get_attribute(dgi_node,'comment')
                 attr_name = new_xml_handle.get_attribute(dgi_node,'name')
                 if int(attr_name,16) < 0x0A01:
                     attr_comment = 'SFI ' + attr_name[0:2] + ' Record ' + attr_name[2:]
+                    flag = False
+                    if attr_name in contact_dgi_names and attr_name not in contactless_dgi_names:
+                        attr_comment += ' (contact'
+                        flag = True
+                    elif attr_name in contactless_dgi_names and attr_name not in contact_dgi_names:
+                        attr_comment += ' (contactless'
+                        flag = True
+                    if attr_name in sig_dgis:
+                        attr_comment += ',signature'
+                        flag = True
+                    if flag:
+                        attr_comment += ')'
+
                 if not attr_comment:
                     attr_comment = self._get_comment(aid,attr_name)
                 new_xml_handle.set_attribute(dgi_node,'comment',attr_comment)
@@ -1145,9 +1306,12 @@ class MockCps:
         '''
         解析tag5F24/5F25格式
         '''
-        if len(date) < 4:
-            Log.info('len of date is too short')
-            return None
+        if len(date) < 5:
+            if date in (r'{FD}',r'{LD}'):
+                date = time.strftime('%y%m') + date
+            else:
+                Log.info('len of date is too short')
+                return None
         yy = date[0:2]
         mm = date[2:4]
         dd_flag = date[4:]
@@ -1304,6 +1468,9 @@ class MockCps:
     def _process_dgi(self,dgi_node,kms=None):
         dgi = Dgi()
         dgi.name = self.xml_handle.get_attribute(dgi_node,'name')
+        if dgi.name in ('8000','9000','8001','9001'):
+            dgi.append_tag_value(dgi.name,kms.get_value(dgi.name))
+            return dgi
         child_nodes = self.xml_handle.get_child_nodes(dgi_node)
         if child_nodes and len(child_nodes) == 1:   #判断是否为70模板开头，若是，则忽略掉70模板
             attr_name = self.xml_handle.get_attribute(child_nodes[0],'name')

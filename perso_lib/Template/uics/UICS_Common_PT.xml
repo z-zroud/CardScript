@@ -123,7 +123,7 @@
 		</DGI>
 		<DGI name="0501">
 			<Template name="70">
-				<Tag name="9F74" source="contact" format="TLV"/>
+				<Tag name="9F74" source="contactless" format="TLV"/>
 			</Template>
 		</DGI>
 		<DGI name="0D01">

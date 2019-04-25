@@ -12,6 +12,7 @@ class TransBase:
     def __init__(self):
         self.pse = None     # 将PSE/PPSE对象作为主应用的一部分，用于检测PSE与主应用之间的关联性
         self.ppse = None
+        self.aid = ''
         self.sig_data = ''  #读记录中的签名数据，包含tag82
         self.tags_info = [] #存储每个交易步骤中的tag信息
         self.cvn = ''       # CVN
@@ -57,6 +58,8 @@ class TransBase:
         '''
         存储交易中的tag信息
         '''
+        if not value:
+            Log.warn('tag:%s is empty')
         self.tags_info.append(TransTag(step,tag,value))
 
     def store_tag_group(self,step,tlvs):
@@ -65,6 +68,8 @@ class TransBase:
         '''
         for tlv in tlvs:
             if not tlv.is_template:
+                if not tlv.value:
+                    Log.warn('tag:%s is empty')
                 self.tags_info.append(TransTag(step,tlv.tag,tlv.value))
 
     def get_tag(self,step,tag=None):
@@ -115,6 +120,7 @@ class TransBase:
         '''
         应用选择
         '''
+        self.aid = aid
         return apdu.select(aid)
 
     def gpo(self,pdol):

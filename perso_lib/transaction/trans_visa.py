@@ -2,6 +2,7 @@
 from perso_lib.transaction.trans_base import *
 from perso_lib.transaction.trans_pse import PseTrans,PpseTrans
 from perso_lib import utils
+from perso_lib import algorithm
 from perso_lib.apdu import Crypto_Type
 from perso_lib.log import Log
 from perso_lib.transaction.utils import terminal,auth,tools
@@ -43,7 +44,7 @@ class VisaTrans(TransBase):
             self.run_case('case_read_record','run_visa',resps)
         return resps
 
-    def gac1(self):
+    def first_gac(self):
         tag8C = self.get_tag(PROCESS_STEP.READ_RECORD,'8C')
         data = tools.assemble_dol(tag8C)
         resp = super().gac(Crypto_Type.ARQC,data)
@@ -75,7 +76,7 @@ class VisaTrans(TransBase):
         return False
 
 
-    def gac2(self):
+    def second_gac(self):
         tag8D = self.get_tag(PROCESS_STEP.READ_RECORD,'8D')
         data = tools.assemble_dol(tag8D)
         resp = super().gac(Crypto_Type.TC,data)
@@ -84,16 +85,75 @@ class VisaTrans(TransBase):
             return
         return resp
 
-    def gac_cda(self):
+    def first_gac_cda(self):
         tag8C = self.get_tag(PROCESS_STEP.READ_RECORD,'8C')
         data = tools.assemble_dol(tag8C)
         resp = super().gac(Crypto_Type.ARQC_CDA,data)
 
 
+    def put_data(self,tag,value):
+        tag9F36 = self.get_tag('9F36')
+        tag9F26 = self.get_tag(PROCESS_STEP.FIRST_GAC,'9F26')
+        key_input = '000000000000' + tag9F36 + '000000000000' + algorithm.xor(tag9F36,'FFFF')
+        if len(tag) == 2:
+            tag = '00' + tag
+        data_len = utils.int_to_hex_str(len(value) // 2 + 8)
+        mac_input = '04DA' + tag + data_len + tag9F36 + tag9F26 + value
+        key_mac = algorithm.xor(key_input,self.key_mac)
+        mac = algorithm.des3_mac(key_mac,mac_input)
+        apdu.put_data(tag,value,mac)
 
-    def do_contact_trans(self,do_pse=True):
+
+    def unlock_app(self):
+        tag9F36 = self.get_tag('9F36')
+        tag9F26 = self.get_tag(PROCESS_STEP.FIRST_GAC,'9F26')
+        key_input = '000000000000' + tag9F36 + '000000000000' + algorithm.xor(tag9F36,'FFFF')
+        mac_input = '8418000008' + tag9F36 + tag9F26
+        key_mac = algorithm.xor(key_input,self.key_mac)
+        mac = algorithm.des3_mac(key_mac,mac_input)
+        apdu.unlock_app(mac)
+
+    def lock_app(self):
+        tag9F36 = self.get_tag('9F36')
+        tag9F26 = self.get_tag(PROCESS_STEP.FIRST_GAC,'9F26')
+        key_input = '000000000000' + tag9F36 + '000000000000' + algorithm.xor(tag9F36,'FFFF')
+        mac_input = '841E000008' + tag9F36 + tag9F26
+        key_mac = algorithm.xor(key_input,self.key_mac)
+        mac = algorithm.des3_mac(key_mac,mac_input)
+        apdu.lock_app(mac)
+
+
+    def do_contact_trans(self,do_pse=True,aid="A0000000031010"):
+        '''
+        Visa借记/贷记接触交易主流程
+        '''
         if do_pse:
             self.pse = PseTrans()
+            self.pse.application_selection()
+            aids = self.pse.read_record()
+            for index,aid in enumerate(aids):
+                print("{0}: {1}".format(index,aid))
+            aid_index = input('select app to do transaction:')
+            self.application_selection(aids[int(aid_index)])
+        else:
+            self.application_selection(aid)
+        self.gpo()
+        self.read_record()
+        self.get_data(['9F75','9F72'])
+        self.do_dda()
+        self.first_gac()
+        self.issuer_auth()
+        self.second_gac()
+
+    def do_contactless_trans(self):
+        self.ppse = PpseTrans()
+        aids = self.ppse.application_selection()
+        if aids:
+            for index,aid in enumerate(aids):
+                print("{0}: {1}".format(index,aid))
+            aid_index = input('select app to do transaction:')
+            self.application_selection(aids[int(aid_index)])
+
 
 
 
@@ -101,28 +161,24 @@ if __name__ == '__main__':
     from perso_lib.pcsc import get_readers,open_reader
     from perso_lib.transaction.utils.terminal import set_terminal
     from perso_lib.transaction.trans_pse import PseTrans,PpseTrans
+    from perso_lib.transaction.utils.property import App_Master_Key
     from perso_lib.log import Log
     import time
 
     Log.init()
-    set_terminal('UDK','CB40040401DABCBCC197FE2A01AD15B961CEE091A267BA6EFBB329A262B97616E01F7F3E7904641AE3862A07943276AE')
+    set_terminal(App_Master_Key.UDK,'5856D35E3405B7C2D97B65809468C2D31C71E2AE1EED4377603877A357428DBAF6241FCA77459F62ACB2CA38CDFD7175')
     trans = VisaTrans()
     readers = get_readers()
     for index,reader in enumerate(readers):
         print("{0}: {1}".format(index,reader))
     index = input('select readers: ')
     if open_reader(readers[int(index)]):
-        pse_trans = PseTrans()
-        pse_trans.application_selection()
-        aids = pse_trans.read_record()
-        for index,aid in enumerate(aids):
-            print("{0}: {1}".format(index,aid))
-        aid_index = input('select app to do transaction:')
-        trans.application_selection(aids[int(aid_index)])
-        trans.gpo()
-        trans.read_record()
-        trans.get_data(['9F75','9F72'])
-        trans.do_dda()
-        trans.gac1()
-        trans.issuer_auth()
-        trans.gac2()
+        #================= contactless trans ==================
+        trans.do_contactless_trans()
+        #=================== contact trans ====================
+        # trans.do_contact_trans()
+        # trans.put_data('9F79','000000010000')
+        # resp = apdu.get_data('9F79')
+        # print(resp.response)
+        # trans.lock_app()
+        # trans.unlock_app()

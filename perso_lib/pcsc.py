@@ -36,7 +36,7 @@ def init():
         return True
     return False
 
-def send(cmd_header,data,resp_sw_list=None):
+def send(cmd_header,data,resp_sw_list=(0x9000,)):
     '''
     在连接读卡器后，发送APDU指令。
     cmd_header 表示指令头
