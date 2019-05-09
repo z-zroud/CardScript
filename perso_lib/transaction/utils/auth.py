@@ -106,8 +106,7 @@ def get_icc_pub_key(issuer_pub_key,tag9F32,tag9F46,tag9F48,tag9F47,sig_data,tag5
     if expiry_date < int(tag5F24[0:4]):
         Log.warn('expiry date: %s',recovery_data[26:28] + recovery_data[24:26])
         Log.warn('tag5F24: %s',tag5F24)
-        Log.info('icc cert overdue earlier than application expiry date')
-        return icc_pub_key
+        Log.warn('icc cert overdue earlier than application expiry date')
     if recovery_data[34:38] != '0101':
         Log.error('hash algo flag: %s',recovery_data[34:36])
         Log.error('ipk algo flag: %s',recovery_data[36:38])

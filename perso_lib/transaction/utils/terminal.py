@@ -13,10 +13,13 @@ terminal_cfg = {
     '9F37':'12345678', #随机数, 默认'12345678'
     '95':'0000000000',  #终端交易结果，默认全0
     '9A':time.strftime('%C%m%d'), #交易日期
+    '9F21':time.strftime('%H%M%S'), #交易时间
     '9C':'00', #交易类型(消费交易)
     '8A':'0000', # 终端生成的授权响应码
     '9F35':'22', # 终端类型
-    '9F34':'000000'
+    '9F34':'000000',
+    '9F66': '27000000', # 设置终端默认为非接联机交易
+    '9F7C':'476F6C64706163454D565465616D'
 }
 
 # 用户可根据该函数重置终端相关数据
@@ -32,11 +35,23 @@ def get_terminal(tag,length=None,default=None):
         if length:
             value = '0' * length * 2
         Log.warn('can not require terminal settings for tag %s',tag)
+        if value:
+            Log.warn('set tag%s value:%s',tag,value)
+            return value
         return default
     else:
         if length and len(value) != length * 2:
-            value += '0' * (length * 2 - len(value))
-            Log.warn('padding 0 at tag %s',tag)
+            if len(value) >= length * 2:
+                value = value[0:length * 2]
+            else:
+                value += '0' * (length * 2 - len(value))
+                Log.warn('padding 0 at tag %s',tag)
     return value
 
+# 常用设置
+def set_offline_only():
+    set_terminal('9F66','28000000')
+
+def set_currency_code(code):
+    set_terminal('5F2A',code)
 

@@ -175,7 +175,8 @@ class Rule:
     #向dgi中指定的tag添加固定值
     def process_add_fixed_tag(self,dgi_name,tag,value,before_tag,after_tag):
         dgis = self.cps.get_all_dgis()
-        if dgi_name not in dgis:
+        dgi_names = [dgi.name for dgi in dgis]
+        if dgi_name not in dgi_names:
             new_dgi = Dgi()
             new_dgi.name = dgi_name
             new_dgi.add_tag_value(tag,value)

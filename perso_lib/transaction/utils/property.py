@@ -12,6 +12,8 @@ class OfflineType(Enum):
 class App_Master_Key(Enum):
     MDK = 'MDK'
     UDK = 'UDK'
+    IDN_KEY = 'IDN_KEY'
+    CVC3_KEY = 'CVC3_KEY'
 
 class PROCESS_STEP(Enum):
     '''
@@ -21,8 +23,9 @@ class PROCESS_STEP(Enum):
     GPO         = 1
     READ_RECORD = 2
     GET_DATA    = 3
-    FIRST_GAC   = 4
-    SECOND_GAC  = 5
+    ODA         = 4
+    FIRST_GAC   = 5
+    SECOND_GAC  = 6
 
 
 

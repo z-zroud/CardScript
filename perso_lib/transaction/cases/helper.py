@@ -11,6 +11,7 @@ def case_startswith(mark,buffer):
     if len(buffer) > 2 and buffer.startswith(mark):
         return CR.OK
     return CR.ERROR
+
     
 def is_support_sda(tag82):
     pass

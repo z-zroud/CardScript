@@ -158,7 +158,7 @@ class Cps:
             dp_dir = folder
         else:
             dp_dir = self.dp_file_path[:self.dp_file_path.rfind('.')]
-        print('dp_dir',dp_dir)
+        # print('dp_dir',dp_dir)
         if os.path.exists(dp_dir) is False:
             os.mkdir(dp_dir) 
         file_name = self.get_account() + '.txt'

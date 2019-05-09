@@ -712,7 +712,7 @@ class GenDpDoc:
         for app_node in app_nodes:
             # 添加应用分组标题
             aid = self.xml_handle.get_attribute(app_node,'aid')
-            self.docx.add_heading(2,app_maps.get(aid,'应用分组 Aid:' +aid))
+            self.docx.add_heading(2,app_maps.get(aid,'应用分组 Aid:' + aid))
             # 设置每个应用的DGI分组
             dgi_nodes = self.xml_handle.get_child_nodes(app_node,'DGI')
             for dgi_node in dgi_nodes:

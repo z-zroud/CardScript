@@ -60,6 +60,9 @@ class TransBase:
         '''
         if not value:
             Log.warn('tag:%s is empty')
+        if tag == '9F10':
+            self.dki = value[2:4]
+            self.cvn = value[4:6]
         self.tags_info.append(TransTag(step,tag,value))
 
     def store_tag_group(self,step,tlvs):
@@ -69,7 +72,10 @@ class TransBase:
         for tlv in tlvs:
             if not tlv.is_template:
                 if not tlv.value:
-                    Log.warn('tag:%s is empty')
+                    Log.warn('tag:%s is empty',tlv.tag)
+                if tlv.tag == '9F10':
+                    self.dki = tlv.value[2:4]
+                    self.cvn = tlv.value[4:6]
                 self.tags_info.append(TransTag(step,tlv.tag,tlv.value))
 
     def get_tag(self,step,tag=None):
@@ -260,23 +266,40 @@ class TransBase:
             return ''
         return icc_pub_key
 
-    def do_dda(self):
+    def do_dda(self,fDDA=False):
         tag9F47 = self.get_tag(PROCESS_STEP.READ_RECORD,'9F47')
-        tag9F49 = self.get_tag(PROCESS_STEP.READ_RECORD,'9F49')
         if not tag9F47:
             Log.error('tag9F47: %s',tag9F47)
             Log.error('require tag9F47 failed whereby dda failed')
             return False
-        if not tag9F49:
-            Log.error('tag9F49: %s',tag9F49)
-            Log.error('require tag9F49 failed whereby dda failed')
-            return False
-        ddol = tools.assemble_dol(tag9F49)
-        if not ddol:
-            Log.error('tag9F49: %s',tag9F49)
-            Log.error('can not get terminal ddol data whereby dda failed')
-            return False
-        tag9F4B = self.gen_9F4B(ddol)
+        tag9F4B = ''
+        ddol = ''
+        if fDDA:
+            tag9F4B = self.get_tag(PROCESS_STEP.GPO,'9F4B')
+            tag9F69 = self.get_tag(PROCESS_STEP.READ_RECORD,'9F69')
+            if not tag9F69:
+                Log.error('tag9F69: %s',tag9F69)
+                Log.error('require tag9F69 failed whereby dda failed')
+                return False
+            # 这里无需再判断终端数据是否存在，在GPO阶段已经验证过
+            tag9F37 = terminal.get_terminal('9F37')
+            tag9F02 = terminal.get_terminal('9F02')
+            tag5F2A = terminal.get_terminal('5F2A')
+            # 这里默认使用ddol代替fDDA的签名数据
+            # 签名使用的tag9F36自动包含在了tag9F4B恢复数据中，这里无需重复包含
+            ddol = tag9F37 + tag9F02 + tag5F2A + tag9F69 
+        else:
+            tag9F49 = self.get_tag(PROCESS_STEP.READ_RECORD,'9F49')
+            if not tag9F49:
+                Log.error('tag9F49: %s',tag9F49)
+                Log.error('require tag9F49 failed whereby dda failed')
+                return False
+            ddol = tools.assemble_dol(tag9F49)
+            if not ddol:
+                Log.error('tag9F49: %s',tag9F49)
+                Log.error('can not get terminal ddol data whereby dda failed')
+                return False
+            tag9F4B = self.gen_9F4B(ddol)
         if not tag9F4B:
             Log.error('can not get tag9F4B data whereby dda failed')
             return False
@@ -291,7 +314,7 @@ class TransBase:
         if not auth.validate_9F4B(icc_pub_key,tag9F47,ddol,tag9F4B):
             Log.error('icc public key: %s',icc_pub_key)
             Log.error('tag9F47: %s',tag9F47)
-            Log.error('ddol data: %s',ddol)
+            Log.error('sig data: %s',ddol)
             Log.error('tag9F4B: %s',tag9F4B)
             Log.error('validate tag9F4B failed whereby dda failed')
             return False

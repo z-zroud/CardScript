@@ -217,7 +217,7 @@ def is_tlv(buffer):
     return False if ret == 0 else True
 
 def is_rsa(dgi):
-    dgi_list = ['8201','8202','8203','8204','8205']
+    dgi_list = ['8201','8202','8203','8204','8205','8000']
     if dgi in dgi_list:
         return True
     return False
@@ -251,3 +251,10 @@ if __name__ == '__main__':
     print(get_strlen("32149895898392844"))
     print(str_to_bcd("你好111"))
     print(base64_to_bcd('Lm595NXdgKqzX53sb1oEjviRYZ+lTW7rrg9LcJZ/60Hy8R+7Eq6x7srFTydmxEI/S2jkD1jkXHxM103oy1JXK2sqZG3TiIHB'))
+    import pyDes,base64
+    text = '333162134000000218'
+    key = '3930340065cc47e9989f36af'
+    k = pyDes.triple_des(key, pyDes.ECB,None, pad=None, padmode=pyDes.PAD_PKCS5)
+    d = k.encrypt(text)
+    res = base64.standard_b64encode(d)
+    print(res)

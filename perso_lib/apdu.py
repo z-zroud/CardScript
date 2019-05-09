@@ -75,10 +75,10 @@ def install_app(packet_aid,applet_aid,inst_aid,priviliage,install_param,token='0
     return pcsc.send_raw(cmd,resp_sw_list) 
 
 # Select Command
-def select(instance_id):
+def select(instance_id,resp_sw_list=(0x9000,)):
     aid_len = utils.get_strlen(instance_id)
     cmd = '00A40400' + aid_len + instance_id
-    return pcsc.send_raw(cmd) 
+    return pcsc.send_raw(cmd,resp_sw_list) 
 
 def select_file(file_id):
     file_id_len = utils.get_strlen(file_id)

@@ -13,8 +13,10 @@ class LenType(Enum):
 	Fixed = 0
 	Range = 1
 
-
 def get_tag_len(tag,aid):
+	'''
+	获取tag规范指定的长度
+	'''
 	mappings = None
 	if aid == '315041592E5359532E4444463031':
 		mappings = pse_tag_desc_mappings
@@ -26,7 +28,21 @@ def get_tag_len(tag,aid):
 		mappings = mc_tag_desc_mappings
 	elif aid in ('A000000333010101','A000000333010102'):
 		mappings = uics_tag_desc_mappings
-
+	if mappings:
+		items = mappings.get(tag)
+		if items and len(items) > 1:
+			tag_len = items[1]
+			if '-' in tag_len:
+				min_len = int(tag_len.split('-')[0])
+				max_len = int(tag_len.split('-')[1])
+				return LenType.Range,[min_len,max_len]
+			elif '|' in tag_len:
+				str_lens = tag_len.split('|')
+				lens = [int(str_len) for str_len in str_lens]
+				return LenType.Fixed,lens
+			else:
+				return LenType.Fixed,[int(items[1])]
+	return None,None
 
 visa_tag_desc_mappings = {
 #Command Response Data-DGI
@@ -82,7 +98,7 @@ visa_tag_desc_mappings = {
 	'5F25' : ('Application Effective Date','3'),
 	'5F34' : ('Application PAN Sequence Number','1'),
 	'9F07' : ('Application Usage Control','2'),
-	'8E' : ('CVM List'),
+	'8E' : ('CVM List',),
 	'9F0D' : ('IAC-Default','5'),
 	'9F0E' : ('IAC-Denial','5'),
 	'9F0F' : ('IAC-Online','5'),
@@ -583,3 +599,10 @@ ppse_tag_desc_mappings = {
 	'5F2D':('preference language','2|4'),
 	'88' : ('SFI','1'),
 }
+
+
+if __name__ == "__main__":
+	x,y = get_tag_len('4F','325041592E5359532E4444463031')
+	x,y = get_tag_len('5F2D','325041592E5359532E4444463031')
+	x,y = get_tag_len('88','325041592E5359532E4444463031')
+	print('ok')

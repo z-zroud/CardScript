@@ -97,13 +97,16 @@ def gen_tag93(d,n,sig_data,tag82,dac='DAC1'):
     return bytes.decode(tag93.value)
 
 def gen_kcv(app_key,algorithm_type='DES'):
-    byte_key = str.encode(app_key)
-    kcv_key = create_string_buffer(33)
-    if algorithm_type == 'DES':
-        auth_lib.GenDesKcv(byte_key,kcv_key,33)
-    else:
-        auth_lib.GenSmKcv(byte_key,kcv_key,33)
-    return bytes.decode(kcv_key.value)[0:6]
+    kcv = ''
+    for index in range(0,len(app_key),32):
+        byte_key = str.encode(app_key[index : index + 32])
+        kcv_key = create_string_buffer(33)
+        if algorithm_type == 'DES':
+            auth_lib.GenDesKcv(byte_key,kcv_key,33)
+        else:
+            auth_lib.GenSmKcv(byte_key,kcv_key,33)
+        kcv += bytes.decode(kcv_key.value)[0:6]
+    return kcv
 
 def gen_app_key_kcv(app_key,algorithm_type='DES'):
     byte_ac = str.encode(app_key[0:32])
