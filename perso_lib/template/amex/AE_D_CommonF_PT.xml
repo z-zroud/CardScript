@@ -43,10 +43,10 @@
 			<Tag name="5F24" source="contact" format="TLV" />
 			<Tag name="5F25" source="contact" format="TLV" />
 			<Tag name="5A"   source="contact" format="TLV" />
-			<Tag name="5F34" source="contact" format="TLV" />
+			<Tag name="5F34" source="magstripe" format="TLV" />
 			<Tag name="9F07" source="contactless" format="TLV" />
-			<Tag name="8C"   source="contact" format="TLV" />
-			<Tag name="8D"   source="contact" format="TLV" />
+			<Tag name="8C"   source="magstripe" format="TLV" />
+			<Tag name="8D"   source="magstripe" format="TLV" />
 			<Tag name="8E"   source="contactless" format="TLV" />
 			<Tag name="9F0D" source="magstripe" format="TLV" />
 			<Tag name="9F0E" source="magstripe" format="TLV" />
@@ -148,10 +148,10 @@
 				<Tag name="5F24" source="contact" format="TLV" />
 				<Tag name="5F25" source="contact" format="TLV" />
 				<Tag name="5A"   source="contact" format="TLV" />
-				<Tag name="5F34" source="contact" format="TLV" />
+				<Tag name="5F34" source="magstripe" format="TLV" />
 				<Tag name="9F07" source="contactless" format="TLV" />
-				<Tag name="8C"   source="contact" format="TLV" />
-				<Tag name="8D"   source="contact" format="TLV" />
+				<Tag name="8C"   source="magstripe" format="TLV" />
+				<Tag name="8D"   source="magstripe" format="TLV" />
 				<Tag name="8E"   source="contactless" format="TLV" />
 				<Tag name="9F0D" source="magstripe" format="TLV" />
 				<Tag name="9F0E" source="magstripe" format="TLV" />
@@ -172,6 +172,7 @@
 				<Tag name="8F"   source="kms" format="TLV"/>
 				<Tag name="92"   source="kms" format="TLV"/>
 				<Tag name="9F32" source="kms" format="TLV"/>
+				<Tag name="9F49" source="contact" format="TLV"/>
 				<Tag name="9F4A" source="contact" format="TLV"/>
 			</Template>
 		</DGI>
@@ -184,7 +185,6 @@
 			<Template name="70">
 				<Tag name="9F47" source="kms" format="TLV"/>
 				<Tag name="9F48" sig_id="sig_AEIP" source="kms" format="TLV"/>
-				<Tag name="9F49" source="contact" format="TLV"/>
 			</Template>
 		</DGI>
 		<DGI name="0403">
@@ -196,7 +196,6 @@
 			<Template name="70">
 				<Tag name="9F47" source="kms" format="TLV"/>
 				<Tag name="9F48" sig_id="sig_XPEMV" source="kms" format="TLV"/>
-				<Tag name="9F49" source="contact" format="TLV"/>
 			</Template>
 		</DGI>
 		<DGI name="0405">
@@ -208,7 +207,6 @@
 			<Template name="70">
 				<Tag name="9F47" source="kms" format="TLV"/>
 				<Tag name="9F48" sig_id="sig_XPMS" source="kms" format="TLV"/>
-				<Tag name="9F49" source="contact" format="TLV"/>
 			</Template>
 		</DGI>
 		<DGI name="0D01">
@@ -270,26 +268,18 @@
 		<DGI name="8205">
 			<Tag name="8205" source="kms" format="V"/>
 		</DGI>
+		<DGI name="90B0">
+			<Tag name="--" value="9F490202" format="V" comment="Record Data Object Link"/>
+		</DGI>
 		<DGI name="9200">
 			<Tag name="9F10" source="contact" format="TLV"/>
 		</DGI>
 	</App>
-	<App aid="A000000025010900">
+	<App aid="A0000000291010">
 		<DGI name="9102">
 			<Template name="A5">
 				<Tag name="50"   source="alias" format="TLV"/>
 				<Tag name="87"   source="alias" format="TLV"/>
-				<Tag name="5F2D" source="contact" format="TLV"/>
-				<Tag name="9F11" source="contact" format="TLV"/>
-				<Tag name="9F12" source="alias" format="TLV"/>
-				<Tag name="BF0C" source="alias" format="TLV"/>
-			</Template>
-		</DGI>
-		<DGI name="9103">
-			<Template name="A5">
-				<Tag name="50"   source="alias" format="TLV"/>
-				<Tag name="87"   source="alias" format="TLV"/>
-				<Tag name="9F38" source="contactless" format="TLV"/>
 				<Tag name="5F2D" source="contact" format="TLV"/>
 				<Tag name="9F11" source="contact" format="TLV"/>
 				<Tag name="9F12" source="alias" format="TLV"/>
@@ -333,11 +323,6 @@
 						<Tag name="4F" source="contact" format="TLV"/>
 						<Tag name="50" source="contact" format="TLV"/>
 						<Tag name="87" source="contact" format="TLV"/>
-					</Template>
-					<Template name="61">
-						<Tag name="4F" source="alias" format="TLV"/>
-						<Tag name="50" source="alias" format="TLV"/>
-						<Tag name="87" source="alias" format="TLV"/>
 					</Template>
 				</Template>
 			</Template>

@@ -117,11 +117,6 @@ class VisaTrans(TransBase):
             return
         return resp
 
-    def first_gac_cda(self):
-        tag8C = self.get_tag(PROCESS_STEP.READ_RECORD,'8C')
-        data = tools.assemble_dol(tag8C)
-        resp = super().gac(Crypto_Type.ARQC_CDA,data)
-
     def get_data(self):
         tags = ['9F75','9F72']
         super().get_data(tags)

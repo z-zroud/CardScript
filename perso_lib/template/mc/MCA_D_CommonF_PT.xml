@@ -194,7 +194,7 @@
             <Tag name="DF1D" source="contact" format="V" comment="Counter 2 Control(Contact)"/>
             <Tag name="DF2E" source="contact" format="V" comment="Counter 2 CVR Dependency Data(Contact)"/>
             <Tag name="DF3C" source="contact" format="V" comment="CVR Issuer Discretionary Data(Contact)"/>
-            <Tag name="--"   source="contact" format="V" comment="Interface Identifier (Contact)"/>
+            <Tag name="DF3E" source="contact" format="V" comment="Interface Identifier (Contact)"/>
             <Tag name="DF22" source="contact" format="V" comment="MTA CVM(Contact)"/>
             <Tag name="DF25" source="contact" format="V" comment="MTA NoCVM(Contact)"/>
 		</DGI>
@@ -219,7 +219,7 @@
             <Tag name="DF1E" source="contact" format="V" comment="Counter 2 Control(Contactless)"/>
             <Tag name="DF2F" source="contact" format="V" comment="Counter 2 CVR Dependency Data(Contactless)"/>
             <Tag name="DF3D" source="contact" format="V" comment="CVR Issuer Discretionary Data(Contactless)"/>
-            <Tag name="--"   source="contact" format="V" comment="Interface Identifier (Contactless)"/>
+            <Tag name="DF3E" source="contactless" format="V" comment="Interface Identifier (Contactless)"/>
             <Tag name="DF23" source="contact" format="V" comment="MTA CVM(Contactless)"/>
             <Tag name="DF26" source="contact" format="V" comment="MTA NoCVM(Contactless)"/>
 		</DGI>
@@ -235,17 +235,17 @@
             <Tag name="CE"   source="contact" format="V" comment="Card Issuer Action Code(Contactless)-Online"/>
 		</DGI>
         <DGI name="A007">
-			<Tag name="--"   source="contact" format="V" comment="Application Transaction Counter Limit"/>
-            <Tag name="--"   source="contact" format="V" comment="Previous Transaction History"/>
+			<Tag name="DF60" source="contact" format="V" comment="Application Transaction Counter Limit"/>
+            <Tag name="DF63" source="contact" format="V" comment="Previous Transaction History"/>
 		</DGI>
         <DGI name="A017">
 			<Tag name="DF3A" source="contact" format="V" comment="AC Session Key Counter Limit(Contact)"/>
-            <Tag name="--"   source="contact" format="V" comment="Key Derivation Index (Contact)"/>
+            <Tag name="DF55" source="contact" format="V" comment="Key Derivation Index (Contact)"/>
             <Tag name="DF32" source="contact" format="V" comment="SMI Session Key Counter Limit(Contact)"/>
 		</DGI>
         <DGI name="A027">
 			<Tag name="DF34" source="contact" format="V" comment="AC Session Key Counter Limit(Contactless)"/>
-            <Tag name="--"   source="contact" format="V" comment="Key Derivation Index (Contactless)"/>
+            <Tag name="DF59" source="contact" format="V" comment="Key Derivation Index (Contactless)"/>
             <Tag name="DF33" source="contact" format="V" comment="SMI Session Key Counter Limit(Contactless)"/>
 		</DGI>
         <DGI name="A009">
@@ -253,30 +253,51 @@
 		</DGI>
         <DGI name="A00E">
 			<Tag name="DF41" source="contact" format="V" comment="DS Management Control"/>
-            <Tag name="--"   value="00" format="V" comment="DS Number Of Slots"/>
+            <Tag name="--"   value="00" format="V" comment="DS Number of slots"/>
             <Tag name="--"   source="contact" format="V" comment="DSPK"/>
 		</DGI>
         <DGI name="B002">
 			<Tag name="DE"   source="contact" format="V" comment="Log Data Table"/>
 			<Tag name="9F4F" source="contact" format="V" comment="Log Format"/>			
 		</DGI>
+		<DGI name="B100">
+            <Tag name="DF04"   source="contact" format="V" comment="Min Time For Processing Relay Resistance APDU (Contact) "/>
+            <Tag name="DF05"   source="contact" format="V" comment="Max Time For Processing Relay Resistance APDU (Contact) "/>
+            <Tag name="DF0B"   source="contact" format="V" comment="Transmission Time For Relay Resistance R-APDU (Contact) "/>
+		</DGI>
+		<DGI name="B101">
+            <Tag name="DF74"   source="contact" format="V" comment="Min Time For Processing Relay Resistance APDU (Contactless) "/>
+            <Tag name="DF75"   source="contact" format="V" comment="Max Time For Processing Relay Resistance APDU (Contactless) "/>
+            <Tag name="DF76"   source="contact" format="V" comment="Transmission Time For Relay Resistance R-APDU (Contactless) "/>
+		</DGI>
+		<DGI name="B102">
+            <Tag name="DF73"   source="contact" format="V" comment="Linked Application Index "/>
+		</DGI>
 		<DGI name="8000">
-			<Tag name="8000" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique AC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique MAC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique ENC Key"/>
 		</DGI>
 		<DGI name="9000">
-			<Tag name="9000" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKMAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKENC"/>
 		</DGI>
         <DGI name="8001">
-			<Tag name="8001" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique AC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique MAC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique ENC Key"/>
 		</DGI>
         <DGI name="9001">
-			<Tag name="9001" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKMAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKENC"/>
 		</DGI>
         <DGI name="A006">
-			<Tag name="A006" source="kms" format="V"/>
+			<Tag name="--" source="kms" format="V" comment="ICC Dynamic Number Master Key"/>
 		</DGI>
         <DGI name="A016">
-			<Tag name="A016" source="kms" format="V"/>
+			<Tag name="--" source="kms" format="V" comment="ICC Dynamic Number Master Key"/>
 		</DGI>
 		<DGI name="8201">
 			<Tag name="8201" source="kms" format="V"/>
@@ -294,11 +315,11 @@
 			<Tag name="8205" source="kms" format="V"/>
 		</DGI>
 		<DGI name="8401">
-			<Tag name="8401" source="kms" format="V"/>
+			<Tag name="--" source="kms" format="V" comment="KDCVC3(Contactless)"/>
 		</DGI>
 		<DGI name="B023">
-			<Tag name="DC"   source="kms" format="V" comment="IVCVC3 (Track1)"/>
-            <Tag name="DD"   source="kms" format="V" comment="IVCVC3 (Track2)"/>
+			<Tag name="DC"   source="kms" format="V" comment="IVCVC3(Track1)"/>
+            <Tag name="DD"   source="kms" format="V" comment="IVCVC3(Track2)"/>
 		</DGI>
 		<DGI name="8010">
 			<Tag name="--"   source="contact" format="V" comment="Reference PIN"/>

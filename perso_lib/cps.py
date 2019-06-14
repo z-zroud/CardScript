@@ -139,7 +139,7 @@ class Cps:
                 if item.name.find('_2') == -1:
                     first_dgi_list += item.name + ';'
                 else:
-                    second_dgi_list += item.name + ';'
+                    second_dgi_list += item.name[0:-2] + ';'
             ini.add_section(item.name)
             for key,value in item.tag_value_dict.items():
                 ini.add_option(item.name,key,value)
@@ -149,7 +149,7 @@ class Cps:
         ini.add_option('DGI_LIST','DGI_LIST',first_dgi_list)
         if second_dgi_list:
             ini.add_section('DGI_LIST_2')
-            ini.add_option('DGI_LIST_2','DGI_LIST',first_dgi_list)
+            ini.add_option('DGI_LIST_2','DGI_LIST',second_dgi_list)
         
         
 

@@ -30,6 +30,7 @@ def process_rule(rule_file_name,cps):
     rule = Rule(cps,rule_handle)
     rule.wrap_process_decrypt()
     rule.wrap_process_add_fixed_tag()
+    rule.wrap_process_dgi_map()
     rule.wrap_process_remove_dgi()
     rule.wrap_process_remove_tag()
     return rule.cps

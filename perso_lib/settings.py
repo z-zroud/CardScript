@@ -13,10 +13,15 @@ class LenType(Enum):
 	Fixed = 0
 	Range = 1
 
-def get_tag_len(tag,aid):
-	'''
-	获取tag规范指定的长度
-	'''
+class TagMapInfo():
+	tag = ''
+	desc = ''
+	len_type = None
+	tag_len = []
+
+def get_mappings_info(aid,tag):
+	tag_map_info = TagMapInfo()
+	tag_map_info.tag = tag
 	mappings = None
 	if aid == '315041592E5359532E4444463031':
 		mappings = pse_tag_desc_mappings
@@ -28,21 +33,57 @@ def get_tag_len(tag,aid):
 		mappings = mc_tag_desc_mappings
 	elif aid in ('A000000333010101','A000000333010102'):
 		mappings = uics_tag_desc_mappings
+	elif aid in ('A00000047400000001'):
+		mappings = jetco_tag_desc_mappings
 	if mappings:
 		items = mappings.get(tag)
-		if items and len(items) > 1:
-			tag_len = items[1]
-			if '-' in tag_len:
-				min_len = int(tag_len.split('-')[0])
-				max_len = int(tag_len.split('-')[1])
-				return LenType.Range,[min_len,max_len]
-			elif '|' in tag_len:
-				str_lens = tag_len.split('|')
-				lens = [int(str_len) for str_len in str_lens]
-				return LenType.Fixed,lens
-			else:
-				return LenType.Fixed,[int(items[1])]
-	return None,None
+		if items:
+			tag_map_info.desc = items[0]
+			if len(items) > 1:
+				tag_len = items[1]
+				if '-' in tag_len:
+					min_len = int(tag_len.split('-')[0])
+					max_len = int(tag_len.split('-')[1])
+					tag_map_info.len_type = LenType.Range
+					tag_map_info.tag_len = [min_len,max_len]
+				elif '|' in tag_len:
+					str_lens = tag_len.split('|')
+					lens = [int(str_len) for str_len in str_lens]
+					tag_map_info.len_type = LenType.Fixed
+					tag_map_info.tag_len = lens
+					# return LenType.Fixed,lens
+				else:
+					tag_map_info.len_type = LenType.Fixed
+					tag_map_info.tag_len = [int(items[1])]
+					# return LenType.Fixed,[int(items[1])]
+	return tag_map_info
+
+encrypt_dgi_rules = (
+	['8000','A006','A016'],
+	'需要解密，个人化时需要使用个人化过程密钥加密'
+)
+
+rsa_dgi_rules = (
+	['8201','8202','8203','8204','8205',],
+	'检查RSA密钥长度是否为{0}位，如果不是则报错；需要解密，个人化时需要填充“80..00“，然后使用个人化过程密钥加密。'
+)
+
+kcv_check_rules = (
+	[('9000','8000')],
+	'使用DGI{0}的密钥分别对8字节0x00加密，分别取前3字节作为kcv，拼起来后与DGI{1}进行比较，如果不一致，则报错。'
+)
+
+fixed_value_rules = (
+	['9104','A005'],
+	'判断值是否为{0}'
+)
+
+empty_tag_rules = (
+	['92','9F48'],
+	'判断Tag{0}的长度是否为0，如果为0则不个人化'
+)
+
+
 
 visa_tag_desc_mappings = {
 #Command Response Data-DGI
@@ -114,7 +155,7 @@ visa_tag_desc_mappings = {
 	'8F' : ('CA PKI','1'),
 	'90' : ('IPK Certificate',),
 	'92' : ('IPK Remainder',),
-	'9F32' : ('IPK Exponent','1|3'),
+	'93' : ('Signed Static Application Data',),	'9F32' : ('IPK Exponent','1|3'),
 	'9F46' : ('ICCPK Certificate',),
 	'9F47' : ('ICCPK Exponent','1|3',),
 	'9F48' : ('ICCPK Remainder',),
@@ -172,11 +213,20 @@ mc_tag_desc_mappings = {
 	'A027' : ('3DES Key Information(Contactless)',),
 	'A009' : ('Application Life Cycle Data',),
 	'A00E' : ('Data Storage Configuration',),
-	'B100' : ('Contact Relay Resistance Protocol Parameters',),
+	'B002' : ('Transaction log related data',),	'B100' : ('Contact Relay Resistance Protocol Parameters',),
 	'B101' : ('Contactless Relay Resistance Protocol Parameters',),
 	'B102' : ('Linked Application Index',),
 	'B023' : ('Contactless IVCVC3',),
-	
+	'B011' : ('Protected Data Envelope 1',),
+	'B012' : ('Protected Data Envelope 2',),
+	'B013' : ('Protected Data Envelope 3',),
+	'B014' : ('Protected Data Envelope 4',),
+	'B015' : ('Protected Data Envelope 5',),
+	'B016' : ('Unprotected Data Envelopes 1',),
+	'B017' : ('Unprotected Data Envelopes 2',),
+	'B018' : ('Unprotected Data Envelopes 3',),
+	'B019' : ('Unprotected Data Envelopes 4',),
+	'B01A' : ('Unprotected Data Envelopes 5',),	
 #Key-DGI
 	'8000' : ('Contact Keyset',),
 	'9000' : ('DES Key Check Values(Contact)',),
@@ -247,7 +297,7 @@ mc_tag_desc_mappings = {
 	'8F' : ('CA Index','1'),
 	'90' : ('IPK Certificate',),
 	'92' : ('IPK Remainder',),
-	'9F32' : ('IPK Exponent','1|3'),
+	'93' : ('Signed Static Application Data',),	'9F32' : ('IPK Exponent','1|3'),
 	'9F46' : ('ICCPK Certificate',),
 	'9F47' : ('ICCPK Exponent','1|3'),
 	'9F48' : ('ICCPK Remainder',),
@@ -375,7 +425,12 @@ jetco_tag_desc_mappings = {
 	'8203' : ('ICC Key CRT constant d mod (p – 1)',),
 	'8204' : ('ICC Key CRT constant prime factor q',),
 	'8205' : ('ICC Key CRT constant prime factor p',),
-#Template Data
+#Jetco-DGI
+	'7FF1' : ('Jetco Data Object List 1',),
+	'7FF2' : ('Jetco Data Object List 2',),
+	'7FF3' : ('Jetco Data Object',),
+	'7FF4' : ('Jetco Data Object',),
+	'7FF5' : ('Jetco Data Object',),#Template Data
 	'70' : ('Record Template',),
 	'61' : ('Application Template',),
 	'A5' : ('FCI Proprietary Template',),
@@ -400,7 +455,7 @@ jetco_tag_desc_mappings = {
 	'5F25' : ('Application Effective Date','3'),
 	'5F34' : ('Application PAN Sequence Number','1'),
 	'9F07' : ('Application Usage Control','2'),
-	'8E' : ('CVM List'),
+	'8E' : ('CVM List',),
 	'9F0D' : ('IAC-Default','5'),
 	'9F0E' : ('IAC-Denial','5'),
 	'9F0F' : ('IAC-Online','5'),
@@ -437,7 +492,8 @@ jetco_tag_desc_mappings = {
 	'9F59' : ('CTCUL','1'),
 	'9F5C' : ('CTTAUL','6'),
 #Jetco Proprietary Data
-	'DF20' : ('Card Account Number',),
+	'DF41' : ('JDOL1',),
+	'DF42' : ('JDOL2',),	'DF20' : ('Card Account Number',),
 	'DF21' : ('Bank Number',),
 	'DF22' : ('Card Sequence Number',),
 	'DF23' : ('Language Code Field',),
@@ -520,7 +576,7 @@ uics_tag_desc_mappings = {
 	'9F4B' : ('Signed Dynamic Application Data',),	
 	'9F24' : ('PAR','29'),
 	'9F74' : ('E-Cash Issuer Authorization Code','6'),
-	'9F63' : ('Product Information',),
+	'9F63' : ('Product Information','16'),
 #Internal Data
 	'82' : ('AIP','2'),
 	'94' : ('AFL',),
@@ -549,7 +605,7 @@ uics_tag_desc_mappings = {
 	'9F77' : ('E-Cash Balance Upper Limit','6'),
 	'9F78' : ('Transaction Amount Limit','6'),
 	'9F79' : ('E-Cash Balance','6'),
-	'DF4F' : ('E-cash circular log format',),
+	'DF4F' : ('Load log format',),
 	'DF62' : ('Fee deduction by segment limit','6'),
 	'DF63' : ('Fee deducted by segment','6'),
 	'DF71' : ('E-cash application currency code(Second currency)','2'),
@@ -599,10 +655,3 @@ ppse_tag_desc_mappings = {
 	'5F2D':('preference language','2|4'),
 	'88' : ('SFI','1'),
 }
-
-
-if __name__ == "__main__":
-	x,y = get_tag_len('4F','325041592E5359532E4444463031')
-	x,y = get_tag_len('5F2D','325041592E5359532E4444463031')
-	x,y = get_tag_len('88','325041592E5359532E4444463031')
-	print('ok')

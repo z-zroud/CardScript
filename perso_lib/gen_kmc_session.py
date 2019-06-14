@@ -51,24 +51,25 @@ def gen_session_key(kmc,div_method,host_challenge,initialize_update_data):
 	dek_session_key = ''
 	mac_session_key = ''
 	enc_session_key = ''
-	div_data = initialize_update_data[0:20]
-	#key_version = initialize_update_data[20:22]
-	scp = initialize_update_data[22:24]
-	card_challenge = initialize_update_data[24:40]
-	#card_cryptogram = initialize_update_data[40:56]
-	dek_key,mac_key,enc_key = gen_kmc_sub_key(kmc, div_method, div_data)
-	if scp == 1:
-		left_div_data = card_challenge[8:16] + host_challenge[0:8]
-		right_div_data = card_challenge[0:8] + host_challenge[8:16]
-		div_data = left_div_data + right_div_data
-		dek_session_key = algorithm.des3_ecb_encrypt(dek_key, div_data)
-		mac_session_key = algorithm.des3_ecb_encrypt(mac_key, div_data)
-		enc_session_key = algorithm.des3_ecb_encrypt(enc_key, div_data)
-	else:	#scp == 2
-		seq_no = card_challenge[0:4]
-		dek_session_key = _gen_dek_session_key(seq_no, dek_key)
-		mac_session_key = _gen_mac_session_key(seq_no, mac_key)
-		enc_session_key = _gen_enc_session_key(seq_no, enc_key)
+	if initialize_update_data:
+		div_data = initialize_update_data[0:20]
+		#key_version = initialize_update_data[20:22]
+		scp = initialize_update_data[22:24]
+		card_challenge = initialize_update_data[24:40]
+		#card_cryptogram = initialize_update_data[40:56]
+		dek_key,mac_key,enc_key = gen_kmc_sub_key(kmc, div_method, div_data)
+		if scp == 1:
+			left_div_data = card_challenge[8:16] + host_challenge[0:8]
+			right_div_data = card_challenge[0:8] + host_challenge[8:16]
+			div_data = left_div_data + right_div_data
+			dek_session_key = algorithm.des3_ecb_encrypt(dek_key, div_data)
+			mac_session_key = algorithm.des3_ecb_encrypt(mac_key, div_data)
+			enc_session_key = algorithm.des3_ecb_encrypt(enc_key, div_data)
+		else:	#scp == 2
+			seq_no = card_challenge[0:4]
+			dek_session_key = _gen_dek_session_key(seq_no, dek_key)
+			mac_session_key = _gen_mac_session_key(seq_no, mac_key)
+			enc_session_key = _gen_enc_session_key(seq_no, enc_key)
 	return dek_session_key,mac_session_key,enc_session_key
 
 

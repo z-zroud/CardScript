@@ -1,7 +1,8 @@
 <Root>
 <Bin />
 	<App aid="A0000000031010" sda="false" dda="true">
-		<Sig id="sig_VSDC">
+		<Config dgi_9F4B="0303" dgi_qgpo_aac="0401"/>
+        <Sig id="sig_VSDC">
 			<Tag name="5A"   source="contact" format="TLV" />
 			<Tag name="5F24" source="contact" format="TLV" />
 			<Tag name="5F25" source="contact" format="TLV" />
@@ -51,7 +52,7 @@
 		</DGI>
 		<DGI name="0203">
 			<Template name="70">
-				<Tag name="9F47" source="kms" format="TLV"/>
+				<Tag name="9F47" source="kms"  format="TLV"/>
 				<Tag name="9F48" sig_id="sig_VSDC" source="kms" format="TLV"/>
 				<Tag name="9F49" source="contact" format="TLV"/>
 			</Template>
@@ -80,6 +81,7 @@
 				<Tag name="9F47" source="kms" format="TLV"/>
 				<Tag name="9F48" sig_id="sig_qVSDC" source="kms" format="TLV"/>
 				<Tag name="9F4A" source="contact" format="TLV"/>
+				<Tag name="5F28" source="contact" format="TLV"/>
 				<Tag name="9F07" source="contactless" format="TLV"/>
 				<Tag name="9F69" source="contactless" format="TLV"/>
 			</Template>
@@ -94,6 +96,12 @@
 				<Tag name="8F"   source="kms" format="TLV"/>
 				<Tag name="92"   source="kms" format="TLV"/>
 				<Tag name="9F32" source="kms" format="TLV"/>                                
+			</Template>
+		</DGI>
+        <DGI name="0401">
+            <Template name="70">
+                <Tag name="5F28" source="contact" format="TLV"/>
+				<Tag name="9F07" source="contactless" format="TLV"/>
 			</Template>
 		</DGI>
 		<DGI name="3000">
@@ -153,13 +161,13 @@
 		</DGI>	
 		<DGI name="9115">
 			<Tag name="82"   source="9115" format="TLV"/>
+            <Tag name="94"   source="9115" format="TLV"/>
 			<Tag name="57"   source="contact" format="TLV"/>
 			<Tag name="5F34" source="contact"  format="TLV"/>
 			<Tag name="9F10" source="contactless" format="TLV"/>
 			<Tag name="FFFF" type="fixed" value="9F26089F27019F3602" format="V"/>
 			<Tag name="9F6C" source="contactless" format="TLV"/>
 			<Tag name="9F6E" source="contactless"  format="TLV"/>
-			<Tag name="9F07" source="contactless" format="TLV"/>
 		</DGI>
 		<DGI name="9116">
 			<Tag name="82"   source="9116" format="TLV"/>

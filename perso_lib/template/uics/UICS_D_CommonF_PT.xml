@@ -1,6 +1,6 @@
 <Root>
 <Bin />
-	<App aid="A000000333" sda="false" dda="true">
+	<App aid="A000000333" sda="true" dda="true">
 		<Sig id="sig_UICS">
 			<Tag name="5F24" source="contact" format="TLV"/>
 			<Tag name="5F25" source="contact" format="TLV"/>
@@ -73,7 +73,7 @@
 				<Tag name="9F48" sig_id="sig_UICS" source="kms" format="TLV"/>
 				<Tag name="9F49" source="contact" format="TLV"/>
 			</Template>
-		</DGI>		
+		</DGI>
 		<DGI name="0205">
 			<Template name="70">
 				<Tag name="5F24" source="contact" format="TLV"/>
@@ -135,19 +135,21 @@
 			<Tag name="9F75" source="contact" format="TLV"/>
 			<Tag name="9F73" source="contact" format="TLV"/>
 			<Tag name="9F5C" source="contact" format="TLV"/>
-			<Tag name="9F77" source="contact" format="TLV"/>
-			<Tag name="9F78" source="contact" format="TLV"/>
-			<Tag name="9F79" source="contact" format="TLV"/>
-			<Tag name="9F6D" source="contact" format="TLV"/>
-			<Tag name="9F68" source="contact" format="TLV"/>
-			<Tag name="9F6B" source="contact" format="TLV"/>
-			<Tag name="9F6C" source="contact" format="TLV"/>
-			<Tag name="9F5D" source="contact" format="TLV"/>
-			<Tag name="DF71" source="contact" format="TLV"/>
-			<Tag name="DF76" source="contact" format="TLV"/>
-			<Tag name="DF77" source="contact" format="TLV"/>
-			<Tag name="DF78" source="contact" format="TLV"/>
-			<Tag name="DF79" source="contact" format="TLV"/>
+			<Tag name="9F77" source="contactless" format="TLV"/>
+			<Tag name="9F78" source="contactless" format="TLV"/>
+			<Tag name="9F79" source="contactless" format="TLV"/>
+			<Tag name="9F6D" source="contactless" format="TLV"/>
+			<Tag name="9F68" source="contactless" format="TLV"/>
+			<Tag name="9F6B" source="contactless" format="TLV"/>
+			<Tag name="9F6C" source="contactless" format="TLV"/>
+			<Tag name="9F5D" source="contactless" format="TLV"/>
+			<Tag name="DF62" source="contactless" format="TLV"/>
+			<Tag name="DF63" source="contactless" format="TLV"/>			
+			<Tag name="DF71" source="contactless" format="TLV"/>
+			<Tag name="DF76" source="contactless" format="TLV"/>
+			<Tag name="DF77" source="contactless" format="TLV"/>
+			<Tag name="DF78" source="contactless" format="TLV"/>
+			<Tag name="DF79" source="contactless" format="TLV"/>
 		</DGI>
 		<DGI name="0E01">
 			<Tag name="57"   source="contact" format="TLV"/>
@@ -171,10 +173,14 @@
 			<Tag name="--" source="contact" format="V" comment="PIN Try Limit"/>
 		</DGI>
 		<DGI name="8000">
-			<Tag name="8000" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique AC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique MAC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique ENC Key"/>
 		</DGI>
 		<DGI name="9000">
-			<Tag name="9000" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKMAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKENC"/>
 		</DGI>
 		<DGI name="8201">
 			<Tag name="8201" source="kms" format="V"/>

@@ -17,16 +17,17 @@ from perso_lib.excel import ExcelMode,ExcelOp
 from perso_lib import settings
 from perso_lib.log import Log
 
-
+Log.init()
 
 alias_count = 0
 def get_alias():
     global alias_count
+    print('alias:' + str(alias_count))
     alias_count += 1
     return 'alias' + str(alias_count)
 
 
-# 定义数据类型枚举
+# 定义数据类型枚举,仅在MC 1156表中使用
 class MediaType(Enum):
     FCI         = 0     #MC 专用
     SHARED      = 1     #MC 专用
@@ -36,6 +37,9 @@ class MediaType(Enum):
     MAGSTRIPE   = 5     #MC 专用
 
 class AppType(Enum):
+    '''
+    除了UICS类型用来区分
+    '''
     VISA_DEBIT  = 'VISA_DEBIT'  #VISA 借记
     VISA_CREDIT = 'VISA_CREDIT' #VISA 贷记
     MC_DEBIT    = 'MC_DEBIT'    #MC 借记
@@ -44,22 +48,24 @@ class AppType(Enum):
     UICS_CREDIT = 'UICS_CREDIT' #UICS 贷记
     JETCO       = 'JETCO'       #JETCO
     AMEX        = 'AMEX'        #AMEX
+    JCB         = 'JCB'         #JCB
+    PURE        = 'PURE'        #PURE
 
-# 该类描述了来源数据的结构呈现形式
 class SourceItem:
+    '''
+    该类描述了获取的元数据格式
+    '''
     def __init__(self):
         self.name = ''      #tag的英文名称
         self.tag = ''       #tag标签
         self.len = ''       #tag长度
         self.value = ''     #tag值
         self.data_type = None   #标识数据值类型,fixed,file,kms
-        self.media_type = None #tag数据类型,由MediaType定义
+        self.media_type = None #tag介质类型
         self.used = False   #个人化时，是否被使用到
 
-# 描述了从emboss file文件中获取的tag标签信息
-class DpItem:
+class TagInfo:
     '''
-    该类用于表示需要从emboss file文件中取值的tag结构
     tag 需要从文件中获取值的tag
     convert_to_ascii 是否需要转换为ASCII码
     value 一种描述取值方式的字符串,例如 "[10,20]001[12,33]"
@@ -253,11 +259,13 @@ class JetcoForm:
         Log.info('ca_exp: ' + exp)
         return tag_values
 
-# 金邦达专用定义的Excel表格
 class GoldpacForm:
-    def __init__(self,form_name):
-        self.excel = ExcelOp(form_name)
-        self.source_items = []
+    '''
+    获取金邦达专用的Excel表格中的数据
+    '''
+    def __init__(self,sheet_name):
+        self.excel = ExcelOp(sheet_name) #sheet_name为Excel表格中的表名
+        self.source_items = []  #存储Excel表中的数据项
         
     def get_data(self,tag,media_type,desc=None):
         for item in self.source_items:
@@ -267,56 +275,69 @@ class GoldpacForm:
         return None
     
     def _get_data(self,row,col,ignore_list=None):
-        # 列名分别是:Data Type,Name,Tag,Length,recommended value,Issuer settings,data source,remarks
+        # 列名分别是:Data Category,Name,Tag,Length,recommended value,Issuer settings,data source,remarks
         source_item = SourceItem()
         source_item.name = self.excel.read_cell_value(row,col + 1)    #Name
         source_item.tag = self.excel.read_cell_value(row,col + 2)    #Tag
-        # if ignore_list and source_item.tag in ignore_list:
-        #     continue    #模板直接忽略
-        source_item.len = self.excel.read_cell_value(row,col + 3)     # 长度(字符串)
+        #source_item.len = self.excel.read_cell_value(row,col + 3)     # 不使用Excel表中的长度定义，使用setting.py中的长度定义
         source_item.value = self.excel.read_cell_value(row,col + 5)   # Issuer settings
-        source_item.data_type = self.excel.read_cell_value(row,col + 6) # file,kms,fixed
-        if source_item.tag:
-            source_item.tag = str(source_item.tag).strip() #有些可能读表格时，默认是int类型，需要转str
-            temp = source_item.tag.split('-')
-            if len(temp) == 2 and temp[1].strip():
-                source_item.tag = temp[0].strip()
-                source_item.media_type = temp[1].strip().lower()
-            else:
-                source_item.media_type = 'contact'
-        if source_item.value:
-            # 过滤掉空格和换行符
+        source_item.data_type = self.excel.read_cell_value(row,col + 6) # Emboss File,Kms,Fixed
+
+        if source_item.name:
+            source_item.name = source_item.name.replace('\n',' ')
+
+        # 忽略掉value为N.A或者为空的数据项
+        if source_item.value and source_item.value != 'N.A':
+            # 1. 清理tag列数据
+            if source_item.tag:
+                source_item.tag = str(source_item.tag).strip() #有些可能读表格时，默认是int类型，需要转str
+                temp = source_item.tag.split('-')
+                if len(temp) == 2 and temp[1].strip():
+                    source_item.tag = temp[0].strip()
+                    source_item.media_type = temp[1].strip().lower()
+                else:
+                    source_item.media_type = 'contact'
+
+            # 2. 清理数据项的数据类型
+            if source_item.data_type == 'Fixed':
+                source_item.data_type = 'fixed'   #保持和模板xml中的type一致
+            elif source_item.data_type == 'Emboss File':
+                source_item.data_type = 'file'
+            elif source_item.data_type == 'Kms':
+                source_item.data_type = 'kms'
+                source_item.value = 'kms'
+
+            # 3. 清理value列数据,过滤掉空格和换行符,
             source_item.value = str(source_item.value)
-            source_item.value = source_item.value.replace(' ','').replace('\n','')
-            if source_item.value != 'N.A':
-                if source_item.data_type == 'Fixed':
-                    source_item.data_type = 'fixed'   #保持和模板xml中的type一致
-                    if source_item.value.lower() == 'empty':
-                        source_item.value = 'empty' #如果为empty,也需要个人化此tag
-                    elif not utils.is_hex_str(source_item.value) and  source_item.tag != '9F10': #此时认为是不合规的值
-                        Log.info('parse tag %s error: value is incorrect format',source_item.tag)
-                        source_item.value = None
-                elif source_item.data_type == 'Emboss File':
-                    source_item.data_type = 'file'
-                elif source_item.data_type == 'Kms':
-                    source_item.data_type = 'kms'
-                    source_item.value = 'kms'
-        if source_item.value is not None and source_item.tag:   #确保tag和value都存在
+            source_item.value = source_item.value.replace('\n','').replace(' ','')
+            # Excel表中，可以不区分大小写和空格，这个统一转为小写形式
+            if source_item.value.lower() == 'empty':
+                source_item.value = 'empty' #如果为empty,也需要个人化此tag
+            # elif not utils.is_hex_str(source_item.value) and  source_item.tag != '9F10': #此时认为是不合规的值
+            #     Log.error('parse tag %s error: value is incorrect format',source_item.tag)
+            #     source_item.value = None
+
+        if source_item.value and source_item.tag:
             return source_item
         return None
 
     def read_data(self,sheet_name,start_row=5,start_col=2):
+        Log.info('start read data...')
         self.source_items.clear() #读数据前，将旧数据清空
         if self.excel.open_worksheet(sheet_name):
             first_header = self.excel.read_cell_value(start_row,start_col)
             if str(first_header).strip() != 'Data Category':
-                print('can not found form start position')
+                Log.error('can not found form start position,row:%scol:%s',start_row,start_col)
                 return None
             start_row += 1 #默认标题行之后就是数据行
             for row in range(start_row,200):
                 item = self._get_data(row,start_col)    #获取每行数据，组成一个SourceItem对象
                 if item:
-                    self.source_items.append(item)
+                    if item.value != 'N.A':
+                        self.source_items.append(item)
+                        Log.info("tag:{0:15s} |value:{1:40s}|desc:{2}".format(item.tag,item.value,item.name))
+                    else:
+                        Log.warn("tag:{0:15s} |value:{1:40s}|desc:{2}".format(item.tag,item.value,item.name))
         return self.source_items[:]
 
 
@@ -572,6 +593,101 @@ class ImportForm:
             if not item.used:
                 Log.info("tag:{0:6s} |value:{1:30s}|name:{2}".format(item.tag,item.value,item.name))
 
+class GenItoDoc:
+    def __init__(self,dp_xml,ito_docx):
+        self.dp_xml = dp_xml    #DP xml配置文件
+        self.ito_docx = ito_docx
+        cwd = os.path.dirname(__file__)
+        ito_docx_template = os.path.join(cwd,'template','DpRequirement.docx')
+        self.docx = Docx(ito_docx_template)
+        self.xml_handle = XmlParser(dp_xml,XmlMode.READ)
+
+    def _parse_rule(self,app_node,dgi_node):
+        rule = ''
+        dgi_name = self.xml_handle.get_attribute(dgi_node,'name')
+        # 处理个人化需加密的DGI
+        if dgi_name in settings.encrypt_dgi_rules[0]:
+            rule += '\n' + settings.encrypt_dgi_rules[1]
+        # 处理个人化RSA秘钥规则
+        if dgi_name in settings.rsa_dgi_rules[0]:
+            cert_node = self.xml_handle.get_first_node(app_node,'Cert')
+            if not cert_node:
+                Log.error('can not handle rsa rule, cert node is not existed.')
+            else:
+                rsa_len = self.xml_handle.get_attribute(cert_node,'rsa')
+                rule += '\n' +  (settings.rsa_dgi_rules[1]).format(rsa_len)
+
+        # 处理DGI的值为固定值的规则
+        if dgi_name in settings.fixed_value_rules[0]:
+            dgi_value = ''
+            tag_nodes = self.xml_handle.get_nodes(dgi_node,'Tag')
+            for tag_node in tag_nodes:
+                name = self.xml_handle.get_attribute(tag_node,'name')
+                tag_type = self.xml_handle.get_attribute(tag_node,'type')
+                value = self.xml_handle.get_attribute(tag_node,'value')
+                tag_format = self.xml_handle.get_attribute(tag_node,'format')
+                if tag_format == 'V':
+                    dgi_value += value
+                else:
+                    if tag_type != 'fixed' or name == '--':
+                        Log.error('can not construct dgi value, make sure tag type is fixed and name not equal --')
+                        break
+                    # TLV格式
+                    dgi_value += name + utils.get_strlen(value) + value
+            rule += '\n' +  (settings.fixed_value_rules[1].format(dgi_value))
+
+        # 处理kcv规则
+        for kcv_dgi_name,compared_dgi_name in settings.kcv_check_rules[0]:
+            if kcv_dgi_name == dgi_name:
+                rule += '\n' +  (settings.kcv_check_rules[1].format(compared_dgi_name,kcv_dgi_name))
+                break
+        
+        # 处理tag相关的规则
+        tag_nodes = self.xml_handle.get_nodes(dgi_node,'Tag')
+        for tag_node in tag_nodes:
+            tag_name = self.xml_handle.get_attribute(tag_node,'name')
+            # 处理空值规则
+            if tag_name in settings.empty_tag_rules[0]:
+                rule += '\n' +  (settings.empty_tag_rules[1].format(tag_name))
+                break
+        if rule.startswith('\n'):
+            rule = rule[1:]
+        return rule
+
+    def gen_ito_docx(self):
+        app_nodes = self.xml_handle.get_child_nodes(self.xml_handle.root_element,'App')
+        for app_node in app_nodes:
+            # 添加应用分组标题
+            aid = self.xml_handle.get_attribute(app_node,'aid')
+            self.docx.add_heading(2,'应用分组 Aid:' + aid)
+
+            # 添加表格,初始值为1行3列
+            col_count = 3
+            new_table = self.docx.add_table(1,col_count)
+
+            # 设置表格标题栏
+            title = ['标签','数据来源','备注']
+            for col in range(col_count): #设置表格头部栏
+                cell = self.docx.get_cell(new_table,0,col)
+                self.docx.set_cell_background(cell,'FFCA00')
+                self.docx.set_cell_text(cell,title[col])
+
+            # 设置每个应用的DGI分组
+            dgi_nodes = self.xml_handle.get_child_nodes(app_node,'DGI')
+            for dgi_node in dgi_nodes:
+                new_row = new_table.add_row()
+                dgi_name = self.xml_handle.get_attribute(dgi_node,'name')
+                # 设置第一列
+                self.docx.set_cell_text(new_row.cells[0],dgi_name)
+                self.docx.set_cell_background(new_row.cells[0],'FFCA00')
+                # 设置第二列
+                content = '从制卡数据DGI' + dgi_name + '中获取'
+                self.docx.set_cell_text(new_row.cells[1],content)
+                # 设置第三列
+                rule = self._parse_rule(app_node,dgi_node)
+                self.docx.set_cell_text(new_row.cells[2],rule)
+            self.docx.save_as(self.ito_docx)
+
 # 根据dp xml文件生成Word文档DP需求
 class GenDpDoc:
     def __init__(self,dp_xml,dp_docx):
@@ -660,15 +776,17 @@ class GenDpDoc:
             tag_type = self.xml_handle.get_attribute(tag_node,'type')
             tag_format = self.xml_handle.get_attribute(tag_node,'format')
             tag_eq = self.xml_handle.get_attribute(tag_node,'replace_equal_by_D')
-            tag_ascii = self.xml_handle.get_attribute(tag_node,'convert_to_ascii')
+            tag_ascii = self.xml_handle.get_attribute(tag_node,'convert_ascii')
             if not tag_value:
                 tag_value = ''
+            if tag_type == 'fixed' and not tag_value:
+                tag_value = 'Empty'
             if tag_type == 'kms':
                 tag_value = 'From KMS'
             if tag_eq and tag_eq == 'true':
-                tag_value += '-replace_equal_by_D'
+                tag_value += '-EQ'
             if tag_ascii and tag_ascii == 'true':
-                tag_value += '-convert_to_ascii'
+                tag_value += '-ASCII'
             
             if not tag_comment:
                 tag_comment = ''
@@ -734,10 +852,12 @@ class DpTemplateXml:
         self.app_type = app_type
         self.name = name
 
-# 根据xml模板、Excel表格中的数据、emboss file中的数据生成DP XML配置文件
 class GenDpXml:
+    '''
+    根据xml模板、Excel表格中的数据、emboss file中的数据生成DP XML配置文件
+    '''
     config = dict() #一个类属性字典，用于自定义配置
-    def __init__(self,template_xml,source_items,second_source_items=None,dp_items=None):
+    def __init__(self,template_xml,first_source_items,second_source_items=None,file_items=None):
         # 支持默认DP模板配置和自定义模板
         if isinstance(template_xml,DpTemplateXml):
             cwd = os.path.dirname(__file__)
@@ -746,52 +866,45 @@ class GenDpXml:
         else:
             self.template_xml = template_xml # 自定义模板
         self.template_handle = XmlParser(self.template_xml)
-        if dp_items:
-            self.dp_items = dp_items # 文件中的数据集
-        else:
-            self.dp_items = dict()
-        self.source_items = source_items # 第一应用数据集
+        self.first_source_items = first_source_items # 第一应用数据集
         self.second_source_items = second_source_items # 第二应用下的数据
-        self.cur_source_items = self.source_items # 表示当前应用使用的数据集
+        self.cur_source_items = self.first_source_items # 表示当前应用使用的数据集
         self.unused_data = []
-        self.first_app_aid = ''
-        self.second_app_aid = ''
+
         
+    def _get_aid_from_excel(self,source_item):
+        '''
+        根据Excel表中的tag4F获取aid
+        '''
+        for item in source_item:
+            if item.tag == '4F':
+                return item.value
+
     def _parse_value(self,value):
-        dp_item = DpItem()
+        '''
+        分析Excel表中value列
+        '''
+        tag_item = TagInfo()
         item = value.split('-')
-        if not item:
-            return None
-        else:
-            dp_item.value = item[0]
+        if item:
+            tag_item.value = item[0]
             for data in item[1:]:
                 if data.strip() == 'ASCII':
-                    dp_item.convert_to_ascii = True
+                    tag_item.convert_to_ascii = True
                 if data.strip() == 'EQ':
-                    dp_item.replace_equal_by_D = True
+                    tag_item.replace_equal_by_D = True
                 if data.strip() == 'TRIM':
-                    dp_item.trim_right_space = True
+                    tag_item.trim_right_space = True
                 if data.strip() == 'BCD':
-                    dp_item.convert_to_bcd = True
-        return dp_item
+                    tag_item.convert_to_bcd = True
+        return tag_item
         
-    def _set_app_info(self,xml_handle,app_nodes):
-        '''
-        存储双应用信息
-        '''
-        for index, app_node in enumerate(app_nodes):
-            aid = xml_handle.get_attribute(app_node,'aid')
-            if index == 0:
-                self.first_app_aid = aid
-            else:
-                self.second_app_aid = aid
-
     def _is_second_app(self,xml_handle,app_node):
         '''
         判断当前应用是否为第二应用
         '''
         aid = xml_handle.get_attribute(app_node,'aid')
-        return aid == self.second_app_aid
+        return aid == self._get_aid_from_excel(self.second_source_items)
 
     def _get_source_item(self,tag='',source='',comment=''):
         '''
@@ -818,48 +931,17 @@ class GenDpXml:
         if source_item:
             source_item.used = True
             dp_item = self._parse_value(source_item.value)
+            if source_item.tag == 'Rsa_len':
+                rsa = int(dp_item.value)
+                dp_item.value = utils.int_to_hex_str(rsa // 8)
             dp_item.tag = tag
-            dp_item.source = source
+            if source_item.data_type == 'kms':
+                dp_item.source = 'kms'
+            else:
+                dp_item.source = source
             dp_item.comment = comment
             return dp_item
         return None
-
-    def _get_aid(self,app_type):
-        if app_type == AppType.VISA_DEBIT or app_type == AppType.VISA_CREDIT:
-            return 'A0000000031010'
-        elif app_type == AppType.MC_DEBIT or app_type == AppType.MC_CREDIT:
-            return 'A0000000041010'
-        elif app_type == AppType.UICS_DEBIT:
-            return 'A000000333010101'
-        elif app_type == AppType.UICS_CREDIT:
-            return 'A000000333010102'
-        elif app_type == AppType.JETCO:
-            return 'A00000047400000001'
-        else:
-            return ''
-    
-    def _get_comment(self,aid,node_name):
-        attr_comment = ''
-        mappings = None
-        if aid == 'A0000000041010':
-            mappings = settings.visa_tag_desc_mappings
-        elif aid == 'A0000000031010':
-            mappings = settings.visa_tag_desc_mappings
-        elif aid == 'A00000047400000001':
-            mappings = settings.jetco_tag_desc_mappings
-        elif aid in ('A000000333010101','A000000333010102'):
-            mappings = settings.uics_tag_desc_mappings
-        elif aid == '315041592E5359532E4444463031':
-            mappings = settings.pse_tag_desc_mappings
-        elif aid == '325041592E5359532E4444463031':
-            mappings = settings.ppse_tag_desc_mappings
-        elif aid in ('A000000025010402','A000000025010900'):
-            mappings = settings.amex_tag_desc_mappings
-        if mappings:
-            mapping_item = mappings.get(node_name)
-            if mapping_item:
-                attr_comment = mapping_item[0]
-        return attr_comment
 
     def _get_rsa_len(self):
         item = self._get_source_item('Rsa_len','contact')
@@ -895,21 +977,21 @@ class GenDpXml:
                 Log.info('special expiry date of tag5F24, please manually set expiry date of cert')
         return expiry_date
 
-    def print_template_unused(self):
-        Log.info('no used tag list at first application----------------------------')
-        for item in self.source_items:
+    def output_result(self):
+        Log.warn('no used tag list at first application')
+        for item in self.first_source_items:
             if not item.used:
-                Log.info("tag:{0:6s} |value:{1:30s}|".format(item.tag,item.value))
+                Log.warn("tag:{0:15s} |value:{1:40s}|desc:{2}".format(item.tag,item.value,item.name))
         if self.second_source_items:
-            Log.info('no used tag list at second application----------------------------')
+            Log.warn('\n\nno used tag list at second application')
             for item in self.second_source_items:
                 if not item.used:
-                    Log.info("tag:{0:6s} |value:{1:30s}|".format(item.tag,item.value))
-        Log.info('no used tag list at template----------------------------')
+                    Log.warn("tag:{0:15s} |value:{1:40s}|desc:{2}".format(item.tag,item.value,item.name))
+        Log.warn('\n\nno used tag list at template')
         ignore_tag_list = ['8000','8001','9000','9001','A006','A016','8401','8400','8201','8202','8203','8204','8205']
         for data in self.unused_data:
             if data[0] not in ignore_tag_list:
-                Log.info("tag:{0:6s} |source:{1:30s}|".format(data[0],data[1]))        
+                Log.warn("tag:{0:15s} |source:{1:40s}|desc:{2}".format(data[0],data[1],data[2]))        
 
     def _add_alias(self,xml_handle,tag_nodes):
         '''
@@ -980,7 +1062,7 @@ class GenDpXml:
                 if not dgi_child_nodes:
                     dgi_name = new_xml_handle.get_attribute(dgi_node,'name')
                     new_xml_handle.remove(dgi_node)
-                    Log.info('Remove DGI: %s',dgi_name)
+                    Log.warn('Remove DGI: %s',dgi_name)
 
     def _handle_9F4B(self,new_xml_handle,app_node):
         rsa_len = self._get_rsa_len()
@@ -1016,17 +1098,13 @@ class GenDpXml:
 
     def _handle_9F10(self,tag,source):
         source_item = self._get_source_item(tag,source)
-        dp_item = DpItem()
+        dp_item = TagInfo()
         value = source_item.value
         index_start = value.find('[')
         index_mid = value.find('|')
         index_end = value.find(']')
         dp_item.value = value[0:index_start] + value[index_start + 1:index_mid] + value[index_end + 1:]
         dp_item.live = value[index_mid + 1:index_end]
-        # print(value[0:index_start])
-        # print(value[index_start + 1:index_mid])
-        # print(value[index_end + 1:])
-        # print(value[index_mid + 1:index_end])
         if source_item:
             source_item.used = True
             dp_item.tag = tag
@@ -1053,28 +1131,28 @@ class GenDpXml:
         if not os.path.exists(fpath):
             os.makedirs(fpath)
         shutil.copyfile(self.template_xml,new_xml)      #复制文件
-        new_xml_handle = XmlParser(new_xml, XmlMode.READ_WRITE)
+        dp_xml_handle = XmlParser(new_xml, XmlMode.READ_WRITE)
 
-        # 设置应用节点属性，需要设置AID
-        app_nodes = new_xml_handle.get_child_nodes(new_xml_handle.root_element,'App')
+        # 设置应用节点属性，需要设置aid
+        app_nodes = dp_xml_handle.get_child_nodes(dp_xml_handle.root_element,'App')
         if app_nodes:
-            new_xml_handle.set_attribute(app_nodes[0],'type',self.config.get('app_type').name.lower())
-            if self.config.get('app_type') in (AppType.UICS_CREDIT,AppType.UICS_DEBIT):
-                new_xml_handle.set_attribute(app_nodes[0],'aid',self._get_aid(self.config.get('app_type')))
+            aid = self._get_aid_from_excel(self.first_source_items)
+            dp_xml_handle.set_attribute(app_nodes[0],'aid',aid)
+            dp_xml_handle.set_attribute(app_nodes[0],'type',self.config.get('app_type').lower())
             if len(app_nodes) == 2: #支持双应用
-                new_xml_handle.set_attribute(app_nodes[1],'type',self.config.get('second_app_type').name.lower())
-                if self.config.get('app_type') in (AppType.UICS_CREDIT,AppType.UICS_DEBIT):
-                    new_xml_handle.set_attribute(app_nodes[1],'aid',self._get_aid(self.config.get('second_app_type')))
-        self._set_app_info(new_xml_handle,app_nodes) #需要设置第一应用和第二应用信息
+                aid = self._get_aid_from_excel(self.second_source_items)
+                dp_xml_handle.set_attribute(app_nodes[1],'aid',aid)
+                dp_xml_handle.set_attribute(app_nodes[1],'type',self.config.get('second_app_type').lower())
 
-        # 设置bin号
-        bin_node = new_xml_handle.get_first_node(new_xml_handle.root_element,'Bin')
+
+        # 1. 设置bin号
+        bin_node = dp_xml_handle.get_first_node(dp_xml_handle.root_element,'Bin')
         if bin_node:
-            new_xml_handle.set_attribute(bin_node,'value',self.config.get('card_bin',''))
+            dp_xml_handle.set_attribute(bin_node,'value',self.config.get('card_bin',''))
 
         # 将pse,ppse节点也加入到app节点集合中，设置tag属性
-        pse_node = new_xml_handle.get_first_node(new_xml_handle.root_element,'PSE')
-        ppse_node = new_xml_handle.get_first_node(new_xml_handle.root_element,'PPSE')
+        pse_node = dp_xml_handle.get_first_node(dp_xml_handle.root_element,'PSE')
+        ppse_node = dp_xml_handle.get_first_node(dp_xml_handle.root_element,'PPSE')
         if pse_node: #防止特殊应用,没有pse或ppse节点的情况
             app_nodes.append(pse_node)
         if ppse_node:
@@ -1082,160 +1160,179 @@ class GenDpXml:
 
         # 设置Tag节点
         for index, app_node in enumerate(app_nodes):
-            aid = new_xml_handle.get_attribute(app_node,'aid')
+            aid = dp_xml_handle.get_attribute(app_node,'aid')
 
             contact_tag94 = ''
             contactless_tag94 = ''
             sig_dgis = []
             
-            #对于VISA应用，如果RSA长度大于1024,需要新增DGI存储tag9F4B
-            if aid == 'A0000000031010':
-                self._handle_9F4B(new_xml_handle,app_node)
-
-            tag_nodes = new_xml_handle.get_nodes(app_node,'Tag') #取应用下面的Tag节点
+            tag_nodes = dp_xml_handle.get_nodes(app_node,'Tag') #取应用下面的Tag节点
             for tag_node in tag_nodes:
-                attr_tag = new_xml_handle.get_attribute(tag_node,'name')        # Tag标签
-                attr_source = new_xml_handle.get_attribute(tag_node,'source')   # Tag来源 contact,contactless,fci...
-                attr_format = new_xml_handle.get_attribute(tag_node,'format')   # Tag 形式,TLV,V结构
-                attr_comment = new_xml_handle.get_attribute(tag_node,'comment') # Tag描述信息
-                attr_sig_id = new_xml_handle.get_attribute(tag_node,'sig_id')   # Tag使用的签名数据
-                attr_value = new_xml_handle.get_attribute(tag_node,'value')     # Tag值
-                second_app = new_xml_handle.get_attribute(tag_node,'second_app') # 指定是否使用第二应用数据
+                attr_tag        = dp_xml_handle.get_attribute(tag_node,'name')        # Tag标签
+                attr_source     = dp_xml_handle.get_attribute(tag_node,'source')   # Tag来源 contact,contactless,fci...
+                attr_format     = dp_xml_handle.get_attribute(tag_node,'format')   # Tag 形式,TLV,V结构
+                attr_comment    = dp_xml_handle.get_attribute(tag_node,'comment') # Tag描述信息
+                attr_sig_id     = dp_xml_handle.get_attribute(tag_node,'sig_id')   # Tag使用的签名数据
+                attr_value      = dp_xml_handle.get_attribute(tag_node,'value')     # Tag值
+                second_app      = dp_xml_handle.get_attribute(tag_node,'second_app') # 指定是否使用第二应用数据
 
-                parent_node = new_xml_handle.get_parent(tag_node)   # 获取tag所在的DGI节点
-                dgi_name = new_xml_handle.get_attribute(parent_node,'name') # DGI节点名称
+                parent_node = dp_xml_handle.get_parent(tag_node)   # 获取tag所在的DGI节点
+                dgi_name    = dp_xml_handle.get_attribute(parent_node,'name') # DGI节点名称
 
 
                 # 生成数据,需要设置当前使用的数据集合(是第一个应用还是第二个应用的集合)
-                if self._is_second_app(new_xml_handle,app_node) or (second_app and second_app == 'true'):
+                if self._is_second_app(dp_xml_handle,app_node) or (second_app and second_app == 'true'):
                     self.cur_source_items = self.second_source_items
                 else:
-                    self.cur_source_items = self.source_items
+                    self.cur_source_items = self.first_source_items
 
                 # 删除之，重新给属性排序
-                new_xml_handle.remove_attribute(tag_node,'type')
-                new_xml_handle.remove_attribute(tag_node,'comment')
-                new_xml_handle.remove_attribute(tag_node,'format')
-                new_xml_handle.remove_attribute(tag_node,'source')
-                new_xml_handle.remove_attribute(tag_node,'sig_id')
-                new_xml_handle.remove_attribute(tag_node,'value')
+                dp_xml_handle.remove_attribute(tag_node,'type')
+                dp_xml_handle.remove_attribute(tag_node,'comment')
+                dp_xml_handle.remove_attribute(tag_node,'format')
+                dp_xml_handle.remove_attribute(tag_node,'source')
+                dp_xml_handle.remove_attribute(tag_node,'sig_id')
+                dp_xml_handle.remove_attribute(tag_node,'value')
                 
                 # value属性获取规则如下:
                 # 1. 若模板中有值，则优先从模板中取值
                 # 2. 若模板无value属性，则根据模板中的name和source属性从source_items集合中获取
                 # 3. 若模板无value属性，且name属性为--,则根据comment属性从source_items集合中获取
                 # 注意，这里的value还只是固定值,value属性放置在type属性之后设置
-                dp_item = DpItem()
-                dp_item.value = attr_value
-                if not dp_item.value:
+                tag_item = TagInfo()
+                tag_item.value = attr_value #模板中的值
+                if not tag_item.value:
+                    # 若tag为--,则根据comment获取值
                     if not attr_tag or attr_tag.strip() == '--':
-                        dp_item = self._get_dp_item(comment=attr_comment)
+                        tag_item = self._get_dp_item(comment=attr_comment)
                     else:
+                        # 根据tag和source获取值
                         if attr_tag == '9F10':
-                            dp_item = self._handle_9F10(tag=attr_tag, source=attr_source)
+                            tag_item = self._handle_9F10(tag=attr_tag, source=attr_source)
                         else:
-                            dp_item = self._get_dp_item(tag=attr_tag, source=attr_source)
+                            tag_item = self._get_dp_item(tag=attr_tag, source=attr_source)
                 tags_from_kms = ('8F','9F32','8000','8001','9000','9001','8400','8401','A006','A016','90','92','93','9F46','9F47', '9F48','8201','8202','8203','8204','8205','DC','DD')
                 
                 # 对 App key做特殊处理
-                if dgi_name in ('8000','9000','8001','9001'):
+                if dgi_name in ('8000','9000','8001','9001','A006','A016','8400','8401'):
                     attr_tag = dgi_name
                 
-                # 过滤无法从数据中查找到的数据
-                if not dp_item and attr_tag not in tags_from_kms:
-                    new_xml_handle.remove(tag_node)
+                # 过滤无法从excel表中中查找到的数据且不是证书相关数据
+                if not tag_item and attr_tag not in tags_from_kms:
+                    dp_xml_handle.remove(tag_node)
                     self.unused_data.append((attr_tag,attr_source,attr_comment))
                     continue
-                if attr_tag not in tags_from_kms:
-                    Log.info('tag:%6s,source:%15s,value:%s',dp_item.tag,dp_item.source,dp_item.value)
 
                 # 记录每个应用的AFL, 用于在comment 中添加那些分组是用于接触/非接
                 if attr_tag == '94' and attr_source == 'contact':
-                    contact_tag94 = dp_item.value
+                    contact_tag94 = tag_item.value
                 elif attr_tag in ('94','D9') and attr_source == 'contactless':
-                    contactless_tag94 = dp_item.value
+                    contactless_tag94 = tag_item.value
 
-                # 对于visa项目,如果RSA长度小于等于1024,需要在9115,9116,9117中添加9F4B81XX
+                # 对于visa项目,如果RSA长度小于等于1024,需要在9116,9117中添加9F4B81XX
                 # 注意,这里默认visa为第一应用,若出现visa为第二应用的情况，则不适用。
-                if aid == 'A0000000031010':
+                #这里使用特殊的tagFFFF表示DGI9116,9117中的TL结构
+                if aid == 'A0000000031010' and attr_tag == 'FFFF' and dgi_name in ('9116','9117'):
                     rsa_len = self._get_rsa_len()
                     if not rsa_len:
-                        rsa_len = self.config.get('rsa','1152')
-                    rsa = int(rsa_len)
-                    if  rsa <= 1024 and attr_tag == 'FFFF' and dgi_name in ('9116','9117'): #这里使用特殊的tagFFFF表示DGI9116,9117中的TL结构
-                        dp_item.value += '9F4B81' + utils.int_to_hex_str(rsa // 8)
-
-                if attr_tag in tags_from_kms:
-                    # 来自加密机, 优先处理从加密机里面的数据，不取来自客户表中数据
-                    new_xml_handle.set_attribute(tag_node,'type','kms')
-                elif dp_item.value: 
-                    # 设置type类型
-                    if dp_item.value.find('[') != -1 or dp_item.value.find('{') != -1:
-                        new_xml_handle.set_attribute(tag_node,'type','file') #说明数据来自文件
+                        rsa_len = self.config.get('rsa')
+                    if not rsa_len:
+                        Log.error('can not get rsa information from template xml')
                     else:
-                        new_xml_handle.set_attribute(tag_node,'type','fixed') #说明是固定值
+                        rsa = int(rsa_len)
+                        if  rsa <= 1024: 
+                            tag_item.value += '9F4B81' + utils.int_to_hex_str(rsa // 8)
+
+                # 来自加密机, 优先处理从加密机里面的数据，不取来自客户表中数据
+                # 有些attr_tag为--,但也有可能是证书相关的信息，所以再根据tag_item中的source属性进行判断
+                if attr_tag in tags_from_kms or (tag_item.source and tag_item.source == 'kms'):
+                    dp_xml_handle.set_attribute(tag_node,'type','kms')
+                elif tag_item.value: 
+                    # 设置type类型
+                    if tag_item.value.find('[') != -1 or tag_item.value.find('{') != -1:
+                        dp_xml_handle.set_attribute(tag_node,'type','file') #说明数据来自文件
+                    else:
+                        dp_xml_handle.set_attribute(tag_node,'type','fixed') #说明是固定值
                     # 设置value值
-                    if dp_item.value.strip().lower() == 'empty':
-                        new_xml_handle.set_attribute(tag_node,'value','')
-                    elif dp_item.value == 'N.A':
-                        if aid == 'A0000000031010' and dp_item.tag == '82':
+                    if tag_item.value.strip().lower() == 'empty':
+                        dp_xml_handle.set_attribute(tag_node,'value','')
+                    elif tag_item.value == 'N.A':
+                        if aid == 'A0000000031010' and tag_item.tag == '82':
                             Log.warn('remove DGI %s',dgi_name)
-                            new_xml_handle.remove(parent_node)
+                            dp_xml_handle.remove(parent_node)
                             continue
                         else:
-                            new_xml_handle.remove(tag_node)
+                            dp_xml_handle.remove(tag_node)
                             self.unused_data.append((attr_tag,attr_source,attr_comment))
-                    elif dp_item.tag == '9F10':
-                        new_xml_handle.set_attribute(tag_node,'value',dp_item.value)
-                        new_xml_handle.set_attribute(tag_node,'live',dp_item.live)
+                    elif tag_item.tag == '9F10':
+                        dp_xml_handle.set_attribute(tag_node,'value',tag_item.value)
+                        dp_xml_handle.set_attribute(tag_node,'live',tag_item.live)
                     else:
-                        new_xml_handle.set_attribute(tag_node,'value',dp_item.value)
+                        dp_xml_handle.set_attribute(tag_node,'value',tag_item.value)
 
                     # 设置tag属性
-                    if dp_item.convert_to_ascii:
-                        new_xml_handle.set_attribute(tag_node,'convert_ascii','true')
-                    if dp_item.replace_equal_by_D:
-                        new_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
-                    if dp_item.trim_right_space:
-                        new_xml_handle.set_attribute(tag_node,'trim_right_space','true')
-                    if dp_item.convert_to_bcd:
-                        new_xml_handle.set_attribute(tag_node,'convert_bcd','true')
+                    if tag_item.convert_to_ascii:
+                        dp_xml_handle.set_attribute(tag_node,'convert_ascii','true')
+                    if tag_item.replace_equal_by_D:
+                        dp_xml_handle.set_attribute(tag_node,'replace_equal_by_D','true')
+                    if tag_item.trim_right_space:
+                        dp_xml_handle.set_attribute(tag_node,'trim_right_space','true')
+                    if tag_item.convert_to_bcd:
+                        dp_xml_handle.set_attribute(tag_node,'convert_bcd','true')
                 else:
-                    new_xml_handle.remove(tag_node)
+                    dp_xml_handle.remove(tag_node)
                     self.unused_data.append((attr_tag,attr_source,attr_comment))
                 
                 # 设置签名,直接复制模板中的值
                 if attr_sig_id:
-                    new_xml_handle.set_attribute(tag_node,'sig_id',attr_sig_id)
+                    dp_xml_handle.set_attribute(tag_node,'sig_id',attr_sig_id)
 
                 #设置编码格式和描述，若模板中没有comment属性，则取至settings.py
-                new_xml_handle.set_attribute(tag_node,'format',attr_format)
+                dp_xml_handle.set_attribute(tag_node,'format',attr_format)
                 if not attr_comment:
-                    attr_comment = self._get_comment(aid,attr_tag)
-                new_xml_handle.set_attribute(tag_node,'comment',attr_comment)
+                    attr_comment = settings.get_mappings_info(aid,attr_tag).desc
+                dp_xml_handle.set_attribute(tag_node,'comment',attr_comment)
 
+            #对于VISA应用，如果RSA长度大于1024,需要新增DGI存储tag9F4B
+            if aid == 'A0000000031010':
+                config_node = dp_xml_handle.get_first_node(app_node,"Config")
+                if config_node:
+                    attr_dgi_9F4B = dp_xml_handle.get_attribute(config_node,'dgi_9F4B')
+                    attr_dgi_GPO_AAC = dp_xml_handle.get_attribute(config_node,'dgi_qgpo_aac')
+                    self.config['dgi_9F4B'] = attr_dgi_9F4B
+                    self.config['dgi_qgpo_aac'] = attr_dgi_GPO_AAC
+                self._handle_9F4B(dp_xml_handle,app_node)
+                # 处理dgi_GPO_AAC节点
+                if self.config['dgi_qgpo_aac']:
+                    dgi_GPO_AAC_node = dp_xml_handle.get_node_by_attribute(app_node,"DGI",name=self.config['dgi_GPO_ACC'])
+                    dgi_9115_node = dp_xml_handle.get_node_by_attribute(app_node,"DGI",name='9115')
+                    if dgi_9115_node:
+                        tag94_node = dp_xml_handle.get_node_by_attribute(dgi_9115_node,"Tag",name='94')
+                        if not tag94_node:
+                            dp_xml_handle.remove(dgi_GPO_AAC_node)
+                    
             #最后设置alias
-            self._add_alias(new_xml_handle,tag_nodes) 
+            self._add_alias(dp_xml_handle,tag_nodes) 
             # 删除 空模板节点
-            self.remove_empty_node(new_xml_handle)
+            self.remove_empty_node(dp_xml_handle)
             if aid == 'A0000000041010': #对于mc应用，如果不支持磁条交易，需删除DGI8400和DGI8401
-                node_dgi_0101 = new_xml_handle.get_node_by_attribute(app_node,'DGI',name="0101")
+                node_dgi_0101 = dp_xml_handle.get_node_by_attribute(app_node,'DGI',name="0101")
                 if not node_dgi_0101:
-                    node_dgi_8400 = new_xml_handle.get_node_by_attribute(app_node,'DGI',name="8400")
-                    node_dgi_8401 = new_xml_handle.get_node_by_attribute(app_node,'DGI',name="8401")
+                    node_dgi_8400 = dp_xml_handle.get_node_by_attribute(app_node,'DGI',name="8400")
+                    node_dgi_8401 = dp_xml_handle.get_node_by_attribute(app_node,'DGI',name="8401")
                     if node_dgi_8400:
-                        new_xml_handle.remove(node_dgi_8400)
+                        dp_xml_handle.remove(node_dgi_8400)
                     if node_dgi_8401:
-                        new_xml_handle.remove(node_dgi_8401)
+                        dp_xml_handle.remove(node_dgi_8401)
             # 给comment属性添加 contact/contactless和signature单词
-            dgi_nodes = new_xml_handle.get_nodes(app_node,'DGI')
+            dgi_nodes = dp_xml_handle.get_nodes(app_node,'DGI')
             contact_dgi_names = self._get_afls(contact_tag94)
             contactless_dgi_names = self._get_afls(contactless_tag94)
             sig_dgis.append(self._get_sig_dgi(contact_tag94))
             sig_dgis .append(self._get_sig_dgi(contactless_tag94))
             for dgi_node in dgi_nodes:
-                attr_comment = new_xml_handle.get_attribute(dgi_node,'comment')
-                attr_name = new_xml_handle.get_attribute(dgi_node,'name')
+                attr_comment = dp_xml_handle.get_attribute(dgi_node,'comment')
+                attr_name = dp_xml_handle.get_attribute(dgi_node,'name')
                 if int(attr_name,16) < 0x0A01:
                     attr_comment = 'SFI ' + attr_name[0:2] + ' Record ' + attr_name[2:]
                     flag = False
@@ -1252,33 +1349,33 @@ class GenDpXml:
                         attr_comment += ')'
 
                 if not attr_comment:
-                    attr_comment = self._get_comment(aid,attr_name)
-                new_xml_handle.set_attribute(dgi_node,'comment',attr_comment)
+                    attr_comment = settings.get_mappings_info(aid,attr_name).desc
+                dp_xml_handle.set_attribute(dgi_node,'comment',attr_comment)
 
             # 配置完所有tag节点之后配置证书信息
             if aid not in ('315041592E5359532E4444463031','325041592E5359532E4444463031'):
                 #设置证书配置信息
-                cert_nodes = new_xml_handle.get_nodes(app_node,'Cert')
+                cert_nodes = dp_xml_handle.get_nodes(app_node,'Cert')
                 if cert_nodes:
-                    expiry_date = self._get_cert_expiry_date(new_xml_handle,app_node)
+                    expiry_date = self._get_cert_expiry_date(dp_xml_handle,app_node)
                     for cert_node in cert_nodes:
                         # 双应用公用失效日期
                         if self.config.get('expireDate'):
-                            new_xml_handle.set_attribute(cert_node,'expireDate',self.config.get('expireDate'))
+                            dp_xml_handle.set_attribute(cert_node,'expireDate',self.config.get('expireDate'))
                         else:
-                            new_xml_handle.set_attribute(cert_node,'expireDate',expiry_date)
-                        new_xml_handle.set_attribute(cert_node,'expireDateType',self.config.get('expireDateType','file'))
+                            dp_xml_handle.set_attribute(cert_node,'expireDate',expiry_date)
+                        dp_xml_handle.set_attribute(cert_node,'expireDateType',self.config.get('expireDateType','file'))
                         rsa_len = self._get_rsa_len()
                         if rsa_len:
-                            new_xml_handle.set_attribute(cert_node,'rsa',rsa_len)
+                            dp_xml_handle.set_attribute(cert_node,'rsa',rsa_len)
                         else:
                             if index == 1: #第二应用,若双应用RSA长度一致，则只需设置一个RSA，默认长度为1152位
-                                new_xml_handle.set_attribute(cert_node,'rsa',self.config.get('second_rsa',self.config.get('rsa','1152')))
+                                dp_xml_handle.set_attribute(cert_node,'rsa',self.config.get('second_rsa',self.config.get('rsa','1152')))
                             else:
-                                new_xml_handle.set_attribute(cert_node,'rsa',self.config.get('rsa','1152'))
+                                dp_xml_handle.set_attribute(cert_node,'rsa',self.config.get('rsa','1152'))
                 
         # 设置完毕后，保存
-        new_xml_handle.save(char_set)
+        dp_xml_handle.save(char_set)
 
 #根据DP xml文件和emboss file模拟一条制卡数据，用于制作测试卡
 class MockCps:
@@ -1310,16 +1407,18 @@ class MockCps:
             if date in (r'{FD}',r'{LD}'):
                 date = time.strftime('%y%m') + date
             else:
-                Log.info('len of date is too short')
+                Log.error('len of date is too short')
                 return None
         yy = date[0:2]
         mm = date[2:4]
         dd_flag = date[4:]
         if not yy.isdigit():
-            Log.info('date of yy is incorrected format')
+            Log.error('handle value:%s',date)
+            Log.error('date of yy is incorrected format')
             return None
         if not mm.isdigit() or int(mm) > 12 or int(mm) == 0:
-            Log.info('date of mm is incorrected format')
+            Log.error('handle value:%s',date)
+            Log.error('date of mm is incorrected format')
             return None
         if dd_flag == r'{FD}':
             return yy + mm + '01'
@@ -1431,8 +1530,11 @@ class MockCps:
                     if tag == '5A':
                         tag5A = value[4:]
             if tag5A == '':
-                Log.warn('sig data must contains card no')
+                Log.error
                 tag5A = kms.issuer_bin + '0000000001'
+            Log.info('gen new icc cert input:')
+            Log.info('5A:%s',tag5A)
+            Log.info('sig_data:%s',sig_data)
             kms.gen_new_icc_cert(tag5A,sig_data,sig_id)
             kms.gen_new_ssda(kms.issuer_bin,sig_data,sig_id)
 
@@ -1445,7 +1547,7 @@ class MockCps:
         if bin_node:
             issuer_bin = self.xml_handle.get_attribute(bin_node,'value')
             if not issuer_bin or issuer_bin == '':
-                Log.info('Please provide card Bin number, if not, card will use default Bin number:654321')
+                Log.error('Please provide card Bin number, if not, card will use default Bin number:654321')
                 issuer_bin = '654321'
             else:
                 issuer_bin = issuer_bin.split(',')[0]    #取第一个bin号生成证书
@@ -1460,7 +1562,7 @@ class MockCps:
         if cert_node:
             rsa_len_str = self.xml_handle.get_attribute(cert_node,'rsa')
             if not rsa_len_str or rsa_len_str == '':
-                Log.warn('Please provide card ICC RSA length, if not, card will use default RSA len:1024')
+                Log.error('Please provide card ICC RSA length, if not, card will use default RSA len:1024')
             else:
                 rsa_len = int(rsa_len_str)       
         return rsa_len
@@ -1468,7 +1570,7 @@ class MockCps:
     def _process_dgi(self,dgi_node,kms=None):
         dgi = Dgi()
         dgi.name = self.xml_handle.get_attribute(dgi_node,'name')
-        if dgi.name in ('8000','9000','8001','9001'):
+        if dgi.name in ('8000','9000','8001','9001','A006','A016','8400','8401'):
             dgi.append_tag_value(dgi.name,kms.get_value(dgi.name))
             return dgi
         child_nodes = self.xml_handle.get_child_nodes(dgi_node)
@@ -1490,7 +1592,7 @@ class MockCps:
                 template_value = self._parse_template(child_node,kms)
                 dgi.append_tag_value(dgi.name,template_value)
             else:
-                print('unrecognize node' + child_node.nodeName)
+                Log.error('unrecognize node%s',child_node.nodeName)
         if dgi.name == '0101' and dgi.is_existed('56') and dgi.is_existed('9F6B'):
             # 说明是MC应用，且支持MSD,这时需要生成对应的DC,DD
             tag56 = dgi.get_value('56')[4:] # 偷懒，不需要解析TLV
@@ -1509,15 +1611,20 @@ class MockCps:
         return pse
 
     def gen_cps(self):
+        Log.info('Start generate cps data...')
         app_nodes = self.xml_handle.get_nodes(self.xml_handle.root_element,'App')
         for app_count,app_node in enumerate(app_nodes):
             aid = self.xml_handle.get_attribute(app_node,'aid')
+            Log.info('\nhandle aid: %s',aid)
             if app_count == 0:
                 self.cps.first_app_aid = aid
             elif app_count == 1:
                 self.cps.second_app_aid = aid
+            Log.info('init kms...')
             issuer_bin = self._get_first_bin()
             rsa_len = self._get_rsa_len(app_node)
+            Log.info('issuer bin:%s',issuer_bin)
+            Log.info('rsa len:%s',rsa_len)
             kms = Kms()
             kms.init(issuer_bin,rsa_len)
             self._gen_sig_data(app_node,kms)    #根据sig节点生成与证书相关的数据

@@ -43,6 +43,36 @@ class McTrans(TransBase):
             # self.run_case('case_read_record','run_visa',resps)
         return resps
 
+    def read_log(self):
+        Log.info('get trans log')
+        tag9F4D = self.get_tag(PROCESS_STEP.SELECT,'9F4D')
+        if not tag9F4D:
+            Log.info('no tag9F4D,do not support record log')
+        else:
+            record_count = int(tag9F4D[2:4],16)
+            log_sfi = int(tag9F4D[0:2],16)
+            buffer = []
+            for i in range(record_count + 1):
+                resp = apdu.read_record(log_sfi,i + 1,(0x9000,0x6A83))
+                if resp.sw == 0x9000:
+                    Log.info(resp.response)
+                    buffer.append(resp.response)
+                else:
+                    break
+            Log.info('%-10s%-15s%-10s%-10s%-8s%-15s%-10s%-10s%-10s','result','money','currency','date','atc','cvr','interface','time','merchant')           
+            for resp in buffer:
+                result = resp[0:2]
+                money = resp[2:14]
+                currency = resp[14:18]
+                date = resp[18:24]
+                atc = resp[24:28]
+                cvr = resp[28:40]
+                interface = resp[40:42]
+                trans_time = resp[42:48]
+                merchant = utils.bcd_to_str(resp[48:])
+                Log.info('%-10s%-15s%-10s%-10s%-8s%-15s%-10s%-10s%-10s',result,money,currency,date,atc,cvr,interface,trans_time,merchant)           
+                
+
     def first_gac(self):
         tag8C = self.get_tag(PROCESS_STEP.READ_RECORD,'8C')
         data = tools.assemble_dol(tag8C)
@@ -110,8 +140,23 @@ class McTrans(TransBase):
 
     def first_gac_cda(self):
         tag8C = self.get_tag(PROCESS_STEP.READ_RECORD,'8C')
-        data = tools.assemble_dol(tag8C)
-        resp = super().gac(Crypto_Type.ARQC_CDA,data)
+        if not tag8C:
+            Log.error('first gac cda faild since tag8C is tempty')
+            return False
+        tls = utils.parse_tl(tag8C)
+        data = ''
+        self.unpredicatble_number = ''
+        for tl in tls:
+            data += terminal.get_terminal(tl.tag,tl.len)
+            if tl.tag == '9F37':
+                self.unpredicatble_number = terminal.get_terminal(tl.tag,tl.len)
+        resp = super().gac(Crypto_Type.TC_CDA,data)
+        if resp.sw != 0x9000:
+            Log.error('send first gac command failed. SW:%04X',resp.sw)
+            return
+        tlvs = utils.parse_tlv(resp.response)
+        tools.output_apdu_info(resp)
+        self.store_tag_group(PROCESS_STEP.FIRST_GAC,tlvs)
 
     def get_data(self):
         tags = ['D5','9F72']
@@ -171,7 +216,8 @@ class McTrans(TransBase):
             self.gpo()
             self.read_record()
             self.get_data()
-            self.do_dda(fDDA=True)
+            self.first_gac_cda()
+            self.do_cda()
 
 
 if __name__ == '__main__':
@@ -194,10 +240,7 @@ if __name__ == '__main__':
     index = input('select readers: ')
     if open_reader(readers[int(index)]):
         #================= contactless trans ==================
-        # terminal.set_offline_only()
-        # terminal.set_currency_code('0446')
-        # trans.do_contactless_trans()
+        trans.do_contactless_trans()
         #=================== contact trans ====================
-        trans.do_contact_trans()
-        trans.lock_app()
-        trans.unlock_app()
+        # trans.do_contact_trans()
+        # trans.read_log()

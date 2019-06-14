@@ -84,6 +84,9 @@ class XmlParser:
         text_node = self.__dom.createTextNode(text)
         node.appendChild(text_node)
 
+    def add_comment(self,parent_node,comment):
+        comm_node = self.__dom.createComment(comment)
+        parent_node.appendChild(comm_node)
 
     def save(self,char_type='GB2312'):
         try:

@@ -74,6 +74,7 @@
 			</Template>
 		</DGI>		
 		<DGI name="0D01">
+			<Tag name="9F4F" source="contact" format="TLV"/>
 			<Tag name="9F53" source="contact" format="TLV"/>
 			<Tag name="9F54" source="contact" format="TLV"/>
 			<Tag name="9F58" source="contact" format="TLV"/>
@@ -89,10 +90,14 @@
 			<Tag name="9F13" source="contact" format="TLV"/>
 		</DGI>
 		<DGI name="8000">
-			<Tag name="8000" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique AC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique MAC Key"/>
+			<Tag name="--"   source="kms" format="V" comment="Unique ENC Key"/>
 		</DGI>
 		<DGI name="9000">
-			<Tag name="9000" source="kms" format="V"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKMAC"/>
+			<Tag name="--"   source="kms" format="V" comment="kcv for UDKENC"/>
 		</DGI>
 		<DGI name="8201">
 			<Tag name="8201" source="kms" format="V"/>
@@ -137,6 +142,9 @@
 				<Tag name="5F2D" source="contact" format="TLV"/>
 				<Tag name="9F11" source="contact" format="TLV"/>
 				<Tag name="9F12" source="contact" format="TLV"/>
+				<Template name="BF0C">
+					<Tag name="9F4D" source="contact" format="TLV"/>
+				</Template>
 			</Template>
 		</DGI>
 		<DGI name="9104">

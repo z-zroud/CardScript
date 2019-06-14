@@ -12,7 +12,7 @@ Log.init()
 
 
 class PersoLogParse:
-    do_not_parse_tlv_list = ['9102','9103','8201','8202','8203','8204','8205','8000','9000','8202','8002','8302']
+    do_not_parse_tlv_list = ['9102_2','9102','9103','8201','8202','8203','8204','8205','8000','9000','8202','8002','8302','9102_2','9103_2','8201_2','8202_2','8203_2','8204_2','8205_2','8000_2','9000_2','8202_2','8002_2','8302_2']
     def __init__(self,perso_log):
         self.log_handle = FileHandle(perso_log,'r+')
 
@@ -81,6 +81,8 @@ class PersoLogParse:
             else:
                 dgi = Dgi()
                 dgi.name = dgi_name
+                if dgi_name.endswith('_2'):
+                    dgi_name = dgi_name[:-2]
                 dgi.add_tag_value(dgi_name,data)
                 return dgi
 
@@ -256,12 +258,12 @@ class PersoLogParse:
 
     def _display_dki(self,cps):
         dgis = cps.get_all_dgis()
-        Log.info('===================== First Application Key Info =====================')
+        Log.info('===================== First Application DKI Info =====================')
         for dgi in dgis:
             for tag,value in dgi.get_all_tags().items():
                 if tag in ('9F10') and '_2' not in dgi.name:
                     Log.info('tag9F10:%s       DKI:%s',value[6:],value[8:10])
-        Log.info('\n===================== Second Application Key Info =====================')
+        Log.info('\n===================== Second Application DKI Info =====================')
         for dgi in dgis:
             for tag,value in dgi.get_all_tags().items():
                 if tag in ('9F10') and '_2' in dgi.name:
@@ -287,36 +289,60 @@ class PersoLogParse:
                 if dgi.name in second_keys:
                     Log.info('tag%-5s:       value:%s  kcv:%s',tag,value,kcv)
         Log.info('\n')
-        
-
-
 
     def compare_cps(self,product_cps,mock_cps,ignore_list=[]):
         self._comapre_dgi_list(mock_cps,product_cps)
+        self._display_dki(product_cps)
+        self._display_key_info(product_cps)
         mock_dgis = mock_cps.get_all_dgis()
         if not ignore_list:
             # 涉及KMS相关的值，不比较
             ignore_list = ['8F','90','92','9F32','9F46','9F48','93','8201','8202','8203','8204','8205','8000','9000','A006','A016','8400','8401','8001','9001','B010','B023']
         Log.info('===================== Compare Data =====================')
+        has_err = False
         for mock_dgi in mock_dgis:
+            Log.info('===================== compare dgi %s =====================',mock_dgi.name)
             product_dgi = product_cps.get_dgi(mock_dgi.name)
             if not product_dgi:
                 Log.error('cannot find DGI %s in product enviromnent' % mock_dgi.name)
+                has_err = True
                 continue
-            for tag,value in mock_dgi.get_all_tags().items():
-                if tag in ignore_list:
-                    continue
-                product_value = product_dgi.get_value(tag)
-                if product_value != value:
-                    Log.error('compare tag %s failed.' % tag)
+            if product_dgi.name in ('9115','9116','9117'):
+                product_value = product_dgi.get_value(product_dgi.name)
+                mock_value = ''
+                for tag,value in mock_dgi.get_all_tags().items():
+                    mock_value += value
+                if mock_value != product_value:
+                    has_err = True
+                    Log.error('compare dgi %s failed.' % product_dgi.name)
                     Log.error('Prod_value: %s' % product_value)
-                    Log.error('Mock_value: %s\n' % value)
+                    Log.error('Mock_value: %s\n' % mock_value)
+                else:
+                    Log.info('compare dgi %s sucess.' % product_dgi.name)
+                    Log.info('Prod_value: %s' % product_value)
+                    Log.info('Mock_value: %s\n' % mock_value)
+            else:
+                for tag,value in mock_dgi.get_all_tags().items():
+                    if tag in ignore_list:
+                        continue
+                    product_value = product_dgi.get_value(tag)
+                    if product_value != value:
+                        has_err = True
+                        Log.error('compare tag %s failed.' % tag)
+                        Log.error('Prod_value: %s' % product_value)
+                        Log.error('Mock_value: %s\n' % value)
+                    else:
+                        Log.info('compare tag %s sucess.' % tag)
+                        Log.info('Prod_value: %s' % product_value)
+                        Log.info('Mock_value: %s\n' % value)
+        if has_err:
+            Log.error('Comapare data failed.')
+        else:
+            Log.info('Compared data sucess.')
 
     def compare_xml(self,cps,dp_xml,emboss_file):
         mock_obj = mock_dp.MockCps(dp_xml,emboss_file)
         mock_cps = mock_obj.gen_cps()
-        self._display_dki(cps)
-        self._display_key_info(cps)
         self._display_emboss_data(cps,dp_xml)
         self.compare_cps(cps,mock_cps)
         

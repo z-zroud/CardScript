@@ -73,7 +73,7 @@ class Docx:
         bk_color:   RGB字符串，例如"AABBCC"
         '''
         xml = r'<w:shd {0} w:fill="{1}"/>'.format(nsdecls('w'),bk_color)
-        print(xml)
+        # print(xml)
         shading_elm_1 = parse_xml(xml)
         cell._tc.get_or_add_tcPr().append(shading_elm_1)
 
